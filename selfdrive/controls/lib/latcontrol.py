@@ -60,10 +60,11 @@ class LatControl(object):
       projected_desired_angle = interp(sec_since_boot() + self.desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
       self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
 
+      projected_angle_steers = float(angle_steers) + self.actual_projection * float(angle_rate)
+      if not steer_override:
+        self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
+
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
-        projected_angle_steers = float(angle_steers) + self.actual_projection * float(angle_rate)
-        if not steer_override:
-          self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
 
         steers_max = get_steer_max(CP, v_ego)
         self.pid.pos_limit = steers_max
@@ -77,4 +78,7 @@ class LatControl(object):
     self.sat_flag = self.pid.saturated
     self.prev_angle_steers = angle_steers
 
-    return output_steer, float(self.dampened_desired_angle)
+    if CP.steerControlType == car.CarParams.SteerControlType.torque:
+      return output_steer, float(path_plan.angleSteers)
+    else:
+      return self.dampened_desired_angle, float(path_plan.angleSteers)
