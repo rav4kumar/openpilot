@@ -57,6 +57,9 @@ class CarInterface(object):
     ret.carFingerprint = candidate
 
     ret.enableCruise = False
+    ret.steerMPCOffsetTime = 0.025
+    ret.steerMPCDampenTime = 0.10
+    ret.steerDampenTime = 0.02
 
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),

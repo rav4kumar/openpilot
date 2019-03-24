@@ -68,7 +68,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-
+    ret.steerMPCOffsetTime = 0.025
+    ret.steerMPCDampenTime = 0.10
+    ret.steerDampenTime = 0.02
+    
     ret.steerActuatorDelay = 0.1  # Default delay
     tire_stiffness_factor = 1.
 

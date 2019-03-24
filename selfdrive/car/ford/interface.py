@@ -77,7 +77,10 @@ class CarInterface(object):
     ret.steerKf = 1. / MAX_ANGLE   # MAX Steer angle to normalize FF
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
-
+    ret.steerMPCOffsetTime = 0.025
+    ret.steerMPCDampenTime = 0.10
+    ret.steerDampenTime = 0.02
+    
     f = 1.2
     tireStiffnessFront_civic *= f
     tireStiffnessRear_civic *= f

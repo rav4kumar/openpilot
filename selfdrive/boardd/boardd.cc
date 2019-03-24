@@ -524,7 +524,7 @@ void *can_recv_thread(void *crap) {
         }
       }
       else {
-        //force_send = (locked_wake_time > last_long_sleep);
+        force_send = (locked_wake_time > last_long_sleep + 1e5);
         wake_time += 1000;
         locked_wake_time = wake_time;
       }
@@ -749,7 +749,7 @@ int main() {
   LOGW("starting boardd");
 
   // set process priority
-  err = set_realtime_priority(3);
+  err = set_realtime_priority(1);
   LOG("setpriority returns %d", err);
 
   // check the environment

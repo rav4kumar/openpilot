@@ -175,6 +175,9 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.steerMPCOffsetTime = 0.025
+    ret.steerMPCDampenTime = 0.10
+    ret.steerDampenTime = 0.02
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -216,6 +219,9 @@ class CarInterface(object):
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
       ret.syncID = 330
+      ret.steerMPCOffsetTime = 0.025
+      ret.steerMPCDampenTime = 0.3
+      ret.steerDampenTime = 0.3
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
