@@ -54,6 +54,8 @@ class LatControl(object):
     if v_ego < 0.3 or not active:
       output_steer = 0.0
       self.pid.reset()
+      self.dampened_angle_steers = angle_steers
+      self.dampened_desired_angle = angle_steers
     else:
       projected_desired_angle = interp(sec_since_boot() + self.desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
       self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
