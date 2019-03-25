@@ -72,9 +72,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCOffsetTime = 0.025
-    ret.steerMPCDampenTime = 0.10
-    ret.steerDampenTime = 0.02
+    ret.steerMPCProjectTime = 0.125    # project desired angle 12.5ms
+    ret.steerMPCSmoothTime = 0.10      # smooth desired angle over 10ms (10 samples)
+    ret.steerProjectTime = 0.20        # project steer angle 20.0 ms (using steer rate)
+    ret.steerSmoothTime = 0.01         # smooth projected steer angle over 1ms (1 samples)
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
     ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
@@ -88,9 +89,10 @@ class CarInterface(object):
       ret.mass = 3045 * CV.LB_TO_KG + std_cargo
       ret.steerKpV, ret.steerKiV = [[0.4], [0.01]]
       ret.steerKf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
-      ret.steerMPCOffsetTime = 0.025
-      ret.steerMPCDampenTime = 0.20
-      ret.steerDampenTime = 0.2
+      ret.steerMPCProjectTime = 0.325    # project desired angle 32.5ms
+      ret.steerMPCSmoothTime = 0.30      # smooth desired angle over 30ms (30 samples)
+      ret.steerProjectTime = 0.30        # project steer angle 30.0 ms (using steer rate)
+      ret.steerSmoothTime = 0.01         # smooth projected steer angle over 1ms (1 sample)
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       ret.steerActuatorDelay = 0.25
 

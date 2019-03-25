@@ -57,9 +57,10 @@ class CarInterface(object):
     ret.carFingerprint = candidate
 
     ret.enableCruise = False
-    ret.steerMPCOffsetTime = 0.025
-    ret.steerMPCDampenTime = 0.10
-    ret.steerDampenTime = 0.02
+    ret.steerMPCProjectTime = 0.125    # project desired angle 12.5ms
+    ret.steerMPCSmoothTime = 0.10      # smooth desired angle over 10ms (10 samples)
+    ret.steerProjectTime = 0.02        # project steer angle 2.0 ms (using steer rate)
+    ret.steerSmoothTime = 0.02         # smooth projected steer angle over 2ms (2 samples)
 
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
