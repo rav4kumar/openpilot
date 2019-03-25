@@ -175,10 +175,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCProjectTime = 0.125    # project desired angle 12.5ms
-    ret.steerMPCSmoothTime = 0.10      # smooth desired angle over 10ms (10 samples)
-    ret.steerProjectTime = 0.02        # project steer angle 2.0 ms (using steer rate)
-    ret.steerSmoothTime = 0.02         # smooth projected steer angle over 2ms (2 samples)
+    ret.steerMPCReactTime = 0.0       # increase total MPC projected time by 0 ms
+    ret.steerMPCDampTime = 0.0        # dampen desired angle over 0ms (0 samples)
+    ret.steerReactTime = -0.0         # decrease total projected angle by 0 ms
+    ret.steerDampTime = 0.0           # dampen projected steer angle over 0ms (0 samples)
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -220,10 +220,10 @@ class CarInterface(object):
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
       ret.syncID = 330
-      ret.steerMPCProjectTime = 0.35    # project desired angle 32.5ms
-      ret.steerMPCSmoothTime = 0.3      # smooth desired angle over 30ms (30 samples)
-      ret.steerProjectTime = 0.4        # project steer angle 30 ms (using steer rate)
-      ret.steerSmoothTime = 0.3         # smooth projected steer angle over 30ms (30 samples)
+      ret.steerMPCReactTime = 0.05     # project desired angle 0 ms
+      ret.steerMPCDampTime = 0.3      # smooth desired angle over 300ms (30 samples)
+      ret.steerReactTime = 0.0        # project steer angle 0 ms (using steer rate)
+      ret.steerDampTime = 0.3        # smooth projected steer angle over 300ms (30 samples)
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]

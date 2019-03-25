@@ -68,11 +68,11 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCProjectTime = 0.125    # project desired angle 12.5ms
-    ret.steerMPCSmoothTime = 0.10      # smooth desired angle over 10ms (10 samples)
-    ret.steerProjectTime = 0.02        # project steer angle 2.0 ms (using steer rate)
-    ret.steerSmoothTime = 0.02         # smooth projected steer angle over 2ms (2 samples)
-
+    ret.steerMPCReactTime = 0.0       # increase total MPC projected time by 0 ms
+    ret.steerMPCDampTime = 0.0        # dampen desired angle over 0ms (0 samples)
+    ret.steerReactTime = -0.0         # decrease total projected angle by 0 ms
+    ret.steerDampTime = 0.0           # dampen projected steer angle over 0ms (0 samples)
+    
     ret.steerActuatorDelay = 0.1  # Default delay
     tire_stiffness_factor = 1.
 

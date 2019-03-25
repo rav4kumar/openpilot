@@ -14,8 +14,10 @@ class LatControl(object):
   def __init__(self, CP):
 
     self.mpc_frame = 0
-    self.steer_smoothing = max(1.0, CP.steerSmoothTime / _DT)
-    self.mpc_smoothing = max(1.0, CP.steerMPCSmoothTime / _DT)
+    self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
+    self.total_actual_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
+    self.actual_smoothing = max(1.0, CP.steerDampTime / _DT)
+    self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
     self.dampened_angle_steers = 0.0
     self.dampened_desired_angle = 0.0
     self.steer_counter = 1.0
@@ -55,12 +57,12 @@ class LatControl(object):
       self.dampened_angle_steers = angle_steers
       self.dampened_desired_angle = angle_steers
     else:
-      projected_desired_angle = interp(sec_since_boot() + CP.steerMPCProjectTime, path_plan.mpcTimes, path_plan.mpcAngles)
-      self.dampened_desired_angle = (((self.mpc_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.mpc_smoothing
+      projected_desired_angle = interp(sec_since_boot() + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
+      self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
 
-      projected_angle_steers = float(angle_steers) + CP.steerProjectTime * float(angle_rate)
+      projected_angle_steers = float(angle_steers) + self.total_actual_projection * float(angle_rate)
       if not steer_override:
-        self.dampened_angle_steers = (((self.steer_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.steer_smoothing
+        self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
 
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
 
