@@ -220,9 +220,9 @@ class CarInterface(object):
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
       ret.syncID = 330
-      ret.steerMPCProjectTime = 0.325    # project desired angle 32.5ms
+      ret.steerMPCProjectTime = 0.35    # project desired angle 32.5ms
       ret.steerMPCSmoothTime = 0.3      # smooth desired angle over 30ms (30 samples)
-      ret.steerProjectTime = 0.3        # project steer angle 30 ms (using steer rate)
+      ret.steerProjectTime = 0.4        # project steer angle 30 ms (using steer rate)
       ret.steerSmoothTime = 0.3         # smooth projected steer angle over 30ms (30 samples)
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
