@@ -57,11 +57,11 @@ class CarInterface(object):
     ret.carFingerprint = candidate
 
     ret.enableCruise = False
-    ret.steerMPCReactTime = 0.0       # increase total MPC projected time by 0 ms
-    ret.steerMPCDampTime = 0.0        # dampen desired angle over 0ms (0 samples)
-    ret.steerReactTime = -0.0         # decrease total projected angle by 0 ms
-    ret.steerDampTime = 0.0           # dampen projected steer angle over 0ms (0 samples)
-    
+    ret.steerMPCReactTime = 0.05      # increase total MPC projected time by 50 ms
+    ret.steerMPCDampTime = 0.2        # dampen desired angle over 200ms (4 mpc cycles)
+    ret.steerReactTime = -0.1         # decrease total projected angle by 100 ms
+    ret.steerDampTime = 0.2           # dampen projected steer angle over 200ms (20 control cycles)
+
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
