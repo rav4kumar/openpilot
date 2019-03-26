@@ -175,10 +175,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCReactTime = 0.0       # increase total MPC projected time by 0 ms
-    ret.steerMPCDampTime = 0.0        # dampen desired angle over 0ms (0 samples)
-    ret.steerReactTime = -0.0         # decrease total projected angle by 0 ms
-    ret.steerDampTime = 0.0           # dampen projected steer angle over 0ms (0 samples)
+    ret.steerMPCReactTime = 0.05      # increase total MPC projected time by 50 ms
+    ret.steerMPCDampTime = 0.2        # dampen desired angle over 200ms (4 mpc cycles)
+    ret.steerReactTime = -0.1         # decrease total projected angle by 100 ms
+    ret.steerDampTime = 0.2           # dampen projected steer angle over 200ms (20 control cycles)
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -199,6 +199,10 @@ class CarInterface(object):
       ret.steerRatio = 14.63  # 10.93 is end-to-end spec
       tire_stiffness_factor = 1.
       ret.syncID = 330
+      ret.steerMPCReactTime = 0.05      # increase total MPC projected time by 50 ms
+      ret.steerMPCDampTime = 0.2        # dampen desired angle over 200ms (4 mpc cycles)
+      ret.steerReactTime = -0.1         # decrease total projected angle by 100 ms
+      ret.steerDampTime = 0.2           # dampen projected steer angle over 200ms (20 control cycles)
       # Civic at comma has modified steering FW, so different tuning for the Neo in that car
       is_fw_modified = os.getenv("DONGLE_ID") in ['99c94dc769b5d96e']
       ret.steerKpV, ret.steerKiV = [[0.4], [0.12]] if is_fw_modified else [[0.8], [0.24]]
@@ -221,9 +225,9 @@ class CarInterface(object):
       tire_stiffness_factor = 0.8467
       ret.syncID = 330
       ret.steerMPCReactTime = 0.05     # project desired angle 0 ms
-      ret.steerMPCDampTime = 0.3      # smooth desired angle over 300ms (30 samples)
+      ret.steerMPCDampTime = 0.25      # smooth desired angle over 300ms (30 samples)
       ret.steerReactTime = 0.0        # project steer angle 0 ms (using steer rate)
-      ret.steerDampTime = 0.3        # smooth projected steer angle over 300ms (30 samples)
+      ret.steerDampTime = 0.25        # smooth projected steer angle over 300ms (30 samples)
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
