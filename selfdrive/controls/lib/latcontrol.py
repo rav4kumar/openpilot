@@ -104,7 +104,7 @@ class LatControl(object):
         self.rough_steers_rate = (self.steer_counter * self.rough_steers_rate) / (self.steer_counter + 1.0)
       self.steer_counter += 1.0
       angle_rate = self.rough_steers_rate
-      self.prev_angle_steers = angle_steers
+      self.prev_angle_steers = float(angle_steers)
     else:
       # If non-zero angle_rate is provided, stop calculating rate
       self.calculate_rate = False
@@ -112,18 +112,17 @@ class LatControl(object):
     if v_ego < 0.3 or not active:
       output_steer = 0.0
       self.pid.reset()
-      self.dampened_angle_steers = angle_steers
-      self.dampened_desired_angle = angle_steers
+      self.dampened_angle_steers = float(angle_steers)
+      self.dampened_desired_angle = float(angle_steers)
     else:
 
       if self.gernbySteer == False:
-        self.dampened_angle_steers = angle_steers
+        self.dampened_angle_steers = float(angle_steers)
         self.dampened_desired_angle = float(path_plan.angleSteers)
 
       else:
         projected_desired_angle = interp(sec_since_boot() + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
         self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
-
         projected_angle_steers = float(angle_steers) + self.total_actual_projection * float(angle_rate)
         if not steer_override:
           self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
@@ -134,16 +133,14 @@ class LatControl(object):
         self.pid.pos_limit = steers_max
         self.pid.neg_limit = -steers_max
         deadzone = 0.0
-
         feed_forward = v_ego**2 * self.dampened_desired_angle
-
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
                                       override=steer_override, feedforward=feed_forward, speed=v_ego, deadzone=deadzone)
 
     self.sat_flag = self.pid.saturated
-    self.prev_angle_steers = angle_steers
+    self.prev_angle_steers = float(angle_steers)
 
     if CP.steerControlType == car.CarParams.SteerControlType.torque:
-      return output_steer, float(path_plan.angleSteers)
+      return float(output_steer), float(path_plan.angleSteers)
     else:
-      return self.dampened_desired_angle, float(path_plan.angleSteers)
+      return float(self.dampened_desired_angle), float(path_plan.angleSteers)

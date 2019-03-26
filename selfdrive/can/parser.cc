@@ -327,9 +327,8 @@ class CANParser {
       auto cans = event.getCan();
 
       UpdateCans(sec, cans);
+      UpdateValid(sec);
     }
-
-    UpdateValid(sec);
 
     zmq_msg_close(&msg);
   }

@@ -378,7 +378,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.5
+    ret.steerRateCost = 0.3
 
     return ret
 
@@ -502,6 +502,8 @@ class CarInterface(object):
         events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     else:
       self.can_invalid_count = 0
+    if self.can_invalid_count > 0:
+      print( " can_invalid_count = %d" % (self.can_invalid_count))
 
     if not self.CS.cam_can_valid and self.CP.enableCamera:
       self.cam_can_invalid_count += 1
