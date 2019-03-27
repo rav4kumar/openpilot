@@ -61,7 +61,11 @@ class CarInterface(object):
     ret.tireStiffnessFront = 1e6    # very stiff to neglect slip
     ret.tireStiffnessRear = 1e6     # very stiff to neglect slip
     ret.steerRatioRear = 0.
-
+    ret.steerMPCReactTime = 0.0       # increase total MPC projected time by 0 ms
+    ret.steerMPCDampTime = 0.0        # dampen desired angle over 0ms (0 samples)
+    ret.steerReactTime = -0.0         # decrease total projected angle by 0 ms
+    ret.steerDampTime = 0.0           # dampen projected steer angle over 0ms (0 samples)
+    
     ret.steerMaxBP = [0.]
     ret.steerMaxV = [0.]  # 2/3rd torque allowed above 45 kph
     ret.gasMaxBP = [0.]

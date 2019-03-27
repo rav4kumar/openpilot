@@ -68,6 +68,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.steerMPCReactTime = 0.05      # increase total MPC projected time by 50 ms
+    ret.steerMPCDampTime = 0.2        # dampen desired angle over 200ms (4 mpc cycles)
+    ret.steerReactTime = -0.1         # decrease total projected angle by 100 ms
+    ret.steerDampTime = 0.2           # dampen projected steer angle over 200ms (20 control cycles)
 
     ret.steerActuatorDelay = 0.1  # Default delay
     tire_stiffness_factor = 1.
@@ -179,7 +183,7 @@ class CarInterface(object):
   def update(self, c):
     # ******************* do can recv *******************
     canMonoTimes = []
-    self.cp.update(int(sec_since_boot() * 1e9), False)
+    self.cp.update(int(sec_since_boot() * 1e9), True)
     self.cp_cam.update(int(sec_since_boot() * 1e9), False)
     self.CS.update(self.cp, self.cp_cam)
     # create message

@@ -185,7 +185,7 @@ class CarState(object):
     self.standstill = not v_wheel > 0.1
 
     self.angle_steers = cp.vl["SAS11"]['SAS_Angle']
-    self.angle_steers_rate = cp.vl["SAS11"]['SAS_Speed']
+    self.angle_steers_rate = 0.0  # Don't use, since this is unsigned   cp.vl["SAS11"]['SAS_Speed']
     self.yaw_rate = cp.vl["ESP12"]['YAW_RATE']
     self.main_on = True
     self.left_blinker_on = cp.vl["CGW1"]['CF_Gway_TSigLHSw']

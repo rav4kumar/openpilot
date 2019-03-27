@@ -175,6 +175,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.steerMPCReactTime = 0.025      # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.1         # dampen desired angle over 100ms (2 mpc cycles)
+    ret.steerReactTime = -0.04         # decrease total projected angle by 40 ms
+    ret.steerDampTime = 0.05           # dampen projected steer angle over 50ms (1 control cycles)
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -194,6 +198,11 @@ class CarInterface(object):
       ret.centerToFront = centerToFront_civic
       ret.steerRatio = 14.63  # 10.93 is end-to-end spec
       tire_stiffness_factor = 1.
+      ret.syncID = 330
+      ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+      ret.steerMPCDampTime = 0.1        # dampen desired angle over 100ms (2 mpc cycles)
+      ret.steerReactTime = 0.0          # decrease total projected angle by 0 ms
+      ret.steerDampTime = 0.06          # dampen projected steer angle over 200ms (20 control cycles)
       # Civic at comma has modified steering FW, so different tuning for the Neo in that car
       is_fw_modified = os.getenv("DONGLE_ID") in ['99c94dc769b5d96e']
       ret.steerKpV, ret.steerKiV = [[0.4], [0.12]] if is_fw_modified else [[0.8], [0.24]]
@@ -214,6 +223,11 @@ class CarInterface(object):
       ret.centerToFront = ret.wheelbase * 0.39
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
+      ret.syncID = 330
+      ret.steerMPCReactTime = 0.05     # project desired angle 0 ms
+      ret.steerMPCDampTime = 0.25      # smooth desired angle over 300ms (30 samples)
+      ret.steerReactTime = 0.0        # project steer angle 0 ms (using steer rate)
+      ret.steerDampTime = 0.25        # smooth projected steer angle over 300ms (30 samples)
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
@@ -224,6 +238,7 @@ class CarInterface(object):
       stop_and_go = False
       ret.mass = 3095 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.67
+      ret.syncID = 342
       ret.centerToFront = ret.wheelbase * 0.37
       ret.steerRatio = 18.61  # 15.3 is spec end-to-end
       tire_stiffness_factor = 0.72
@@ -237,6 +252,7 @@ class CarInterface(object):
       stop_and_go = False
       ret.mass = 3572 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.62
+      ret.syncID = 330
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 15.3         # as spec
       tire_stiffness_factor = 0.444 # not optimized yet
@@ -248,6 +264,7 @@ class CarInterface(object):
 
     elif candidate == CAR.CRV_5G:
       stop_and_go = True
+      ret.syncID = 342
       ret.safetyParam = 1 # Accord and CRV 5G use an alternate user brake msg
       ret.mass = 3410. * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.66
@@ -264,6 +281,7 @@ class CarInterface(object):
       stop_and_go = False
       ret.mass = 3935 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.68
+      ret.syncID = 342
       ret.centerToFront = ret.wheelbase * 0.38
       ret.steerRatio = 15.0         # as spec
       tire_stiffness_factor = 0.444 # not optimized yet
@@ -277,6 +295,7 @@ class CarInterface(object):
       stop_and_go = False
       ret.mass = 4471 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 3.00
+      ret.syncID = 342
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 14.35        # as spec
       tire_stiffness_factor = 0.82
@@ -290,6 +309,7 @@ class CarInterface(object):
       stop_and_go = False
       ret.mass = 4303 * CV.LB_TO_KG + std_cargo
       ret.wheelbase = 2.81
+      ret.syncID = 342
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 16.0         # as spec
       tire_stiffness_factor = 0.444 # not optimized yet
@@ -302,6 +322,7 @@ class CarInterface(object):
     elif candidate == CAR.RIDGELINE:
       stop_and_go = False
       ret.mass = 4515 * CV.LB_TO_KG + std_cargo
+      ret.syncID = 342
       ret.wheelbase = 3.18
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 15.59        # as spec
@@ -357,7 +378,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.5
+    ret.steerRateCost = 0.3
 
     return ret
 
@@ -366,7 +387,7 @@ class CarInterface(object):
     # ******************* do can recv *******************
     canMonoTimes = []
 
-    self.cp.update(int(sec_since_boot() * 1e9), False)
+    self.cp.update(int(sec_since_boot() * 1e9), True)
     self.cp_cam.update(int(sec_since_boot() * 1e9), False)
 
     self.CS.update(self.cp, self.cp_cam)
@@ -481,6 +502,8 @@ class CarInterface(object):
         events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     else:
       self.can_invalid_count = 0
+    if self.can_invalid_count > 0:
+      print( " can_invalid_count = %d" % (self.can_invalid_count))
 
     if not self.CS.cam_can_valid and self.CP.enableCamera:
       self.cam_can_invalid_count += 1

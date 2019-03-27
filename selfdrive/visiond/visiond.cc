@@ -914,7 +914,7 @@ void* processing_thread(void *arg) {
 
   set_thread_name("processing");
 
-  err = set_realtime_priority(1);
+  err = set_realtime_priority(2);
   LOG("setpriority returns %d", err);
 
   // init cl stuff
@@ -1129,7 +1129,7 @@ void* processing_thread(void *arg) {
       //printf("avg %f\n", pose_output[0]);
       posenet->execute(posenet_input);
 
-        
+
       // fix stddevs
       for (int i = 6; i < 12; i++) {
         pose_output[i] = log1p(exp(pose_output[i])) + 1e-6;
@@ -1327,7 +1327,7 @@ void party(VisionState *s, bool nomodel) {
   assert(err == 0);
 
   // priority for cameras
-  err = set_realtime_priority(1);
+  err = set_realtime_priority(2);
   LOG("setpriority returns %d", err);
 
   cameras_run(&s->cameras);
