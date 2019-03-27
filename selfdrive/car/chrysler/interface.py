@@ -78,10 +78,10 @@ class CarInterface(object):
     ret.steerKf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
     ret.steerActuatorDelay = 0.1
     ret.steerRateCost = 0.7
-    ret.steerMPCReactTime = 0.05      # increase total MPC projected time by 50 ms
-    ret.steerMPCDampTime = 0.2        # dampen desired angle over 200ms (4 mpc cycles)
-    ret.steerReactTime = -0.1         # decrease total projected angle by 100 ms
-    ret.steerDampTime = 0.2           # dampen projected steer angle over 200ms (20 control cycles)
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.05       # dampen desired angle over 50ms (1 mpc cycles)
+    ret.steerReactTime = -0.02        # decrease total projected angle by 20 ms
+    ret.steerDampTime = 0.03          # dampen projected steer angle over 30ms (3 control cycles)
 
     if candidate == CAR.JEEP_CHEROKEE:
       ret.wheelbase = 2.91  # in meters

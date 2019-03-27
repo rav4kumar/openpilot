@@ -50,6 +50,10 @@ class CarInterface(object):
     ret.enableCruise = False
     ret.steerLimitAlert = True
     ret.enableCamera = True
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.05       # dampen desired angle over 50ms (1 mpc cycles)
+    ret.steerReactTime = -0.02        # decrease total projected angle by 20 ms
+    ret.steerDampTime = 0.03          # dampen projected steer angle over 30ms (3 control cycles)
 
     std_cargo = 136
     ret.steerRateCost = 0.7

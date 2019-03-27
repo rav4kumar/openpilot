@@ -175,10 +175,10 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCReactTime = 0.025      # increase total MPC projected time by 25 ms
-    ret.steerMPCDampTime = 0.1         # dampen desired angle over 100ms (2 mpc cycles)
-    ret.steerReactTime = -0.04         # decrease total projected angle by 40 ms
-    ret.steerDampTime = 0.05           # dampen projected steer angle over 50ms (1 control cycles)
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.05       # dampen desired angle over 50ms (1 mpc cycles)
+    ret.steerReactTime = -0.02        # decrease total projected angle by 20 ms
+    ret.steerDampTime = 0.03          # dampen projected steer angle over 30ms (3 control cycles)
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -224,10 +224,10 @@ class CarInterface(object):
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
       ret.syncID = 330
-      ret.steerMPCReactTime = 0.05     # project desired angle 0 ms
-      ret.steerMPCDampTime = 0.25      # smooth desired angle over 300ms (30 samples)
+      ret.steerMPCReactTime = 0.025     # project desired angle 0 ms
+      ret.steerMPCDampTime = 0.3      # smooth desired angle over 300ms (30 samples)
       ret.steerReactTime = 0.0        # project steer angle 0 ms (using steer rate)
-      ret.steerDampTime = 0.25        # smooth projected steer angle over 300ms (30 samples)
+      ret.steerDampTime = 0.3        # smooth projected steer angle over 300ms (30 samples)
       ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
@@ -363,7 +363,7 @@ class CarInterface(object):
 
     # no max steer limit VS speed
     ret.steerMaxBP = [0.]  # m/s
-    ret.steerMaxV = [1.]   # max steer allowed 
+    ret.steerMaxV = [1.]   # max steer allowed
 
     ret.gasMaxBP = [0.]  # m/s
     ret.gasMaxV = [0.6] if ret.enableGasInterceptor else [0.] # max gas allowed
