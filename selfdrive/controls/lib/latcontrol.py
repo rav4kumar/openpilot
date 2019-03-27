@@ -52,7 +52,6 @@ class LatControl(object):
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
     self.dampened_angle_steers = 0.0
     self.dampened_desired_angle = 0.0
-    self.dampened_desired_rate = 0.0
     self.steer_counter = 1.0
     self.steer_counter_prev = 0.0
     self.rough_steers_rate = 0.0
@@ -115,19 +114,15 @@ class LatControl(object):
       self.pid.reset()
       self.dampened_angle_steers = float(angle_steers)
       self.dampened_desired_angle = float(angle_steers)
-      self.dampened_desired_rate = 0.0
     else:
 
       if self.gernbySteer == False:
         self.dampened_angle_steers = float(angle_steers)
         self.dampened_desired_angle = float(path_plan.angleSteers)
-        self.dampened_desired_rate = 0.0
 
       else:
         projected_desired_angle = interp(sec_since_boot() + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
-        projected_desired_rate = interp(sec_since_boot(), path_plan.mpcTimes, path_plan.mpcRates)
         self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
-        self.dampened_desired_rate = (((self.desired_smoothing - 1.) * self.dampened_desired_rate) + projected_desired_rate) / self.desired_smoothing
 
         projected_angle_steers = float(angle_steers) + self.total_actual_projection * float(angle_rate)
         if not steer_override:
@@ -140,12 +135,8 @@ class LatControl(object):
         self.pid.neg_limit = -steers_max
         deadzone = 0.0
 
-        if abs(self.dampened_desired_rate) > abs((self.dampened_desired_angle - path_plan.angleOffset)):
-          steer_feedforward = v_ego**2 * (self.dampened_desired_rate)
-        else:
-          steer_feedforward = v_ego**2 * (self.dampened_desired_angle - path_plan.angleOffset)
-
-        print("sr %1.3f ff  %1.3f offset  %1.3f  damp_des_angle  %1.3f  damp_des_rate %1.3f " % ( VM.sR, steer_feedforward, path_plan.angleOffset, self.dampened_desired_angle, self.dampened_desired_rate))
+        steer_feedforward = (self.dampened_desired_angle - path_plan.angleOffset) * v_ego**2
+        #print("sr %1.3f ff  %1.3f offset  %1.3f  damp_des_angle  %1.3f  damp_des_rate %1.3f " % ( VM.sR, steer_feedforward, path_plan.angleOffset, self.dampened_desired_angle))
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
                                       override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)

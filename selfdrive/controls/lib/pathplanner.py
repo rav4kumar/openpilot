@@ -89,7 +89,7 @@ class PathPlanner(object):
       delta_desired = self.mpc_solution[0].delta[1]
       rate_desired = math.degrees(self.mpc_solution[0].rate[0] * VM.sR)
     else:
-      print(CP.steerRateCost, VM.sR)
+      #print(CP.steerRateCost, VM.sR)
       delta_desired = math.radians(angle_steers - angle_offset_bias) / VM.sR
       rate_desired = 0.0
 
