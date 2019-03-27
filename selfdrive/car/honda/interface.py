@@ -363,7 +363,7 @@ class CarInterface(object):
 
     # no max steer limit VS speed
     ret.steerMaxBP = [0.]  # m/s
-    ret.steerMaxV = [1.]   # max steer allowed
+    ret.steerMaxV = [1.]   # max steer allowed 
 
     ret.gasMaxBP = [0.]  # m/s
     ret.gasMaxV = [0.6] if ret.enableGasInterceptor else [0.] # max gas allowed
@@ -378,7 +378,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.3
+    ret.steerRateCost = 0.4
 
     return ret
 
