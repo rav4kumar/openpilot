@@ -212,7 +212,7 @@ void handle_usb_issue(int err, const char func[]) {
   LOGE_100("usb error %d \"%s\" in %s", err, libusb_strerror((enum libusb_error)err), func);
   if (err == -4) {
     LOGE("lost connection");
-    sync_id = 0
+    sync_id = 0;
     usb_retry_connect();
   }
   // TODO: check other errors, is simply retrying okay?

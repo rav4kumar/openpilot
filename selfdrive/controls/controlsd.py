@@ -39,13 +39,19 @@ def isEnabled(state):
   return (isActive(state) or state == State.preEnabled)
 
 
-def data_sample(CI, CC, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
+def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
                 poller, cal_status, cal_perc, overtemp, free_space, low_battery,
-                driver_status, state, mismatch_counter, params, plan, path_plan):
+                driver_status, state, mismatch_counter, rk, params, plan, path_plan):
   """Receive data from sockets and create events for battery, temperature and disk space"""
 
+  rk.monitor_time()
   # Update carstate from CAN and create events
-  CS = CI.update(CC)
+  if rk.remaining > 10. / 1000 or rk.frame < 1000:
+    CS = CI.update(CC)
+  else:
+    CS = CS
+    print("CAN lagging!", rk.remaining, rk.frame)
+
   events = list(CS.events)
   enabled = isEnabled(state)
 
@@ -471,17 +477,17 @@ def controlsd_thread(gctx=None, rate=100):
     angle_offset = 0.
 
   prof = Profiler(False)  # off by default
+  CS = None
 
   while True:
     start_time = int(sec_since_boot() * 1e9)
-    rk.monitor_time()
     prof.checkpoint("Ratekeeper", ignore=True)
 
     # Sample data and compute car events
     CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan  =\
-      data_sample(CI, CC, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
+      data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
                   poller, cal_status, cal_perc, overtemp, free_space, low_battery, driver_status,
-                  state, mismatch_counter, params, plan, path_plan)
+                  state, mismatch_counter, rk, params, plan, path_plan)
 
     prof.checkpoint("Sample")
 
