@@ -17,13 +17,8 @@ def calc_d_lookahead(v_ego, d_poly):
   # howfar we look ahead is function of speed and how much curvy is the path
   offset_lookahead = 1.
   k_lookahead = 7.
-  # integrate abs value of second derivative of poly to get a measure of path curvature
-  pts_len = 50.  # m
-  if len(d_poly) > 0:
-    pts = np.polyval([6 * d_poly[0], 2 * d_poly[1]], np.arange(0, pts_len))
-  else:
-    pts = 0.
-  curv = np.sum(np.abs(pts)) / pts_len
+
+  curv = abs(calc_poly_curvature(d_poly))
 
   k_curv = interp(curv, _K_CURV_BP, _K_CURV_V)
 
@@ -32,6 +27,15 @@ def calc_d_lookahead(v_ego, d_poly):
   # 36m at 25m/s
   d_lookahead = offset_lookahead + math.sqrt(max(v_ego, 0)) * k_lookahead * k_curv
   return d_lookahead
+
+def calc_poly_curvature(line_poly):
+  # integrate abs value of second derivative of poly to get a measure of path curvature
+  pts_len = 50.  # m
+  if len(line_poly) > 0:
+    pts = np.polyval([6 * line_poly[0], 2 * line_poly[1]], np.arange(0, pts_len))
+  else:
+    pts = 0.
+  return np.sum((pts)) / pts_len
 
 
 def calc_lookahead_offset(v_ego, angle_steers, d_lookahead, VM, angle_offset):

@@ -1,5 +1,6 @@
+import math
 from common.numpy_fast import interp
-from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv
+from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv, calc_poly_curvature
 
 CAMERA_OFFSET = 0.06  # m from center car to camera
 
@@ -8,6 +9,11 @@ class ModelParser(object):
   def __init__(self):
     self.d_poly = [0., 0., 0., 0.]
     self.c_poly = [0., 0., 0., 0.]
+    self.l_poly = [0., 0., 0., 0.]
+    self.r_poly = [0., 0., 0., 0.]
+    self.l_avg_poly = [0., 0., 0., 0.]
+    self.r_avg_poly = [0., 0., 0., 0.]
+    self.p_curv = 0.0
     self.c_prob = 0.
     self.last_model = 0.
     self.lead_dist, self.lead_prob, self.lead_var = 0, 0, 1
@@ -43,9 +49,29 @@ class ModelParser(object):
                         (1 - self.lane_width_certainty) * speed_lane_width
 
       lane_width_diff = abs(self.lane_width - current_lane_width)
-      lane_r_prob = interp(lane_width_diff, [0.3, 1.0], [1.0, 0.0])
+      lane_prob = interp(lane_width_diff, [0.0, 0.5], [1.0, 0.0])
+
+      l_divergence = (l_poly[2] - self.l_avg_poly[2]) / abs(self.l_avg_poly[2] - self.r_avg_poly[2])
+      r_divergence = (self.r_avg_poly[2] - r_poly[2]) / abs(self.l_avg_poly[2] - self.r_avg_poly[2])
+      self.p_curv = ((9.0 * self.p_curv) + calc_poly_curvature(p_poly)) / 10.0
+      curv_prob = interp(abs(self.p_curv), [0, 0.001], [1.0, 0.5] )
+
+      if r_divergence > abs(l_divergence) and self.p_curv < 0:
+        r_prob *= lane_prob
+      elif l_divergence > abs(r_divergence) and self.p_curv > 0:
+        l_prob *= lane_prob
+      elif self.p_curv < 0:
+        r_prob *= curv_prob
+      elif self.p_curv > 0:
+        l_prob *= curv_prob
+
+      self.l_avg_poly[2] = ((39.0 * self.l_avg_poly[2]) + l_poly[2]) / 40.0
+      self.r_avg_poly[2] = ((39.0 * self.r_avg_poly[2]) + r_poly[2]) / 40.0
+
+      '''lane_r_prob = interp(lane_width_diff, [0.3, 1.0], [1.0, 0.0])
 
       r_prob *= lane_r_prob
+      '''
 
       self.lead_dist = md.model.lead.dist
       self.lead_prob = md.model.lead.prob

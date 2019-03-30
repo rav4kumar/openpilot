@@ -176,6 +176,7 @@ def locationd_thread(gctx, addr, disabled_logs):
   car_state_socket = messaging.sub_sock(ctx, service_list['carState'].port, poller, addr=addr, conflate=True)
   sensor_events_socket = messaging.sub_sock(ctx, service_list['sensorEvents'].port, poller, addr=addr, conflate=True)
   camera_odometry_socket = messaging.sub_sock(ctx, service_list['cameraOdometry'].port, poller, addr=addr, conflate=True)
+  path_plan_socket = messaging.sub_sock(ctx, service_list['pathPlan'].port, poller, addr=addr, conflate=True)
 
   kalman_odometry_socket = messaging.pub_sock(ctx, service_list['kalmanOdometry'].port)
   live_parameters_socket = messaging.pub_sock(ctx, service_list['liveParameters'].port)
@@ -201,7 +202,14 @@ def locationd_thread(gctx, addr, disabled_logs):
       'angleOffsetAverage': 0.0,
       'stiffnessFactor': 1.0,
       'steerRatio': VM.sR,
+      'laneWidth': 3.6,
     }
+
+  try:
+    lane_width = params.laneWidth
+  except:
+    params['laneWidth'] = 3.6
+
     cloudlog.info("Parameter learner resetting to default values")
 
   cloudlog.info("Parameter starting with: %s" % str(params))
@@ -218,6 +226,9 @@ def locationd_thread(gctx, addr, disabled_logs):
     for socket, event in poller.poll(timeout=1000):
       log = messaging.recv_one(socket)
       localizer.handle_log(log)
+
+      if socket is path_plan_socket:
+        lane_width = float(log.pathPlan.laneWidth)
 
       if socket is car_state_socket:
         if not localizer.kf.t:
@@ -240,11 +251,13 @@ def locationd_thread(gctx, addr, disabled_logs):
           params.liveParameters.angleOffsetAverage = float(math.degrees(learner.slow_ao))
           params.liveParameters.stiffnessFactor = float(learner.x)
           params.liveParameters.steerRatio = float(learner.sR)
+          params.liveParameters.laneWidth = float(lane_width)
           live_parameters_socket.send(params.to_bytes())
 
         if i % 6000 == 0:   # once a minute
           params = learner.get_values()
           params['carFingerprint'] = CP.carFingerprint
+          params['laneWidth'] = float(lane_width)
           params_reader.put("LiveParameters", json.dumps(params))
 
         i += 1
