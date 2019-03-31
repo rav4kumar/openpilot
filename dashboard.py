@@ -222,19 +222,8 @@ def dashboard_thread(rate=100):
                 sample_str += ","
             a = _pathPlan.pathPlan.mpcAngles
 
-            d_curv = int(calc_poly_curvature(map(float, _pathPlan.pathPlan.dPoly)) * 50000)
-            l_curv = int(calc_poly_curvature(map(float, _pathPlan.pathPlan.lPoly)) * 50000)
-            r_curv = int(calc_poly_curvature(map(float, _pathPlan.pathPlan.rPoly)) * 50000)
-
-            #if prev_p_curv is not None:
-            #  print("l_curv: %d  r_curv: %d  p_curv: %d  l_diff: %d  r_diff: %d  p_diff: %d" % (l_curv, r_curv, d_curv, prev_l_curv - l_curv, prev_r_curv - r_curv, prev_p_curv - p_curv))
-
-            #prev_l_curv = l_curv
-            #prev_r_curv = r_curv
-            #prev_p_curv = p_curv
-
-            sample_str = ("lane_width=%1.2f,d_curv=%d,l_curv=%d,r_curv=%d,lpoly2=%1.3f,rpoly2=%1.3f,cpoly2=%1.3f,dpoly2=%1.3f,lpoly3=%1.3f,rpoly3=%1.3f,cpoly3=%1.3f,dpoly3=%1.3f,cProb=%1.3f,lProb=%1.3f,rProb=%1.3f,mpc1=%1.2f,mpc2=%1.2f,mpc3=%1.2f,mpc4=%1.2f,mpc5=%1.2f,mpc6=%1.2f,mpc7=%1.2f,mpc8=%1.2f,mpc9=%1.2f,mpc10=%1.2f,mpc11=%1.2f,mpc12=%1.2f,mpc13=%1.2f,mpc14=%1.2f,mpc15=%1.2f,mpc16=%1.2f,mpc17=%1.2f,mpc18=%1.2f" %
-                        (_pathPlan.pathPlan.laneWidth, d_curv, l_curv, r_curv, _pathPlan.pathPlan.lPoly[2], _pathPlan.pathPlan.rPoly[2], _pathPlan.pathPlan.cPoly[2], _pathPlan.pathPlan.dPoly[2],_pathPlan.pathPlan.lPoly[3], _pathPlan.pathPlan.rPoly[3], _pathPlan.pathPlan.cPoly[3], _pathPlan.pathPlan.dPoly[3],
+            sample_str = ("lane_width=%1.2f,lpoly2=%1.3f,rpoly2=%1.3f,cpoly2=%1.3f,dpoly2=%1.3f,lpoly3=%1.3f,rpoly3=%1.3f,cpoly3=%1.3f,dpoly3=%1.3f,cProb=%1.3f,lProb=%1.3f,rProb=%1.3f,mpc1=%1.2f,mpc2=%1.2f,mpc3=%1.2f,mpc4=%1.2f,mpc5=%1.2f,mpc6=%1.2f,mpc7=%1.2f,mpc8=%1.2f,mpc9=%1.2f,mpc10=%1.2f,mpc11=%1.2f,mpc12=%1.2f,mpc13=%1.2f,mpc14=%1.2f,mpc15=%1.2f,mpc16=%1.2f,mpc17=%1.2f,mpc18=%1.2f" %
+                        (_pathPlan.pathPlan.laneWidth, _pathPlan.pathPlan.lPoly[2], _pathPlan.pathPlan.rPoly[2], _pathPlan.pathPlan.cPoly[2], _pathPlan.pathPlan.dPoly[2],_pathPlan.pathPlan.lPoly[3], _pathPlan.pathPlan.rPoly[3], _pathPlan.pathPlan.cPoly[3], _pathPlan.pathPlan.dPoly[3],
                               _pathPlan.pathPlan.cProb,  _pathPlan.pathPlan.lProb,  _pathPlan.pathPlan.rProb, a[1], a[2], a[3],
                               a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18]))
             influxLineString += ("opData,sources=capnp " + sample_str + " %s\n" % receiveTime)

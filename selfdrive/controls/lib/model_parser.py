@@ -49,29 +49,31 @@ class ModelParser(object):
                         (1 - self.lane_width_certainty) * speed_lane_width
 
       lane_width_diff = abs(self.lane_width - current_lane_width)
-      lane_prob = interp(lane_width_diff, [0.0, 0.5], [1.0, 0.0])
+      lane_prob = interp(lane_width_diff, [0.1, 1.0], [1.0, 0.0])
 
-      l_divergence = (l_poly[2] - self.l_avg_poly[2]) / abs(self.l_avg_poly[2] - self.r_avg_poly[2])
-      r_divergence = (self.r_avg_poly[2] - r_poly[2]) / abs(self.l_avg_poly[2] - self.r_avg_poly[2])
-      self.p_curv = ((9.0 * self.p_curv) + calc_poly_curvature(p_poly)) / 10.0
-      curv_prob = interp(abs(self.p_curv), [0, 0.001], [1.0, 0.5] )
+      l_divergence = (l_poly[2] - self.l_avg_poly[2])
+      r_divergence = (self.r_avg_poly[2] - r_poly[2])
+      self.p_curv = ((19.0 * self.p_curv) + calc_poly_curvature(p_poly)) / 20.0
+      curv_prob = interp(abs(self.p_curv), [0, 0.001], [1.0, 0.0] )
+
+      if (self.r_avg_poly[3] - r_poly[3]) > abs(l_poly[3] - self.l_avg_poly[3]):
+        #print("   right lane_prob  %1.2f" % lane_prob)
+        r_prob *= lane_prob
+      elif (l_poly[3] - self.l_avg_poly[3]) > abs(self.r_avg_poly[3] - r_poly[3]):
+        #print("   left lane_prob  %1.2f" % lane_prob)
+        l_prob *= lane_prob
 
       if r_divergence > abs(l_divergence) and self.p_curv < 0:
-        r_prob *= lane_prob
-      elif l_divergence > abs(r_divergence) and self.p_curv > 0:
-        l_prob *= lane_prob
-      elif self.p_curv < 0:
+        #print("   right curv prob  %1.2f" % curv_prob)
         r_prob *= curv_prob
-      elif self.p_curv > 0:
+        p_prob *= curv_prob
+      elif l_divergence > abs(r_divergence) and self.p_curv > 0:
+        #print("   left curv prob  %1.2f" % curv_prob)
         l_prob *= curv_prob
+        p_prob *= curv_prob
 
       self.l_avg_poly[2] = ((39.0 * self.l_avg_poly[2]) + l_poly[2]) / 40.0
       self.r_avg_poly[2] = ((39.0 * self.r_avg_poly[2]) + r_poly[2]) / 40.0
-
-      '''lane_r_prob = interp(lane_width_diff, [0.3, 1.0], [1.0, 0.0])
-
-      r_prob *= lane_r_prob
-      '''
 
       self.lead_dist = md.model.lead.dist
       self.lead_prob = md.model.lead.prob
