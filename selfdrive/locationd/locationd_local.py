@@ -206,7 +206,7 @@ def locationd_thread(gctx, addr, disabled_logs):
     }
 
   try:
-    lane_width = params.laneWidth
+    lane_width = params['laneWidth']
   except:
     params['laneWidth'] = 3.6
 

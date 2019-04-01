@@ -761,7 +761,7 @@ int main() {
   LOGW("starting boardd");
 
   // set process priority
-  err = set_realtime_priority(1);
+  err = set_realtime_priority(3);
   LOG("setpriority returns %d", err);
 
   // check the environment

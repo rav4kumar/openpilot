@@ -914,7 +914,7 @@ void* processing_thread(void *arg) {
 
   set_thread_name("processing");
 
-  err = set_realtime_priority(2);
+  err = set_realtime_priority(1);
   LOG("setpriority returns %d", err);
 
   // init cl stuff
@@ -1327,7 +1327,7 @@ void party(VisionState *s, bool nomodel) {
   assert(err == 0);
 
   // priority for cameras
-  err = set_realtime_priority(2);
+  err = set_realtime_priority(1);
   LOG("setpriority returns %d", err);
 
   cameras_run(&s->cameras);
