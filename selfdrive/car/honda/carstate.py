@@ -252,7 +252,7 @@ class CarState(object):
         self.steer_data_skipped += 1
     else:
       self.steer_good_count += 1
-      self.prev_steering_counter = steer_counter
+    self.prev_steering_counter = steer_counter
 
     self.cruise_setting = cp.vl["SCM_BUTTONS"]['CRUISE_SETTING']
     self.cruise_buttons = cp.vl["SCM_BUTTONS"]['CRUISE_BUTTONS']

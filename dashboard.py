@@ -36,7 +36,7 @@ def dashboard_thread(rate=200):
   vEgo = 0.0
   pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=True, poller=poller)
   #pathPlan = None
-  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=True, poller=poller)
+  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
   liveParameters = messaging.sub_sock(context, service_list['liveParameters'].port, addr=ipaddress, conflate=True, poller=poller)
   #live20 = messaging.sub_sock(context, service_list['live20'].port, addr=ipaddress, conflate=True, poller=poller)
   #model = messaging.sub_sock(context, service_list['model'].port, addr=ipaddress, conflate=True, poller=poller)
@@ -95,39 +95,39 @@ def dashboard_thread(rate=200):
       #receiveTime = int(time.time() * 1000000000)
       for socket, event in poller.poll(0):
         if socket is live100:
-          l100 = messaging.recv_one(socket)
-          #_live100 = messaging.drain_sock(socket)
-          #for l100 in _live100:
-          vEgo = l100.live100.vEgo
-          if vEgo > 0: # and l100.live100.active:
-            #if sample_str != "":
-            #    sample_str += ","
-            receiveTime = int(monoTimeOffset + l100.logMonoTime)
-            #print(receiveTime, monoTimeOffset, l100.logMonoTime)
-            if (abs(receiveTime - int(time.time() * 1000000000)) > 10000000000):
-              angle_error_noise = 0.0
-              last_desired = 0.0
-              last_actual = 0.0
-              actual_angle_change_noise = 0.0
-              desired_angle_change_noise = 0.0
-              angle_error_noise = 0.0
-              monoTimeOffset = (time.time() * 1000000000) - l100.logMonoTime
+          #l100 = messaging.recv_one(socket)
+          _live100 = messaging.drain_sock(socket)
+          for l100 in _live100:
+            vEgo = l100.live100.vEgo
+            if vEgo > 0: # and l100.live100.active:
+              #if sample_str != "":
+              #    sample_str += ","
               receiveTime = int(monoTimeOffset + l100.logMonoTime)
-              print(int(time.time() * 1000000000), receiveTime, monoTimeOffset, l100.logMonoTime)
-              #receiveTime = 1 / 0
-            abs_error = abs(l100.live100.angleSteers - l100.live100.angleSteersDes)
-            angle_error_noise = ((99. * angle_error_noise) + (math.pow(abs_error, 2.))) / 100.
-            abs_desired_change = abs(l100.live100.angleSteersDes - last_desired)
-            desired_angle_change_noise = ((99. * desired_angle_change_noise) + (math.pow(abs_desired_change, 2.))) / 100.
-            abs_angle_change = abs(l100.live100.angleSteersDes - last_actual)
-            actual_angle_change_noise = ((99. * actual_angle_change_noise) + (math.pow(abs_angle_change, 2.))) / 100.
-            last_desired = l100.live100.angleSteersDes
-            last_actual = l100.live100.angleSteers
+              #print(receiveTime, monoTimeOffset, l100.logMonoTime)
+              if (abs(receiveTime - int(time.time() * 1000000000)) > 10000000000):
+                angle_error_noise = 0.0
+                last_desired = 0.0
+                last_actual = 0.0
+                actual_angle_change_noise = 0.0
+                desired_angle_change_noise = 0.0
+                angle_error_noise = 0.0
+                monoTimeOffset = (time.time() * 1000000000) - l100.logMonoTime
+                receiveTime = int(monoTimeOffset + l100.logMonoTime)
+                print(int(time.time() * 1000000000), receiveTime, monoTimeOffset, l100.logMonoTime)
+                #receiveTime = 1 / 0
+              abs_error = abs(l100.live100.angleSteers - l100.live100.angleSteersDes)
+              angle_error_noise = ((99. * angle_error_noise) + (math.pow(abs_error, 2.))) / 100.
+              abs_desired_change = abs(l100.live100.angleSteersDes - last_desired)
+              desired_angle_change_noise = ((99. * desired_angle_change_noise) + (math.pow(abs_desired_change, 2.))) / 100.
+              abs_angle_change = abs(l100.live100.angleSteersDes - last_actual)
+              actual_angle_change_noise = ((99. * actual_angle_change_noise) + (math.pow(abs_angle_change, 2.))) / 100.
+              last_desired = l100.live100.angleSteersDes
+              last_actual = l100.live100.angleSteers
 
-            influxLineString += ("opData,sources=capnp ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,dampened_angle_rate_des=%1.2f,dampened_angle_steers=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
-                        (angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,  l100.live100.dampAngleRateDes, l100.live100.dampAngleSteers, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
-                        l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, l100.live100.vCruise, receiveTime))
-            frame_count += 1
+              influxLineString += ("opData,sources=capnp ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,dampened_angle_rate_des=%1.2f,dampened_angle_steers=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
+                          (angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,  l100.live100.dampAngleRateDes, l100.live100.dampAngleSteers, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
+                          l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, l100.live100.vCruise, receiveTime))
+              frame_count += 1
 
           '''print(_live100)
             live100 = (
@@ -205,7 +205,7 @@ def dashboard_thread(rate=200):
           _liveParameters = messaging.recv_one(socket)
           lp = _liveParameters.liveParameters
           skippedLiveParameters += 1
-          if vEgo >= 0 and skippedLiveParameters >= 100: # and _live100.live100.active:
+          if vEgo >= 0 and skippedLiveParameters >= 10: # and _live100.live100.active:
             skippedLiveParameters= 0
             if sample_str != "":
                 sample_str += ","
@@ -399,6 +399,7 @@ def dashboard_thread(rate=200):
 
         #print(influxLineString)
         if sample_str != "":
+          '''
           kegman_counter += 1
           if kegman_counter == 300:
             kegman_counter = 0
@@ -413,6 +414,7 @@ def dashboard_thread(rate=200):
               sample_str += (",mpc_project=%s,mpc_smooth=%s,steer_project=%s,steer_smooth=%s,KpV=%s,KiV=%s" % (mpc_project,mpc_smooth,steer_project,steer_smooth, steerKpV, steerKiV))
             except:
               pass
+          '''
           influxLineString += ("opData,sources=capnp " + sample_str + " %s\n" % receiveTime)
           frame_count += 1
           sample_str = ""
