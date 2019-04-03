@@ -130,7 +130,7 @@ class LatControl(object):
           self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
 
       if path_plan.laneProb == 0.0 and self.lane_prob_reset == False:
-        self.dampened_desired_angle = path_plan.angleSteers
+        if path_plan.laneWidth > 3.7: self.dampened_desired_angle = path_plan.angleSteers
         self.lane_prob_reset = True
       elif path_plan.laneProb > 0.0:
         self.lane_prob_reset = False
