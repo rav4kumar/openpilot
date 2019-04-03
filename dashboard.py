@@ -11,6 +11,12 @@ from selfdrive.controls.lib.pathplanner import PathPlanner
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from common.realtime import set_realtime_priority, Ratekeeper
 from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv, calc_poly_curvature
+import importlib
+from collections import defaultdict, deque
+from fastcluster import linkage_vector
+from selfdrive.controls.lib.vehicle_model import VehicleModel
+from cereal import car
+from common.params import Params
 
 try:
   from selfdrive.kegman_conf import kegman_conf
@@ -36,10 +42,11 @@ def dashboard_thread(rate=200):
   vEgo = 0.0
   pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=True, poller=poller)
   #pathPlan = None
-  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
-  liveParameters = messaging.sub_sock(context, service_list['liveParameters'].port, addr=ipaddress, conflate=True, poller=poller)
+  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=True, poller=poller)
+  #liveParameters = messaging.sub_sock(context, service_list['liveParameters'].port, addr=ipaddress, conflate=True, poller=poller)
+  liveParameters = None
   #live20 = messaging.sub_sock(context, service_list['live20'].port, addr=ipaddress, conflate=True, poller=poller)
-  #model = messaging.sub_sock(context, service_list['model'].port, addr=ipaddress, conflate=True, poller=poller)
+  model = messaging.sub_sock(context, service_list['model'].port, addr=ipaddress, conflate=True, poller=poller)
   #frame = messaging.sub_sock(context, service_list['frame'].port, addr=ipaddress, conflate=True, poller=poller)
   #sensorEvents = messaging.sub_sock(context, service_list['sensorEvents'].port, addr=ipaddress, conflate=True, poller=poller)
   #carControl = messaging.sub_sock(context, service_list['carControl'].port, addr=ipaddress, conflate=True, poller=poller)
@@ -53,7 +60,7 @@ def dashboard_thread(rate=200):
   carControl = "disabled"
   sensorEvents = "disabled"
   frame = "disabled"
-  model = "disabled"
+  #model = "disabled"
   live20 = "disabled"
 
   _model = None
@@ -82,6 +89,9 @@ def dashboard_thread(rate=200):
   prev_l_curv = None
   prev_r_curv = None
   prev_p_curv = None
+  prev_l_sum = 0
+  prev_r_sum = 0
+  prev_p_sum = 0
 
   current_rate = rate
   rk = Ratekeeper(current_rate, print_delay_threshold=np.inf)
@@ -89,6 +99,10 @@ def dashboard_thread(rate=200):
   kegman_counter = 0
   monoTimeOffset = 0
   receiveTime = 0
+
+  CP = car.CarParams.from_bytes(Params().get("CarParams", block=True))
+  VM = VehicleModel(CP)
+  _path_pinv = compute_path_pinv()
 
   while 1:
     #try:
@@ -123,6 +137,7 @@ def dashboard_thread(rate=200):
               actual_angle_change_noise = ((99. * actual_angle_change_noise) + (math.pow(abs_angle_change, 2.))) / 100.
               last_desired = l100.live100.angleSteersDes
               last_actual = l100.live100.angleSteers
+              v_curv = l100.live100.curvature
 
               influxLineString += ("opData,sources=capnp ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,dampened_angle_rate_des=%1.2f,dampened_angle_steers=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
                           (angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,  l100.live100.dampAngleRateDes, l100.live100.dampAngleSteers, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
@@ -177,8 +192,65 @@ def dashboard_thread(rate=200):
               driverMonitoringOn = false,
               alertType = "",
               alertSound = "" ) )'''
-        #elif socket is model:
-        #  _model = messaging.recv_one(socket)
+        elif socket is model:
+          _model = messaging.recv_one(socket)
+          md = _model.model
+          if vEgo > 0: # and l100.live100.active:
+            influxLineString += ("opLines,sources=capnp ")
+            influxLineString += ("l0=%1.3f,p0=%1.3f,r0=%1.3f" % (md.leftLane.points[0], md.path.points[0], md.rightLane.points[0]))
+            lp = md.leftLane.points
+            rp = md.rightLane.points
+            pp = md.path.points
+
+            p_sum = np.sum(md.path.points)
+            l_sum = np.sum(md.leftLane.points)
+            r_sum = np.sum(md.rightLane.points)
+
+            l_change = l_sum - prev_l_sum
+            r_change = r_sum - prev_r_sum
+            p_change = p_sum - prev_p_sum
+            prev_l_sum = l_sum
+            prev_r_sum = r_sum
+            prev_p_sum = p_sum
+
+
+            p_poly = model_polyfit(md.path.points, _path_pinv)
+            l_poly = model_polyfit(md.leftLane.points, _path_pinv)
+            r_poly = model_polyfit(md.rightLane.points, _path_pinv)
+
+            far_pinv = [_path_pinv[0][25:50],_path_pinv[1][25:50],_path_pinv[2][25:50],_path_pinv[3][25:50]]
+            near_pinv = [_path_pinv[0][0:30],_path_pinv[1][0:30],_path_pinv[2][0:30],_path_pinv[3][0:30]]
+
+            p_poly_far = model_polyfit(map(float, md.path.points)[25:50], far_pinv)  # predicted path
+            l_poly_far = model_polyfit(map(float, md.leftLane.points)[25:50], far_pinv)  # left line
+            r_poly_far = model_polyfit(map(float, md.rightLane.points)[25:50], far_pinv)  # right line
+
+            p_poly_near = model_polyfit(map(float, md.path.points)[0:30], near_pinv)  # predicted path
+            l_poly_near = model_polyfit(map(float, md.leftLane.points)[0:30], near_pinv)  # left line
+            r_poly_near = model_polyfit(map(float, md.rightLane.points)[0:30], near_pinv)  # right line
+
+            p_curv = calc_poly_curvature(p_poly)
+            l_curv = calc_poly_curvature(l_poly)
+            r_curv = calc_poly_curvature(r_poly)
+            p_curv1 = calc_poly_curvature(p_poly_far)
+            l_curv1 = calc_poly_curvature(l_poly_far)
+            r_curv1 = calc_poly_curvature(r_poly_far)
+            p_curv2 = calc_poly_curvature(p_poly_near)
+            l_curv2 = calc_poly_curvature(l_poly_near)
+            r_curv2 = calc_poly_curvature(r_poly_near)
+            #left_curv = calc_poly_curvature([lp[0], lp[9], lp[19], lp[29], lp[39],lp[49]])
+            #path_curv = calc_poly_curvature([pp[0], pp[9], pp[19], pp[29], pp[39],pp[49]])
+            #path_curv = calc_poly_curvature(md.path.points)
+            #right_curv = calc_poly_curvature([rp[0], rp[9], rp[19], rp[29], rp[39],rp[49]])  #calc_poly_curvature(md.rightLane.points)
+            #print(left_curv, path_curv, right_curv)
+            for i in range(1,50):
+              influxLineString += (",l%d=%1.3f,p%d=%1.3f,r%d=%1.3f" % (i, md.leftLane.points[i], i, md.path.points[i], i, md.rightLane.points[i]))
+            #influxLineString += (",left_curv=%1.1f %s\n" % (left_curv, receiveTime))
+            influxLineString += (",vEgo=%1.1f,vCurv=%1.5f,lstd=%1.2f,rstd=%1.2f,pstd=%1.2f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,pProb=%1.2f,rProb=%1.2f,p_curv1=%1.5f,l_curv1=%1.5f,r_curv1=%1.5f,p_curv2=%1.5f,l_curv2=%1.5f,r_curv2=%1.5f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
+                 (vEgo, v_curv, md.leftLane.std,md.rightLane.std,md.path.std,l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.path.prob, md.rightLane.prob,p_curv1,l_curv1,r_curv1,p_curv2,l_curv2,r_curv2, v_curv, p_curv,l_curv, r_curv, receiveTime))
+
+            frame_count += 1
+
           '''model = (
                   frameId = 19786,
                   path = (
@@ -446,7 +518,7 @@ def dashboard_thread(rate=200):
     #  print(identifier)
     #  pass
 
-def main(rate=200):
+def main(rate=100):
   dashboard_thread(rate)
 
 if __name__ == "__main__":

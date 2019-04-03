@@ -343,7 +343,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "vEgoRaw": CS.vEgoRaw,
     "angleSteers": CS.steeringAngle,
     "dampAngleSteers": float(LaC.dampened_angle_steers),
-    "curvature": VM.calc_curvature(CS.steeringAngle * CV.DEG_TO_RAD, CS.vEgo),
+    "curvature": VM.calc_curvature((LaC.dampened_angle_steers - path_plan.pathPlan.angleOffset) * CV.DEG_TO_RAD, CS.vEgo),
     "steerOverride": CS.steeringPressed,
     "state": state,
     "engageable": not bool(get_events(events, [ET.NO_ENTRY])),

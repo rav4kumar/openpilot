@@ -57,6 +57,7 @@ class LatControl(object):
     self.rough_steers_rate = 0.0
     self.prev_angle_steers = 0.0
     self.calculate_rate = True
+    self.lane_prob_reset = False
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -127,6 +128,12 @@ class LatControl(object):
         projected_angle_steers = float(angle_steers) + self.total_actual_projection * float(angle_rate)
         if not steer_override:
           self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
+
+      if path_plan.laneProb == 0.0 and self.lane_prob_reset == False:
+        self.dampened_desired_angle = path_plan.angleSteers
+        self.lane_prob_reset = True
+      elif path_plan.laneProb > 0.0:
+        self.lane_prob_reset = False
 
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
 

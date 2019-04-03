@@ -53,11 +53,12 @@ class PathPlanner(object):
   def update(self, CP, VM, CS, md, live100, live_parameters):
     v_ego = CS.carState.vEgo
     angle_steers = live100.live100.dampAngleSteers
+    v_curv = live100.live100.curvature
     active = live100.live100.active
 
     angle_offset_bias = live100.live100.angleModelBias + live_parameters.liveParameters.angleOffsetAverage
 
-    self.MP.update(v_ego, md)
+    self.MP.update(v_ego, md, v_curv)
 
     # Run MPC
     self.angle_steers_des_prev = live100.live100.dampAngleSteersDes
@@ -131,6 +132,7 @@ class PathPlanner(object):
     plan_send.pathPlan.mpcAngles = map(float, self.mpc_angles)
     plan_send.pathPlan.mpcRates = map(float, self.mpc_rates)
     plan_send.pathPlan.mpcTimes = map(float, self.mpc_times)
+    plan_send.pathPlan.laneProb =float(self.MP.lane_prob)
     plan_send.pathPlan.valid = bool(plan_valid)
     plan_send.pathPlan.paramsValid = bool(live_parameters.liveParameters.valid)
 
