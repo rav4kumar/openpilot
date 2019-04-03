@@ -89,7 +89,9 @@ def get_can_signals(CP):
                ("STANDSTILL", 50)]
 
   if CP.carFingerprint in (CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH, CAR.CIVIC_BOSCH):
-    signals += [("DRIVERS_DOOR_OPEN", "SCM_FEEDBACK", 1)]
+    signals += [("DRIVERS_DOOR_OPEN", "SCM_FEEDBACK", 1),
+                ("LEAD_DISTANCE", "RADAR_HUD", 0)]
+    checks += [("RADAR_HUD", 50)]
   else:
     signals += [("DOOR_OPEN_FL", "DOORS_STATUS", 1),
                 ("DOOR_OPEN_FR", "DOORS_STATUS", 1),
@@ -196,6 +198,7 @@ class CarState(object):
     if self.CP.carFingerprint in (CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH, CAR.CIVIC_BOSCH): # TODO: find wheels moving bit in dbc
       self.standstill = cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] < 0.1
       self.door_all_closed = not cp.vl["SCM_FEEDBACK"]['DRIVERS_DOOR_OPEN']
+      self.lead_distance= cp.vl["RADAR_HUD"]['LEAD_DISTANCE']
     else:
       self.standstill = not cp.vl["STANDSTILL"]['WHEELS_MOVING']
       self.door_all_closed = not any([cp.vl["DOORS_STATUS"]['DOOR_OPEN_FL'], cp.vl["DOORS_STATUS"]['DOOR_OPEN_FR'],

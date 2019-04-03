@@ -23,7 +23,7 @@ try:
 except:
   pass
 
-def dashboard_thread(rate=200):
+def dashboard_thread(rate=300):
   set_realtime_priority(5)
 
   USER = ''
@@ -42,7 +42,7 @@ def dashboard_thread(rate=200):
   vEgo = 0.0
   pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=True, poller=poller)
   #pathPlan = None
-  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=True, poller=poller)
+  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
   #liveParameters = messaging.sub_sock(context, service_list['liveParameters'].port, addr=ipaddress, conflate=True, poller=poller)
   liveParameters = None
   #live20 = messaging.sub_sock(context, service_list['live20'].port, addr=ipaddress, conflate=True, poller=poller)
@@ -217,8 +217,11 @@ def dashboard_thread(rate=200):
             p_poly = model_polyfit(md.path.points, _path_pinv)
             l_poly = model_polyfit(md.leftLane.points, _path_pinv)
             r_poly = model_polyfit(md.rightLane.points, _path_pinv)
+            p_curv = calc_poly_curvature(p_poly)
+            l_curv = calc_poly_curvature(l_poly)
+            r_curv = calc_poly_curvature(r_poly)
 
-            far_pinv = [_path_pinv[0][25:50],_path_pinv[1][25:50],_path_pinv[2][25:50],_path_pinv[3][25:50]]
+            '''far_pinv = [_path_pinv[0][25:50],_path_pinv[1][25:50],_path_pinv[2][25:50],_path_pinv[3][25:50]]
             near_pinv = [_path_pinv[0][0:30],_path_pinv[1][0:30],_path_pinv[2][0:30],_path_pinv[3][0:30]]
 
             p_poly_far = model_polyfit(map(float, md.path.points)[25:50], far_pinv)  # predicted path
@@ -229,29 +232,29 @@ def dashboard_thread(rate=200):
             l_poly_near = model_polyfit(map(float, md.leftLane.points)[0:30], near_pinv)  # left line
             r_poly_near = model_polyfit(map(float, md.rightLane.points)[0:30], near_pinv)  # right line
 
-            p_curv = calc_poly_curvature(p_poly)
-            l_curv = calc_poly_curvature(l_poly)
-            r_curv = calc_poly_curvature(r_poly)
             p_curv1 = calc_poly_curvature(p_poly_far)
             l_curv1 = calc_poly_curvature(l_poly_far)
             r_curv1 = calc_poly_curvature(r_poly_far)
             p_curv2 = calc_poly_curvature(p_poly_near)
             l_curv2 = calc_poly_curvature(l_poly_near)
             r_curv2 = calc_poly_curvature(r_poly_near)
+            '''
             #left_curv = calc_poly_curvature([lp[0], lp[9], lp[19], lp[29], lp[39],lp[49]])
             #path_curv = calc_poly_curvature([pp[0], pp[9], pp[19], pp[29], pp[39],pp[49]])
             #path_curv = calc_poly_curvature(md.path.points)
             #right_curv = calc_poly_curvature([rp[0], rp[9], rp[19], rp[29], rp[39],rp[49]])  #calc_poly_curvature(md.rightLane.points)
             #print(left_curv, path_curv, right_curv)
-            for i in range(1,50):
+            for i in range(5,50,5):
               influxLineString += (",l%d=%1.3f,p%d=%1.3f,r%d=%1.3f" % (i, md.leftLane.points[i], i, md.path.points[i], i, md.rightLane.points[i]))
             #influxLineString += (",left_curv=%1.1f %s\n" % (left_curv, receiveTime))
-            influxLineString += (",vEgo=%1.1f,vCurv=%1.5f,lstd=%1.2f,rstd=%1.2f,pstd=%1.2f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,pProb=%1.2f,rProb=%1.2f,p_curv1=%1.5f,l_curv1=%1.5f,r_curv1=%1.5f,p_curv2=%1.5f,l_curv2=%1.5f,r_curv2=%1.5f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
-                 (vEgo, v_curv, md.leftLane.std,md.rightLane.std,md.path.std,l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.path.prob, md.rightLane.prob,p_curv1,l_curv1,r_curv1,p_curv2,l_curv2,r_curv2, v_curv, p_curv,l_curv, r_curv, receiveTime))
+            #influxLineString += (",vEgo=%1.1f,vCurv=%1.5f,lstd=%1.2f,rstd=%1.2f,pstd=%1.2f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,pProb=%1.2f,rProb=%1.2f,p_curv1=%1.5f,l_curv1=%1.5f,r_curv1=%1.5f,p_curv2=%1.5f,l_curv2=%1.5f,r_curv2=%1.5f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
+            #     (vEgo, v_curv, md.leftLane.std,md.rightLane.std,md.path.std,l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.path.prob, md.rightLane.prob,p_curv1,l_curv1,r_curv1,p_curv2,l_curv2,r_curv2, v_curv, p_curv,l_curv, r_curv, receiveTime))
+            influxLineString += (",vEgo=%1.1f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,rProb=%1.2f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
+                 (vEgo, l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.rightLane.prob,v_curv, p_curv,l_curv, r_curv, receiveTime))
 
             frame_count += 1
 
-          '''model = (
+            '''model = (
                   frameId = 19786,
                   path = (
                   points = [-0.002040863, 0.0048789978, 0.0024032593, -0.029251099, -0.050567627, -0.071716309, -0.10424805, -0.14196777, -0.18005371, -0.20825195, -0.2277832, -0.26391602, -0.31420898, -0.38085938, -0.43212891, -0.47900391, -0.51318359, -0.56494141, -0.62646484, -0.68212891, -0.73632812, -0.74951172, -0.82519531, -0.89648438, -0.97265625, -1.0615234, -1.1464844, -1.2412109, -1.3369141, -1.4462891, -1.5488281, -1.6445312, -1.7460938, -1.8544922, -1.9658203, -2.0820312, -2.2089844, -2.3320312, -2.484375, -2.6152344, -2.7265625, -2.8554688, -2.984375, -3.1425781, -3.2636719, -3.4160156, -3.5566406, -3.6835938, -3.8222656, -3.9746094],
@@ -293,11 +296,15 @@ def dashboard_thread(rate=200):
             if sample_str != "":
                 sample_str += ","
             a = _pathPlan.pathPlan.mpcAngles
+            p = _pathPlan.pathPlan
 
-            sample_str = ("lane_width=%1.2f,lpoly2=%1.3f,rpoly2=%1.3f,cpoly2=%1.3f,dpoly2=%1.3f,lpoly3=%1.3f,rpoly3=%1.3f,cpoly3=%1.3f,dpoly3=%1.3f,cProb=%1.3f,lProb=%1.3f,rProb=%1.3f,mpc1=%1.2f,mpc2=%1.2f,mpc3=%1.2f,mpc4=%1.2f,mpc5=%1.2f,mpc6=%1.2f,mpc7=%1.2f,mpc8=%1.2f,mpc9=%1.2f,mpc10=%1.2f,mpc11=%1.2f,mpc12=%1.2f,mpc13=%1.2f,mpc14=%1.2f,mpc15=%1.2f,mpc16=%1.2f,mpc17=%1.2f,mpc18=%1.2f" %
-                        (_pathPlan.pathPlan.laneWidth, _pathPlan.pathPlan.lPoly[2], _pathPlan.pathPlan.rPoly[2], _pathPlan.pathPlan.cPoly[2], _pathPlan.pathPlan.dPoly[2],_pathPlan.pathPlan.lPoly[3], _pathPlan.pathPlan.rPoly[3], _pathPlan.pathPlan.cPoly[3], _pathPlan.pathPlan.dPoly[3],
-                              _pathPlan.pathPlan.cProb,  _pathPlan.pathPlan.lProb,  _pathPlan.pathPlan.rProb, a[1], a[2], a[3],
-                              a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18]))
+            #sample_str = ("lane_width=%1.2f,lpoly2=%1.3f,rpoly2=%1.3f,cpoly2=%1.3f,dpoly2=%1.3f,lpoly3=%1.3f,rpoly3=%1.3f,cpoly3=%1.3f,dpoly3=%1.3f,cProb=%1.3f,lProb=%1.3f,rProb=%1.3f,mpc1=%1.2f,mpc2=%1.2f,mpc3=%1.2f,mpc4=%1.2f,mpc5=%1.2f,mpc6=%1.2f,mpc7=%1.2f,mpc8=%1.2f,mpc9=%1.2f,mpc10=%1.2f,mpc11=%1.2f,mpc12=%1.2f,mpc13=%1.2f,mpc14=%1.2f,mpc15=%1.2f,mpc16=%1.2f,mpc17=%1.2f,mpc18=%1.2f" %
+            #            (_pathPlan.pathPlan.laneWidth, _pathPlan.pathPlan.lPoly[2], _pathPlan.pathPlan.rPoly[2], _pathPlan.pathPlan.cPoly[2], _pathPlan.pathPlan.dPoly[2],_pathPlan.pathPlan.lPoly[3], _pathPlan.pathPlan.rPoly[3], _pathPlan.pathPlan.cPoly[3], _pathPlan.pathPlan.dPoly[3],
+            #                  _pathPlan.pathPlan.cProb,  _pathPlan.pathPlan.lProb,  _pathPlan.pathPlan.rProb, a[1], a[2], a[3],
+            #                  a[4], a[5], a[6], a[7], a[8], a[9], a[10], a[11], a[12], a[13], a[14], a[15], a[16], a[17], a[18]))
+            sample_str = ("lane_width=%1.2f,lpoly0=%1.6f,rpoly0=%1.6f,cpoly0=%1.6f,dpoly0=%1.6f,lpoly1=%1.5f,rpoly1=%1.5f,cpoly1=%1.5f,dpoly1=%1.5f,lpoly2=%1.4f,rpoly2=%1.4f,cpoly2=%1.4f,dpoly2=%1.4f,lpoly3=%1.3f,rpoly3=%1.3f,cpoly3=%1.3f,dpoly3=%1.3f,cProb=%1.3f,lProb=%1.3f,rProb=%1.3f,mpc1=%1.2f,mpc2=%1.2f,mpc3=%1.2f" %
+                        (p.laneWidth, p.lPoly[0], p.rPoly[0], p.cPoly[0], p.dPoly[0], p.lPoly[1], p.rPoly[1], p.cPoly[1], p.dPoly[1], p.lPoly[2], p.rPoly[2], p.cPoly[2], p.dPoly[2],p.lPoly[3], p.rPoly[3], p.cPoly[3], p.dPoly[3],
+                              p.cProb,  p.lProb,  p.rProb, a[1], a[2], a[3]))
             influxLineString += ("opData,sources=capnp " + sample_str + " %s\n" % receiveTime)
             sample_str = ""
             frame_count += 1
@@ -518,7 +525,7 @@ def dashboard_thread(rate=200):
     #  print(identifier)
     #  pass
 
-def main(rate=100):
+def main(rate=300):
   dashboard_thread(rate)
 
 if __name__ == "__main__":

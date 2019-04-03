@@ -11,6 +11,15 @@ _DT = 0.01    # 100Hz
 def get_steer_max(CP, v_ego):
   return interp(v_ego, CP.steerMaxBP, CP.steerMaxV)
 
+def apply_deadzone(angle, deadzone):
+  if angle > deadzone:
+    angle -= deadzone
+  elif angle < - deadzone:
+    angle += deadzone
+  else:
+    angle = 0.
+  return angle
+
 
 class LatControl(object):
   def __init__(self, CP):
@@ -50,7 +59,8 @@ class LatControl(object):
     self.total_actual_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_smoothing = max(1.0, CP.steerDampTime / _DT)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
-    self.dampened_angle_steers = 0.0
+    self.ff_angle_factor = 0.5
+    self.ff_rate_factor = 1.0
     self.dampened_desired_angle = 0.0
     self.steer_counter = 1.0
     self.steer_counter_prev = 0.0
@@ -58,6 +68,7 @@ class LatControl(object):
     self.prev_angle_steers = 0.0
     self.calculate_rate = True
     self.lane_prob_reset = False
+    self.feed_forward = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -123,14 +134,16 @@ class LatControl(object):
 
       else:
         projected_desired_angle = interp(sec_since_boot() + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
-        self.dampened_desired_angle = (((self.desired_smoothing - 1.) * self.dampened_desired_angle) + projected_desired_angle) / self.desired_smoothing
+        self.dampened_desired_angle += ((projected_desired_angle - self.dampened_desired_angle) / self.desired_smoothing)
 
         projected_angle_steers = float(angle_steers) + self.total_actual_projection * float(angle_rate)
         if not steer_override:
-          self.dampened_angle_steers = (((self.actual_smoothing - 1.) * self.dampened_angle_steers) + projected_angle_steers) / self.actual_smoothing
+          self.dampened_angle_steers += ((projected_angle_steers - self.dampened_angle_steers) / self.actual_smoothing)
 
       if path_plan.laneProb == 0.0 and self.lane_prob_reset == False:
-        if path_plan.laneWidth > 3.7: self.dampened_desired_angle = path_plan.angleSteers
+        if path_plan.lPoly[3] - path_plan.rPoly[3] > 3.9:
+          print(self.dampened_desired_angle, path_plan.angleSteers)
+          self.dampened_desired_angle = path_plan.angleSteers
         self.lane_prob_reset = True
       elif path_plan.laneProb > 0.0:
         self.lane_prob_reset = False
@@ -142,11 +155,20 @@ class LatControl(object):
         self.pid.neg_limit = -steers_max
         deadzone = 0.0
 
-        steer_feedforward = (self.dampened_desired_angle - path_plan.angleOffset) * v_ego**2
-        #print("sr %1.3f ff  %1.3f offset  %1.3f  damp_des_angle  %1.3f  damp_des_rate %1.3f " % ( VM.sR, steer_feedforward, path_plan.angleOffset, self.dampened_desired_angle))
+        angle_feedforward = apply_deadzone(self.ff_angle_factor * (self.dampened_desired_angle - path_plan.angleOffset), 0.5) * v_ego**2
+        rate_feedforward = self.ff_rate_factor * path_plan.rateSteers * v_ego**2
+        rate_more_significant = (abs(rate_feedforward) > abs(angle_feedforward))
+        rate_same_direction = (rate_feedforward > 0) == (angle_feedforward > 0)
+        rate_away_from_zero = ((angle_steers - path_plan.angleOffset) > 0 == (rate_feedforward > 0))
+
+        if rate_more_significant and rate_same_direction: # and rate_away_from_zero:
+          self.feed_forward += ((rate_feedforward - self.feed_forward) / self.desired_smoothing)
+          #print(self.feed_forward)
+        else:
+          self.feed_forward += ((angle_feedforward - self.feed_forward) / self.desired_smoothing)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                      override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
+                                      override=steer_override, feedforward=self.feed_forward, speed=v_ego, deadzone=deadzone)
 
     self.sat_flag = self.pid.saturated
     self.prev_angle_steers = float(angle_steers)
