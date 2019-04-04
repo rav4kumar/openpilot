@@ -401,6 +401,8 @@ struct Live100Data {
   dampAngleSteers @52 :Float32;
   dampAngleSteersDes @53 :Float32;
   dampRateSteersDes @54 :Float32;
+  rateModeFF @56 :Int32;
+  angleModeFF @57 :Int32;
   curvature @37 :Float32;       # path curvature from vehicle model
   hudLeadDEPRECATED @14 :Int32;
   cumLagMs @15 :Float32;

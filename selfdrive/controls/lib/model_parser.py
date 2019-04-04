@@ -52,26 +52,28 @@ class ModelParser(object):
                         (1 - self.lane_width_certainty) * speed_lane_width
 
       lane_width_diff = abs(self.lane_width - current_lane_width)
-      lane_prob = interp(lane_width_diff, [0.3, 0.31], [1.0, 0.0])
+      lane_prob = interp(lane_width_diff, [0.3, interp(v_ego, [20.0, 25.0], [1.0, 0.4])], [1.0, 0.0])
 
-      steer_compensation = v_curv * v_ego
-      total_left_divergence = (md.model.leftLane.points[5] - md.model.leftLane.points[0]) * r_prob + steer_compensation
-      total_right_divergence = -((md.model.rightLane.points[5] - md.model.rightLane.points[0]) * l_prob + steer_compensation)
+      if (l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:
+        steer_compensation = 1.2 * v_curv * v_ego
+        total_left_divergence = (md.model.leftLane.points[5] - md.model.leftLane.points[0]) * r_prob + steer_compensation
+        total_right_divergence = -((md.model.rightLane.points[5] - md.model.rightLane.points[0]) * l_prob + steer_compensation)
 
-      if (r_prob > 0.5 and total_left_divergence > abs(total_right_divergence) \
-        and (self.lane_prob > 0 or self.r_prob > 0)) or (self.lane_prob == 0 and self.l_prob == 0):
-        l_prob *= lane_prob
-        if lane_prob == 0.0:
-          p_prob = 0.5
-          r_prob *= 1.5
-          r_poly, p_poly = self.fix_polys(map(float, md.model.rightLane.points), map(float, md.model.path.points))
-      elif (l_prob > 0.5 and total_right_divergence > abs(total_left_divergence)) \
-        or (self.lane_prob == 0 and self.r_prob == 0):
-        r_prob *= lane_prob
-        if lane_prob == 0.0:
-          p_prob = 0.5
-          l_prob *= 1.5
-          l_poly, p_poly = self.fix_polys(map(float, md.model.leftLane.points), map(float, md.model.path.points))
+        if (total_left_divergence > abs(total_right_divergence) \
+          and (self.lane_prob > 0 or self.r_prob > 0)) or (self.lane_prob == 0 and self.l_prob == 0):
+          l_prob *= lane_prob
+          if lane_prob == 0.0:
+            p_prob = 0.5
+            #r_prob *= 1.5
+            r_poly, p_poly = self.fix_polys(map(float, md.model.rightLane.points), map(float, md.model.path.points))
+        elif (total_right_divergence > abs(total_left_divergence)) \
+          or (self.lane_prob == 0 and self.r_prob == 0):
+          r_prob *= lane_prob
+          if lane_prob == 0.0:
+            p_prob = 0.5
+            #l_prob *= 1.5
+            l_poly, p_poly = self.fix_polys(map(float, md.model.leftLane.points), map(float, md.model.path.points))
+        self.lane_prob = lane_prob
 
       self.lead_dist = md.model.lead.dist
       self.lead_prob = md.model.lead.prob
@@ -81,7 +83,6 @@ class ModelParser(object):
       self.d_poly, self.c_poly, self.c_prob = calc_desired_path(
         l_poly, r_poly, p_poly, l_prob, r_prob, p_prob, v_ego, self.lane_width)
 
-      self.lane_prob = lane_prob
       self.r_poly = r_poly
       self.r_prob = r_prob
 

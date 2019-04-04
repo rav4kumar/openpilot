@@ -59,8 +59,8 @@ class LatControl(object):
     self.total_actual_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_smoothing = max(1.0, CP.steerDampTime / _DT)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
-    self.ff_angle_factor = 0.5
-    self.ff_rate_factor = 1.0
+    self.ff_angle_factor = 1.0
+    self.ff_rate_factor = 0.0
     self.dampened_desired_angle = 0.0
     self.steer_counter = 1.0
     self.steer_counter_prev = 0.0
@@ -69,6 +69,8 @@ class LatControl(object):
     self.calculate_rate = True
     self.lane_prob_reset = False
     self.feed_forward = 0.0
+    self.rate_mode = 0
+    self.angle_mode = 1
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -143,7 +145,7 @@ class LatControl(object):
       if path_plan.laneProb == 0.0 and self.lane_prob_reset == False:
         if path_plan.lPoly[3] - path_plan.rPoly[3] > 3.9:
           print(self.dampened_desired_angle, path_plan.angleSteers)
-          self.dampened_desired_angle = path_plan.angleSteers
+          #self.dampened_desired_angle = path_plan.angleSteers
         self.lane_prob_reset = True
       elif path_plan.laneProb > 0.0:
         self.lane_prob_reset = False
@@ -159,12 +161,15 @@ class LatControl(object):
         rate_feedforward = self.ff_rate_factor * path_plan.rateSteers * v_ego**2
         rate_more_significant = (abs(rate_feedforward) > abs(angle_feedforward))
         rate_same_direction = (rate_feedforward > 0) == (angle_feedforward > 0)
-        rate_away_from_zero = ((angle_steers - path_plan.angleOffset) > 0 == (rate_feedforward > 0))
 
         if rate_more_significant and rate_same_direction: # and rate_away_from_zero:
           self.feed_forward += ((rate_feedforward - self.feed_forward) / self.desired_smoothing)
+          self.rate_mode = 1
+          self.angle_mode = 0
           #print(self.feed_forward)
         else:
+          self.rate_mode = 0
+          self.angle_mode = 1
           self.feed_forward += ((angle_feedforward - self.feed_forward) / self.desired_smoothing)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),

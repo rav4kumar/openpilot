@@ -36,24 +36,25 @@ def dashboard_thread(rate=300):
   context = zmq.Context()
   poller = zmq.Poller()
   ipaddress = "127.0.0.1"
-  #carState = messaging.sub_sock(context, service_list['carState'].port, addr=ipaddress, conflate=True, poller=poller)
+  carState = messaging.sub_sock(context, service_list['carState'].port, addr=ipaddress, conflate=True, poller=poller)
   #can = messaging.sub_sock(context, service_list['can'].port, addr=ipaddress, poller=poller)
   can = "disabled"
   vEgo = 0.0
-  pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=True, poller=poller)
-  #pathPlan = None
+  #pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=True, poller=poller)
+  pathPlan = None
   live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
   #liveParameters = messaging.sub_sock(context, service_list['liveParameters'].port, addr=ipaddress, conflate=True, poller=poller)
   liveParameters = None
   #live20 = messaging.sub_sock(context, service_list['live20'].port, addr=ipaddress, conflate=True, poller=poller)
-  model = messaging.sub_sock(context, service_list['model'].port, addr=ipaddress, conflate=True, poller=poller)
+  #model = messaging.sub_sock(context, service_list['model'].port, addr=ipaddress, conflate=True, poller=poller)
+  model = None
   #frame = messaging.sub_sock(context, service_list['frame'].port, addr=ipaddress, conflate=True, poller=poller)
   #sensorEvents = messaging.sub_sock(context, service_list['sensorEvents'].port, addr=ipaddress, conflate=True, poller=poller)
   #carControl = messaging.sub_sock(context, service_list['carControl'].port, addr=ipaddress, conflate=True, poller=poller)
   #health = messaging.sub_sock(context, service_list['health'].port, addr=ipaddress, conflate=True, poller=poller)
   #sendcan = messaging.sub_sock(context, service_list['sendcan'].port, addr=ipaddress, conflate=True, poller=poller)
   #androidLog = messaging.sub_sock(context, service_list['androidLog'].port, addr=ipaddress, conflate=True, poller=poller)
-  carState = "disabled"
+  #carState = "disabled"
   androidLog = "disabled"
   sendcan = "disabled"
   health = "disabled"
@@ -139,8 +140,8 @@ def dashboard_thread(rate=300):
               last_actual = l100.live100.angleSteers
               v_curv = l100.live100.curvature
 
-              influxLineString += ("opData,sources=capnp ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,dampened_angle_rate_des=%1.2f,dampened_angle_steers=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
-                          (angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,  l100.live100.dampAngleRateDes, l100.live100.dampAngleSteers, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
+              influxLineString += ("opData,sources=capnp ff_rate=%d,ff_angle=%d,ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,dampened_angle_rate_des=%1.2f,dampened_angle_steers=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
+                          (l100.live100.rateModeFF, l100.live100.angleModeFF, angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,  l100.live100.dampAngleRateDes, l100.live100.dampAngleSteers, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
                           l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, l100.live100.vCruise, receiveTime))
               frame_count += 1
 
@@ -249,8 +250,8 @@ def dashboard_thread(rate=300):
             #influxLineString += (",left_curv=%1.1f %s\n" % (left_curv, receiveTime))
             #influxLineString += (",vEgo=%1.1f,vCurv=%1.5f,lstd=%1.2f,rstd=%1.2f,pstd=%1.2f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,pProb=%1.2f,rProb=%1.2f,p_curv1=%1.5f,l_curv1=%1.5f,r_curv1=%1.5f,p_curv2=%1.5f,l_curv2=%1.5f,r_curv2=%1.5f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
             #     (vEgo, v_curv, md.leftLane.std,md.rightLane.std,md.path.std,l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.path.prob, md.rightLane.prob,p_curv1,l_curv1,r_curv1,p_curv2,l_curv2,r_curv2, v_curv, p_curv,l_curv, r_curv, receiveTime))
-            influxLineString += (",vEgo=%1.1f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,rProb=%1.2f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
-                 (vEgo, l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.rightLane.prob,v_curv, p_curv,l_curv, r_curv, receiveTime))
+            influxLineString += (",vEgo=%1.1f,lstd=%1.1f,rstd=%1.1f,lsum=%d,rsum=%d,psum=%d,lchange=%d,rchange=%d,pchange=%d,lProb=%1.2f,rProb=%1.2f,v_curv=%1.5f,p_curv=%1.5f,l_curv=%1.5f,r_curv=%1.5f %s\n" % \
+                 (vEgo, md.leftLane.std, md.rightLane.std, l_sum, r_sum, p_sum, l_change,r_change,p_change,md.leftLane.prob, md.rightLane.prob,v_curv, p_curv,l_curv, r_curv, receiveTime))
 
             frame_count += 1
 
@@ -342,7 +343,7 @@ def dashboard_thread(rate=300):
           if vEgo > 0:
             if sample_str != "":
                 sample_str += ","
-            sample_str += ("driver_torque=%1.2f,angle_rate=%1.2f,yawRate=%1.2f,angle_steers=%1.2f" % (_carState.carState.steeringTorque, _carState.carState.steeringRate, _carState.carState.yawRate, _carState.carState.steeringAngle))
+            sample_str += ("lead_distance=%d,driver_torque=%1.2f,angle_rate=%1.2f,yawRate=%1.2f,angle_steers=%1.2f" % (_carState.carState.leadDistance, _carState.carState.steeringTorque, _carState.carState.steeringRate, _carState.carState.yawRate, _carState.carState.steeringAngle))
 
           '''carState = (
               vEgo = 0,
