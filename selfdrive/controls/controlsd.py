@@ -355,6 +355,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "ufAccelCmd": float(LoC.pid.f),
     "angleSteersDes": float(path_plan.pathPlan.angleSteers),
     "dampAngleSteersDes": float(LaC.dampened_desired_angle),
+    "dampRateSteersDes": float(LaC.dampened_desired_rate),
     "rateModeFF": LaC.rate_mode,
     "angleModeFF": LaC.angle_mode,
     "upSteer": float(LaC.pid.p),
