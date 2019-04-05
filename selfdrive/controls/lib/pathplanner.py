@@ -86,15 +86,12 @@ class PathPlanner(object):
       for i in range(1,20):
         self.mpc_times[i] = self.mpc_times[i-1] + _DT_MPC
         self.mpc_angles[i] = float(math.degrees(self.mpc_solution[0].delta[i] * VM.sR) + angle_offset_bias)
-        self.mpc_rates[i] = (self.mpc_angles[i] - self.mpc_angles[i-1]) / (self.mpc_times[i] - self.mpc_times[i-1])
+        self.mpc_rates[i-1] = (self.mpc_angles[i] - self.mpc_angles[i-1]) / (self.mpc_times[i] - self.mpc_times[i-1])
         #self.mpc_rates[i] = math.degrees(self.mpc_solution[0].rate[i] * VM.sR)
 
       delta_desired = self.mpc_solution[0].delta[1]
       rate_desired = math.degrees(self.mpc_solution[0].rate[0] * VM.sR)
-      rate_desired2 = math.degrees(self.mpc_solution[0].rate[1] * VM.sR)
-      print("%1.2f  %1.2f  %1.2f  %1.2f  %1.2f  %1.2f  " % (rate_desired, self.mpc_rates[1], rate_desired - self.mpc_rates[1], rate_desired2, self.mpc_rates[2], rate_desired2 - self.mpc_rates[2] ))
     else:
-      #print(CP.steerRateCost, VM.sR)
       delta_desired = math.radians(angle_steers - angle_offset_bias) / VM.sR
       rate_desired = 0.0
 

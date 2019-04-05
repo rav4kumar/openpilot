@@ -59,15 +59,14 @@ class LatControl(object):
     self.total_actual_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_smoothing = max(1.0, CP.steerDampTime / _DT)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
-    self.ff_angle_factor = 1.0
-    self.ff_rate_factor = 1.0
+    self.ff_angle_factor = 5.0
+    self.ff_rate_factor = 0.1
     self.dampened_desired_angle = 0.0
     self.steer_counter = 1.0
     self.steer_counter_prev = 0.0
     self.rough_steers_rate = 0.0
     self.prev_angle_steers = 0.0
     self.calculate_rate = True
-    self.lane_prob_reset = False
     self.feed_forward = 0.0
     self.rate_mode = 0.0
     self.angle_mode = 0.0
@@ -151,15 +150,6 @@ class LatControl(object):
           projected_angle_steers = float(angle_steers)
         self.dampened_angle_steers += ((projected_angle_steers - self.dampened_angle_steers) / self.actual_smoothing)
 
-      '''if path_plan.laneProb == 0.0 and self.lane_prob_reset == False:
-        if path_plan.lPoly[3] - path_plan.rPoly[3] > 3.9:
-          print(self.dampened_desired_angle, path_plan.angleSteers)
-          #self.dampened_desired_angle = path_plan.angleSteers
-        self.lane_prob_reset = True
-      elif path_plan.laneProb > 0.0:
-        self.lane_prob_reset = False
-      '''
-
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
 
         steers_max = get_steer_max(CP, v_ego)
@@ -167,36 +157,12 @@ class LatControl(object):
         self.pid.neg_limit = -steers_max
         deadzone = 0.0
 
-        angle_feedforward = apply_deadzone(self.ff_angle_factor * (self.dampened_desired_angle - path_plan.angleOffset), 1.0) * v_ego**2
-        rate_feedforward = self.ff_rate_factor * self.dampened_desired_rate * v_ego**2
-
-        self.dampened_angle_ff += (angle_feedforward - self.dampened_angle_ff) / self.desired_smoothing
-        if angle_feedforward == 0 or (angle_feedforward < 0) == (rate_feedforward < 0):
-          self.dampened_rate_ff += (rate_feedforward - self.dampened_rate_ff) / self.desired_smoothing
-        else:
-          self.dampened_rate_ff += (0.0 - self.dampened_rate_ff) / self.desired_smoothing
-
-        feed_forward = self.dampened_angle_ff + self.dampened_rate_ff
-        if abs(feed_forward) > 0:
-          self.angle_mode = max(0.0, min(1.0, self.dampened_angle_ff / feed_forward))
-          self.rate_mode = 1.0 - self.angle_mode
-        else:
-          self.angle_mode = 0.0
-          self.rate_mode = 0.0
-
-        '''rate_more_significant = (abs(rate_feedforward) > abs(angle_feedforward))
-        rate_same_direction = (rate_feedforward > 0) == (angle_feedforward > 0)
-
-        if rate_more_significant and rate_same_direction: # and rate_away_from_zero:
-          self.feed_forward += ((rate_feedforward - self.feed_forward) / self.desired_smoothing)
-          self.rate_mode = 1
-          self.angle_mode = 0
-          #print(self.feed_forward)
-        else:
-          self.rate_mode = 0
-          self.angle_mode = 1
-          self.feed_forward += ((angle_feedforward - self.feed_forward) / self.desired_smoothing)
-        '''
+        ff_target_angle = self.dampened_desired_angle - path_plan.angleOffset
+        self.angle_mode = interp(abs(ff_target_angle), [1.5, 6.0], [0.0, 1.0])
+        self.rate_mode = 1.0 - self.angle_mode
+        angle_feedforward = self.angle_mode * self.ff_angle_factor * ff_target_angle
+        rate_feedforward = self.rate_mode * self.ff_rate_factor * self.dampened_desired_rate
+        feed_forward = v_ego**2 * (rate_feedforward + angle_feedforward)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
                                       override=steer_override, feedforward=feed_forward, speed=v_ego, deadzone=deadzone)
