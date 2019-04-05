@@ -9,12 +9,12 @@ from common.realtime import set_realtime_priority, Ratekeeper
 import os, os.path
 
 # Polling rate should be twice the data rate to prevent aliasing
-def main(rate=200):
+def main(rate=100):
   set_realtime_priority(5)
   context = zmq.Context()
   poller = zmq.Poller()
 
-  live100 = messaging.sub_sock(context, service_list['live100'].port, conflate=True, poller=poller)
+  live100 = messaging.sub_sock(context, service_list['live100'].port, conflate=False, poller=poller)
   carState = messaging.sub_sock(context, service_list['carState'].port, conflate=True, poller=poller)
   can = None #messaging.sub_sock(context, service_list['can'].port, conflate=True, poller=poller)
 
@@ -38,13 +38,13 @@ def main(rate=200):
   monoTimeOffset = 0
   receiveTime = 0
   angle_rate = 0.0
-  
+
   print("start")
   with open(DIR + '/dashboard_file_%d.csv' % filenumber, mode='w') as dash_file:
     print("opened")
     dash_writer = csv.writer(dash_file, delimiter=',', quotechar='', quoting=csv.QUOTE_NONE)
     print("initialized")
-    dash_writer.writerow(['angle_steers_des','angle_steers','angle_rate','dampened_angle_steers_des','dampened_angle_rate_des','dampened_angle_steers','v_ego','steer_override','p','i','f','time'])
+    dash_writer.writerow(['ff_rate','ff_angle', 'angle_steers_des','angle_steers','angle_rate','dampened_angle_steers_des','dampened_angle_rate_des','dampened_angle_steers','v_ego','steer_override','p','i','f','time'])
     print("first row")
 
     while 1:
@@ -69,9 +69,11 @@ def main(rate=200):
                 receiveTime = int(monoTimeOffset + l100.logMonoTime)
 
               frame_count += 1
-              dash_writer.writerow([str(round(l100.live100.angleSteersDes, 2)),
+              dash_writer.writerow([str(round(l100.live100.rateModeFF, 2)),
+                                    str(round(l100.live100.angleModeFF, 2)),
+                                    str(round(l100.live100.angleSteersDes, 2)),
                                     str(round(l100.live100.angleSteers, 2)),
-                                    str(round(angle_rate,1)),
+                                    str(round(angle_rate, 2)),
                                     str(round(l100.live100.dampAngleSteersDes, 2)),
                                     str(round(l100.live100.dampAngleRateDes, 2)),
                                     str(round(l100.live100.dampAngleSteers, 2)),

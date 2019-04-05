@@ -17,7 +17,7 @@ def print_letters(text):
                 pass
             temp += ' '*(5-len(temp))
             temp = temp.replace(' ',' ')
-            temp = temp.replace('#','@')
+            temp = temp.replace('#','\xE2\x96\x88')
             output[i] += temp
     return '\n'.join(output)
 import sys, termios, tty, os, time
