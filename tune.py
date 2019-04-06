@@ -17,8 +17,7 @@ def print_letters(text):
                 pass
             temp += ' '*(5-len(temp))
             temp = temp.replace(' ',' ')
-            temp = temp.replace('#','\xE2\x96\x88')
-
+            temp = temp.replace('#','@')
             output[i] += temp
     return '\n'.join(output)
 import sys, termios, tty, os, time
@@ -39,7 +38,7 @@ button_delay = 0.2
 kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
-param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "rateFF", "angleFF", "Kp", "Ki"]
+param = ["tuneGernby", "reactMPC", "dampMPC", "rateFF", "angleFF", "Kp", "Ki"]
 
 j = 0
 while True:
