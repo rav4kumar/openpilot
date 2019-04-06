@@ -52,7 +52,7 @@ class PathPlanner(object):
 
   def update(self, CP, VM, CS, md, live100, live_parameters):
     v_ego = CS.carState.vEgo
-    angle_steers = live100.live100.dampAngleSteers
+    angle_steers = live100.live100.angleSteers
     v_curv = live100.live100.curvature
     active = live100.live100.active
 
@@ -82,12 +82,9 @@ class PathPlanner(object):
     if active:
       self.mpc_angles[0] = live100.live100.dampAngleSteersDes
       self.mpc_times[0] = live100.logMonoTime * 1e-9
-      self.mpc_rates[0] = live100.live100.dampRateSteersDes
       for i in range(1,20):
         self.mpc_times[i] = self.mpc_times[i-1] + _DT_MPC
         self.mpc_angles[i] = float(math.degrees(self.mpc_solution[0].delta[i] * VM.sR) + angle_offset_bias)
-        self.mpc_rates[i-1] = (self.mpc_angles[i] - self.mpc_angles[i-1]) / (self.mpc_times[i] - self.mpc_times[i-1])
-        #self.mpc_rates[i] = math.degrees(self.mpc_solution[0].rate[i] * VM.sR)
 
       delta_desired = self.mpc_solution[0].delta[1]
       rate_desired = math.degrees(self.mpc_solution[0].rate[0] * VM.sR)
@@ -131,7 +128,6 @@ class PathPlanner(object):
     plan_send.pathPlan.rateSteers = float(rate_desired)
     plan_send.pathPlan.angleOffset = float(live_parameters.liveParameters.angleOffsetAverage)
     plan_send.pathPlan.mpcAngles = map(float, self.mpc_angles)
-    plan_send.pathPlan.mpcRates = map(float, self.mpc_rates)
     plan_send.pathPlan.mpcTimes = map(float, self.mpc_times)
     plan_send.pathPlan.laneProb =float(self.MP.lane_prob)
     plan_send.pathPlan.valid = bool(plan_valid)

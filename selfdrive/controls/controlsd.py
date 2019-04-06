@@ -263,8 +263,7 @@ def state_control(plan, path_plan, CS, CP, state, events, v_cruise_kph, v_cruise
   actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
                                               v_cruise_kph, v_acc_sol, plan.vTargetFuture, a_acc_sol, CP)
   # Steering PID loop and lateral MPC
-  actuators.steer, actuators.steerAngle = LaC.update(active, CS.vEgo, CS.steeringAngle, CS.steeringRate,
-                                                     CS.steeringPressed, CP, VM, path_plan)
+  actuators.steer, actuators.steerAngle = LaC.update(active, CS.vEgo, CS.steeringAngle, CS.steeringPressed, CP, VM, path_plan)
 
   # Send a "steering required alert" if saturation count has reached the limit
   if LaC.sat_flag and CP.steerLimitAlert:
@@ -342,8 +341,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "vEgo": CS.vEgo,
     "vEgoRaw": CS.vEgoRaw,
     "angleSteers": CS.steeringAngle,
-    "dampAngleSteers": float(LaC.dampened_angle_steers),
-    "curvature": VM.calc_curvature((LaC.dampened_angle_steers - path_plan.pathPlan.angleOffset) * CV.DEG_TO_RAD, CS.vEgo),
+    "curvature": VM.calc_curvature((CS.steeringAngle - path_plan.pathPlan.angleOffset) * CV.DEG_TO_RAD, CS.vEgo),
     "steerOverride": CS.steeringPressed,
     "state": state,
     "engageable": not bool(get_events(events, [ET.NO_ENTRY])),
@@ -355,7 +353,6 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "ufAccelCmd": float(LoC.pid.f),
     "angleSteersDes": float(path_plan.pathPlan.angleSteers),
     "dampAngleSteersDes": float(LaC.dampened_desired_angle),
-    "dampRateSteersDes": float(LaC.dampened_desired_rate),
     "rateModeFF": LaC.rate_mode,
     "angleModeFF": LaC.angle_mode,
     "upSteer": float(LaC.pid.p),

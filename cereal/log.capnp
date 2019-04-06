@@ -397,12 +397,10 @@ struct Live100Data {
   jerkFactor @12 :Float32;
   angleSteers @13 :Float32;     # Steering angle in degrees.
   angleSteersDes @29 :Float32;
-  dampAngleRateDes @55 :Float32;
-  dampAngleSteers @52 :Float32;
-  dampAngleSteersDes @53 :Float32;
-  dampRateSteersDes @54 :Float32;
-  rateModeFF @56 :Float32;
-  angleModeFF @57 :Float32;
+  dampAngleSteersDes @52 :Float32;
+  dampRateSteersDes @53 :Float32;
+  rateModeFF @54 :Float32;
+  angleModeFF @55 :Float32;
   curvature @37 :Float32;       # path curvature from vehicle model
   hudLeadDEPRECATED @14 :Int32;
   cumLagMs @15 :Float32;
@@ -620,9 +618,8 @@ struct PathPlan {
   angleSteers @8 :Float32; # deg
   rateSteers @13 :Float32; # deg/s
   mpcAngles @14 :List(Float32);
-  mpcRates @15 :List(Float32);
-  mpcTimes @16 :List(Float32);
-  laneProb @17 :Float32;
+  mpcTimes @15 :List(Float32);
+  laneProb @16 :Float32;
   valid @9 :Bool;
   paramsValid @10 :Bool;
   modelValid @12 :Bool;

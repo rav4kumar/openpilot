@@ -67,7 +67,6 @@ bool pigeon_needs_init;
 
 int big_recv;
 uint32_t big_data[RECV_SIZE*2];
-uint16_t sync_id;
 
 void pigeon_init();
 void *pigeon_thread(void *crap);
@@ -95,8 +94,7 @@ void *safety_setter_thread(void *s) {
 
   auto safety_model = car_params.getSafetyModel();
   auto safety_param = car_params.getSafetyParam();
-  sync_id = car_params.getSyncID();
-  LOGW("setting safety model: %d with param %d and sync id %d", safety_model, safety_param, sync_id);
+  LOGW("setting safety model: %d with param %d", safety_model, safety_param);
 
   int safety_setting = 0;
   switch (safety_model) {
@@ -216,7 +214,6 @@ void handle_usb_issue(int err, const char func[]) {
   LOGE_100("usb error %d \"%s\" in %s", err, libusb_strerror((enum libusb_error)err), func);
   if (err == -4) {
     LOGE("lost connection");
-    sync_id = 0;
     usb_retry_connect();
   }
   // TODO: check other errors, is simply retrying okay?
@@ -257,15 +254,6 @@ bool can_recv(void *s, bool force_send) {
     big_data[(big_index + i)*4+2] = data[i*4+2];
     big_data[(big_index + i)*4+3] = data[i*4+3];
     big_recv += 0x10;
-    if (data[i*4] & 4) {
-      // extended
-      address = data[i*4] >> 3;
-      //printf("got extended: %x\n", big_data[i*4] >> 3);
-    } else {
-      // normal
-      address = data[i*4] >> 21;
-    }
-    if (address == sync_id) force_send = true;
   }
   if (force_send) {
     frame_sent = true;
@@ -497,85 +485,42 @@ void *can_recv_thread(void *crap) {
 
   while (!do_exit) {
 
-    // TODO: Merge the looping logic after syncID vs non-sincID performance is optimized / debugged
-    while (sync_id > 0 && !do_exit) {
-      frame_sent = can_recv(publisher, force_send);
+    frame_sent = can_recv(publisher, force_send);
 
-      // drain the Panda twice at 4.5ms intervals, then once at 1.0ms interval (twice max if sync_id is set)
-      if (frame_sent == true || skip_once == true) {
-        last_long_sleep = 1e-3 * nanos_since_boot();
-        skip_once = frame_sent;
-        wake_time += 4500;
-        force_send = false;
-        if (last_long_sleep < wake_time) {
-          usleep(wake_time - last_long_sleep);
-        }
-        else {
-          if ((last_long_sleep - wake_time) > 5e5) {
-            // probably a new drive
-            wake_time = last_long_sleep;
-          }
-          else {
-            if (skip_once) {
-              wake_time += 4500;
-              skip_once = false;
-              if (last_long_sleep < wake_time) {
-                usleep(wake_time - last_long_sleep);
-              }
-              else {
-                printf("   lagging sync %d \n", sync_id);
-              }
-            }
-          }
-        }
+    // drain the Panda twice at 4.5ms intervals, then once at 1.0ms interval (twice max if sync_id is set)
+    if (recv_state++ < 2) {
+      last_long_sleep = 1e-3 * nanos_since_boot();
+      wake_time += 4500;
+      force_send = false;
+      if (last_long_sleep < wake_time) {
+        usleep(wake_time - last_long_sleep);
       }
       else {
-        force_send = (wake_time > last_long_sleep);
-        wake_time += 1000;
-        cur_time = 1e-3 * nanos_since_boot();
-        if (wake_time > cur_time) {
-          usleep(wake_time - cur_time);
+        if ((last_long_sleep - wake_time) > 5e5) {
+          // probably a new drive
+          wake_time = last_long_sleep;
+        }
+        else {
+          if (recv_state < 2) {
+            wake_time += 4500;
+            recv_state++;
+            if (last_long_sleep < wake_time) {
+              usleep(wake_time - last_long_sleep);
+            }
+            else {
+              printf("    lagging!\n");
+            }
+          }
         }
       }
     }
-    while (sync_id == 0 && !do_exit) {
-      frame_sent = can_recv(publisher, force_send);
-
-      // drain the Panda twice at 4.5ms intervals, then once at 1.0ms interval (twice max if sync_id is set)
-      if (recv_state++ < 2) {
-        last_long_sleep = 1e-3 * nanos_since_boot();
-        wake_time += 4500;
-        force_send = false;
-        if (last_long_sleep < wake_time) {
-          usleep(wake_time - last_long_sleep);
-        }
-        else {
-          if ((last_long_sleep - wake_time) > 5e5) {
-            // probably a new drive
-            wake_time = last_long_sleep;
-          }
-          else {
-            if (recv_state < 2) {
-              wake_time += 4500;
-              recv_state++;
-              if (last_long_sleep < wake_time) {
-                usleep(wake_time - last_long_sleep);
-              }
-              else {
-                printf("    lagging!\n");
-              }
-            }
-          }
-        }
-      }
-      else {
-        force_send = true;
-        recv_state = 0;
-        wake_time += 1000;
-        cur_time = 1e-3 * nanos_since_boot();
-        if (wake_time > cur_time) {
-          usleep(wake_time - cur_time);
-        }
+    else {
+      force_send = true;
+      recv_state = 0;
+      wake_time += 1000;
+      cur_time = 1e-3 * nanos_since_boot();
+      if (wake_time > cur_time) {
+        usleep(wake_time - cur_time);
       }
     }
   }

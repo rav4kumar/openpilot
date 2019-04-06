@@ -58,9 +58,7 @@ class CarInterface(object):
 
     ret.enableCruise = False
     ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
-    ret.steerMPCDampTime = 0.05       # dampen desired angle over 50ms (1 mpc cycles)
-    ret.steerReactTime = -0.02        # decrease total projected angle by 20 ms
-    ret.steerDampTime = 0.03          # dampen projected steer angle over 30ms (3 control cycles)
+    ret.steerMPCDampTime = 0.25       # dampen desired angle over 250ms (5 mpc cycles)
 
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
