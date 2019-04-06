@@ -2,9 +2,37 @@ import json
 import os
 
 class kegman_conf():
-  def __init__(self):
+  def __init__(self, CP=None):
     self.conf = self.read_config()
-    self.update = self.conf
+    if CP is not None:
+      self.init_config(CP)
+
+  def init_config(self, CP):
+    write_conf = False
+    if self.conf['tuneGernby'] == "-1":
+      self.conf['tuneGernby'] = str(1)
+      write_conf = True
+    if self.conf['rateFF'] == "-1":
+      self.conf['rateFF'] = "0.2"
+      write_conf = True
+    if self.conf['angleFF'] == "-1":
+      self.conf['angleFF'] = "2.0"
+      write_conf = True
+    if self.conf['reactMPC'] == "-1":
+      self.conf['reactMPC'] = str(round(CP.steerMPCReactTime,3))
+      write_conf = True
+    if self.conf['dampMPC'] == "-1":
+      self.conf['dampMPC'] = str(round(CP.steerMPCDampTime,3))
+      write_conf = True
+    if self.conf['Kp'] == "-1":
+      self.conf['Kp'] = str(round(CP.steerKpV[0],3))
+      write_conf = True
+    if self.conf['Ki'] == "-1":
+      self.conf['Ki'] = str(round(CP.steerKiV[0],3))
+      write_conf = True
+
+    if write_conf:
+      self.write_config(self.config)
 
   def read_config(self):
     self.element_updated = False

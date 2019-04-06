@@ -14,36 +14,8 @@ def get_steer_max(CP, v_ego):
 class LatControl(object):
   def __init__(self, CP):
 
-    kegman = kegman_conf()
-    self.write_conf = False
+    kegman = kegman_conf(CP)
     self.gernbySteer = True
-    kegman.conf['tuneGernby'] = str(1)
-    self.write_conf = True
-    if kegman.conf['tuneGernby'] == "-1":
-      kegman.conf['tuneGernby'] = str(1)
-      self.write_conf = True
-    if kegman.conf['rateFF'] == "-1":
-      kegman.conf['rateFF'] = "0.2"
-      self.write_conf = True
-    if kegman.conf['angleFF'] == "-1":
-      kegman.conf['angleFF'] = "2.0"
-      self.write_conf = True
-    if kegman.conf['reactMPC'] == "-1":
-      kegman.conf['reactMPC'] = str(round(CP.steerMPCReactTime,3))
-      self.write_conf = True
-    if kegman.conf['dampMPC'] == "-1":
-      kegman.conf['dampMPC'] = str(round(CP.steerMPCDampTime,3))
-      self.write_conf = True
-    if kegman.conf['Kp'] == "-1":
-      kegman.conf['Kp'] = str(round(CP.steerKpV[0],3))
-      self.write_conf = True
-    if kegman.conf['Ki'] == "-1":
-      kegman.conf['Ki'] = str(round(CP.steerKiV[0],3))
-      self.write_conf = True
-
-    if self.write_conf:
-      kegman.write_config(kegman.conf)
-
     self.mpc_frame = 0
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
