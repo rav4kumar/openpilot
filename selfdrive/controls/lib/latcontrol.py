@@ -19,17 +19,14 @@ class LatControl(object):
     self.mpc_frame = 0
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime / _DT)
-    self.angle_ff_gain = 2.0
-    self.rate_ff_gain = 0.2
+    self.angle_ff_gain = -1.0
+    self.rate_ff_gain = -1.0
     self.angle_ff_bp = [[0.5, 5.0],[0.0, 1.0]]
     self.dampened_actual_angle = 0.0
     self.dampened_desired_angle = 0.0
     self.dampened_desired_rate = 0.0
     self.rate_mode = 0.0
     self.angle_mode = 0.0
-    self.angle_ff_counter = 0
-    self.starting_integral = 0.0
-    self.last_angle = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -58,6 +55,17 @@ class LatControl(object):
       self.last_angle = self.dampened_desired_angle
     self.angle_ff_counter += 1
 
+  def adjust_rate_gain(self, steer_rate):
+    self.desired_rate_noise += 0.0001 * (self.dampened_desired_rate**2 - self.desired_rate_noise)
+    self.actual_rate_noise += 0.0001 * (steer_rate**2 - self.actual_rate_noise)
+    #if self.rate_ff_counter > 100:
+    if self.actual_rate_noise**0.5 > 0.75 * self.desired_rate_noise**0.5:
+      self.rate_ff_gain *= 0.9999
+    else:
+      self.rate_ff_gain *= 1.0001
+    #  self.rate_ff_counter = 0
+    #self.rate_ff_counter += 1
+
   def live_tune(self, CP):
     self.mpc_frame += 1
     if self.mpc_frame % 300 == 0:
@@ -69,8 +77,6 @@ class LatControl(object):
         self.total_desired_projection = max(0.0, float(kegman.conf['dampMPC']) + float(kegman.conf['reactMPC']))
         self.desired_smoothing = max(1.0, float(kegman.conf['dampMPC']) / _DT)
         self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1)
-        self.ff_angle_factor = float(kegman.conf['angleFF'])
-        self.ff_rate_factor = float(kegman.conf['rateFF'])
 
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
@@ -86,7 +92,7 @@ class LatControl(object):
   def reset(self):
     self.pid.reset()
 
-  def update(self, active, v_ego, angle_steers, steer_override, CP, VM, path_plan):
+  def update(self, active, v_ego, angle_steers, rate_steers, steer_override, CP, VM, path_plan):
 
     self.live_tune(CP)
 
@@ -94,6 +100,14 @@ class LatControl(object):
       output_steer = 0.0
       self.pid.reset()
       self.dampened_desired_angle = float(angle_steers)
+      self.rate_ff_gain = VM.rG
+      self.angle_ff_gain = VM.aG
+      self.angle_ff_counter = 0
+      self.rate_ff_counter = 0
+      self.desired_rate_noise = 0.0
+      self.starting_integral = 0.0
+      self.actual_rate_noise = 0.0
+      self.last_angle = 0.0
     else:
       if self.gernbySteer == False:
         self.dampened_desired_angle = float(path_plan.angleSteers)
@@ -102,7 +116,7 @@ class LatControl(object):
         cur_time = sec_since_boot()
         projected_desired_angle = interp(cur_time + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcAngles)
         self.dampened_desired_angle += ((projected_desired_angle - self.dampened_desired_angle) / self.desired_smoothing)
-        projected_desired_rate = interp(cur_time + self.total_desired_projection, path_plan.mpcRates, path_plan.mpcRates)
+        projected_desired_rate = interp(cur_time + self.total_desired_projection, path_plan.mpcTimes, path_plan.mpcRates)
         self.dampened_desired_rate += ((projected_desired_rate - self.dampened_desired_rate) / self.desired_smoothing)
 
       if CP.steerControlType == car.CarParams.SteerControlType.torque:
@@ -121,10 +135,12 @@ class LatControl(object):
         output_steer = self.pid.update(self.dampened_desired_angle, angle_steers, check_saturation=(v_ego > 10),
                                       override=steer_override, feedforward=feed_forward, speed=v_ego, deadzone=deadzone)
 
-        #if not steer_override and abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
-        #  self.adjust_angle_gain()
-        #else:
-        #  self.angle_ff_counter = 0
+        if not steer_override and abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
+          self.adjust_angle_gain()
+          self.rate_ff_counter = 0
+        else:
+          self.adjust_rate_gain(rate_steers)
+          self.angle_ff_counter = 0
 
     self.sat_flag = self.pid.saturated
     self.dampened_actual_angle += 0.1 * (angle_steers - self.dampened_actual_angle)

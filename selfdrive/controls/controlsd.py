@@ -39,9 +39,9 @@ def isEnabled(state):
   return (isActive(state) or state == State.preEnabled)
 
 
-def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
+def data_sample(CI, CC, CS, plan_sock, path_plan_sock, live_parameters_sock, thermal, calibration, health, driver_monitor,
                 poller, cal_status, cal_perc, overtemp, free_space, low_battery,
-                driver_status, state, mismatch_counter, rk, params, plan, path_plan):
+                driver_status, state, mismatch_counter, rk, params, plan, path_plan, live_parameters):
   """Receive data from sockets and create events for battery, temperature and disk space"""
 
   rk.monitor_time()
@@ -74,6 +74,8 @@ def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, hea
       plan = messaging.recv_one(socket)
     elif socket is path_plan_sock:
       path_plan = messaging.recv_one(socket)
+    elif socket is live_parameters_sock:
+      live_parameters = messaging.recv_one(socket)
 
   if td is not None:
     overtemp = td.thermal.thermalStatus >= ThermalStatus.red
@@ -117,7 +119,7 @@ def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, hea
   if dm is not None:
     driver_status.get_pose(dm.driverMonitoring, params)
 
-  return CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan
+  return CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan, live_parameters
 
 
 def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM):
@@ -263,7 +265,7 @@ def state_control(plan, path_plan, CS, CP, state, events, v_cruise_kph, v_cruise
   actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
                                               v_cruise_kph, v_acc_sol, plan.vTargetFuture, a_acc_sol, CP)
   # Steering PID loop and lateral MPC
-  actuators.steer, actuators.steerAngle = LaC.update(active, CS.vEgo, CS.steeringAngle, CS.steeringPressed, CP, VM, path_plan)
+  actuators.steer, actuators.steerAngle = LaC.update(active, CS.vEgo, CS.steeringAngle, CS.steeringRate, CS.steeringPressed, CP, VM, path_plan)
 
   # Send a "steering required alert" if saturation count has reached the limit
   if LaC.sat_flag and CP.steerLimitAlert:
@@ -355,6 +357,10 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "dampAngleSteersDes": float(LaC.dampened_desired_angle),
     "rateModeFF": LaC.rate_mode,
     "angleModeFF": LaC.angle_mode,
+    "angleGain": LaC.angle_ff_gain,
+    "rateGain": LaC.rate_ff_gain,
+    "actualNoise": LaC.actual_rate_noise**0.5,
+    "desiredNoise": LaC.desired_rate_noise**0.5,
     "upSteer": float(LaC.pid.p),
     "uiSteer": float(LaC.pid.i),
     "ufSteer": float(LaC.pid.f),
@@ -416,6 +422,7 @@ def controlsd_thread(gctx=None, rate=100):
 
   # Sub sockets
   poller = zmq.Poller()
+  live_parameters_sock = messaging.sub_sock(context, service_list['liveParameters'].port, conflate=True, poller=poller)
   thermal = messaging.sub_sock(context, service_list['thermal'].port, conflate=True, poller=poller)
   health = messaging.sub_sock(context, service_list['health'].port, conflate=True, poller=poller)
   cal = messaging.sub_sock(context, service_list['liveCalibration'].port, conflate=True, poller=poller)
@@ -466,6 +473,8 @@ def controlsd_thread(gctx=None, rate=100):
   plan.init('plan')
   path_plan = messaging.new_message()
   path_plan.init('pathPlan')
+  live_parameters = messaging.new_message()
+  live_parameters.init('liveParameters')
 
   rk = Ratekeeper(rate, print_delay_threshold=12. / 1000)
   controls_params = params.get("ControlsParams")
@@ -487,12 +496,15 @@ def controlsd_thread(gctx=None, rate=100):
     prof.checkpoint("Ratekeeper", ignore=True)
 
     # Sample data and compute car events
-    CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan  =\
-      data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
+    CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan, live_parameters = \
+      data_sample(CI, CC, CS, plan_sock, path_plan_sock, live_parameters_sock, thermal, cal, health, driver_monitor,
                   poller, cal_status, cal_perc, overtemp, free_space, low_battery, driver_status,
-                  state, mismatch_counter, rk, params, plan, path_plan)
+                  state, mismatch_counter, rk, params, plan, path_plan, live_parameters)
 
     prof.checkpoint("Sample")
+
+    VM.aG = live_parameters.liveParameters.angleGain
+    VM.rG = live_parameters.liveParameters.rateGain
 
     path_plan_age = (start_time - path_plan.logMonoTime) / 1e9
     plan_age = (start_time - plan.logMonoTime) / 1e9

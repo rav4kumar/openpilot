@@ -401,6 +401,10 @@ struct Live100Data {
   dampRateSteersDes @53 :Float32;
   rateModeFF @54 :Float32;
   angleModeFF @55 :Float32;
+  angleGain @57 :Float32;
+  rateGain @56 :Float32;
+  desiredNoise @58 :Float32;
+  actualNoise @59 :Float32;
   curvature @37 :Float32;       # path curvature from vehicle model
   hudLeadDEPRECATED @14 :Int32;
   cumLagMs @15 :Float32;
@@ -1621,6 +1625,8 @@ struct LiveParametersData {
   stiffnessFactor @4 :Float32;
   steerRatio @5 :Float32;
   laneWidth @6 :Float32;
+  angleGain @7 :Float32;
+  rateGain @8 :Float32;
 }
 
 struct LiveMapData {

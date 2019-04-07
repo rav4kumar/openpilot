@@ -140,8 +140,8 @@ def dashboard_thread(rate=300):
               last_actual = l100.live100.angleSteers
               v_curv = l100.live100.curvature
 
-              influxLineString += ("opData,sources=capnp ff_rate=%1.3f,ff_angle=%1.3f,ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
-                          (l100.live100.rateModeFF, l100.live100.angleModeFF, angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
+              influxLineString += ("opData,sources=capnp actualNoise=%1.3f,desiredNoise=%1.3f,ff_rate=%1.3f,ff_angle=%1.3f,ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
+                          (l100.live100.actualNoise, l100.live100.desiredNoise, l100.live100.rateModeFF, l100.live100.angleModeFF, angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
                           l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, l100.live100.vCruise, receiveTime))
               frame_count += 1
 
