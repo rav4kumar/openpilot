@@ -25,6 +25,7 @@ class LatControl(object):
     self.dampened_desired_angle = 0.0
     self.rate_mode = 0.0
     self.angle_mode = 0.0
+    self.dampened_actual_angle = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -94,6 +95,7 @@ class LatControl(object):
                                       override=steer_override, feedforward=feed_forward, speed=v_ego, deadzone=deadzone)
 
     self.sat_flag = self.pid.saturated
+    self.dampened_actual_angle += 0.1 * (angle_steers - self.dampened_actual_angle)
 
     if CP.steerControlType == car.CarParams.SteerControlType.torque:
       return float(output_steer), float(path_plan.angleSteers)
