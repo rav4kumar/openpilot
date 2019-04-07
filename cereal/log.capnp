@@ -618,8 +618,9 @@ struct PathPlan {
   angleSteers @8 :Float32; # deg
   rateSteers @13 :Float32; # deg/s
   mpcAngles @14 :List(Float32);
-  mpcTimes @15 :List(Float32);
-  laneProb @16 :Float32;
+  mpcRates @15 :List(Float32);
+  mpcTimes @16 :List(Float32);
+  laneProb @17 :Float32;
   valid @9 :Bool;
   paramsValid @10 :Bool;
   modelValid @12 :Bool;

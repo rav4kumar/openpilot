@@ -13,10 +13,10 @@ class kegman_conf():
       self.conf['tuneGernby'] = str(1)
       write_conf = True
     if self.conf['rateFF'] == "-1":
-      self.conf['rateFF'] = "0.2"
+      self.conf['rateFF'] = "0.1"
       write_conf = True
     if self.conf['angleFF'] == "-1":
-      self.conf['angleFF'] = "2.0"
+      self.conf['angleFF'] = "1.0"
       write_conf = True
     if self.conf['reactMPC'] == "-1":
       self.conf['reactMPC'] = str(round(CP.steerMPCReactTime,3))
@@ -55,8 +55,8 @@ class kegman_conf():
         self.element_updated = True
 
       if "rateFF" not in self.config:
-        self.config.update({"rateFF":"0.2"})
-        self.config.update({"angleFF":"2.0"})
+        self.config.update({"rateFF":"0.1"})
+        self.config.update({"angleFF":"1.0"})
         self.element_updated = True
 
       if "dampMPC" not in self.config:
@@ -82,7 +82,7 @@ class kegman_conf():
       self.config = {"cameraOffset":"0.06", "lastTrMode":"1", "battChargeMin":"60", "battChargeMax":"70", \
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
                      "brakeStoppingTarget":"0.25", "tuneGernby":"0", "reactSteer":"-1", "reactMPC":"-1", \
-                     "dampMPC":"-1", "dampSteer":"-1", "rateFF":"0.2", "angleFF":"2.0", "Kp":"-1", "Ki":"-1"}
+                     "dampMPC":"-1", "dampSteer":"-1", "rateFF":"0.1", "angleFF":"1.0", "Kp":"-1", "Ki":"-1"}
 
       self.write_config(self.config)
     return self.config

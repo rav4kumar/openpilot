@@ -52,13 +52,7 @@ while True:
   print "would cause the vehicle to turn sooner."
   print ""
   print ""
-  print "reactSteer is an adjustment to the time projection of steering"
-  print "rate to determine future steering angle.  If the steering is "
-  print "too shaky, decrease this value (may be negative).  If the"
-  print "steering response is too slow, increase this value."
-  print ""
-  print ""
-  print "dampMPC / dampSteer is the amount of time that the samples"
+  print "dampMPC is the amount of time that the samples"
   print "will be projected and averaged to smooth the values"
   print ""
   print ""
@@ -66,7 +60,7 @@ while True:
   print ("press a, d, g, j to decr 0.1, 0.05, 0.01, 0.001")
   print ("press 0 / L to make the value 0 / 1")
   print ("press SPACE / m for next /prev parameter")
-  print ("press q to quit")
+  print ("press z to quit")
 
   char  = getch()
   write_json = False
@@ -122,7 +116,7 @@ while True:
     else:
       j = len(param) - 1
 
-  elif (char == "q"):
+  elif (char == "z"):
     break
 
 

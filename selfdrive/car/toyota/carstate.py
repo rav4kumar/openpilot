@@ -168,5 +168,6 @@ class CarState(object):
     self.brake_lights = bool(cp.vl["ESP_CONTROL"]['BRAKE_LIGHTS_ACC'] or self.brake_pressed)
     if self.CP.carFingerprint == CAR.PRIUS:
       self.generic_toggle = cp.vl["AUTOPARK_STATUS"]['STATE'] != 0
+      self.angle_steers += self.angle_steers_rate * 0.1
     else:
       self.generic_toggle = bool(cp.vl["LIGHT_STALK"]['AUTO_HIGH_BEAM'])
