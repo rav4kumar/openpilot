@@ -6,7 +6,7 @@ from selfdrive.kegman_conf import kegman_conf
 from cereal import car
 
 _DT = 0.01    # 100Hz
-
+NOISE_THRESHOLD = 0.16
 
 def get_steer_max(CP, v_ego):
   return interp(v_ego, CP.steerMaxBP, CP.steerMaxV)
@@ -25,9 +25,10 @@ class LatControl(object):
     self.dampened_actual_angle = 0.0
     self.dampened_desired_angle = 0.0
     self.dampened_desired_rate = 0.0
-    self.angle_steers_noise = 0.4
+    self.angle_steers_noise = NOISE_THRESHOLD
     self.rate_mode = 0.0
     self.angle_mode = 0.0
+    self.previous_integral = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -50,8 +51,7 @@ class LatControl(object):
 
   def adjust_rate_gain(self, angle_steers):
     self.angle_steers_noise += 0.0001 * ((angle_steers - self.dampened_actual_angle)**2 - self.angle_steers_noise)
-    #self.angle_steers_noise += 0.0001 * (steer_rate**2 - self.angle_steers_noise)
-    if self.angle_steers_noise**0.5 > 0.4:
+    if self.angle_steers_noise > NOISE_THRESHOLD:
       self.rate_ff_gain *= 0.9999
     else:
       self.rate_ff_gain *= 1.0001
@@ -92,11 +92,6 @@ class LatControl(object):
       self.dampened_desired_angle = float(angle_steers)
       self.rate_ff_gain = VM.rG
       self.angle_ff_gain = VM.aG
-      #self.angle_ff_counter = 0
-      #self.rate_ff_counter = 0
-      #self.desired_rate_noise = 0.0
-      #self.angle_steers_noise = 0.0
-      #self.last_angle = 0.0
     else:
       if self.gernbySteer == False:
         self.dampened_desired_angle = float(path_plan.angleSteers)

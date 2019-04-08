@@ -168,7 +168,7 @@ class CarController(object):
         can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.CANCEL, idx))
       elif CS.stopped:
         print(self.prev_lead_distance, CS.lead_distance)
-        if CS.lead_distance is not None and CS.lead_distance > (self.prev_lead_distance + 2):
+        if CS.lead_distance > (self.prev_lead_distance + 2):
           can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx))
       else:
         self.prev_lead_distance = CS.lead_distance

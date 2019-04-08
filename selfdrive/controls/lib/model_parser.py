@@ -54,7 +54,9 @@ class ModelParser(object):
       lane_width_diff = abs(self.lane_width - current_lane_width)
       lane_prob = interp(lane_width_diff, [0.3, interp(v_ego, [20.0, 25.0], [1.0, 0.4])], [1.0, 0.0])
 
-      if (abs(v_curv) < 0.0005 and l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:
+      r_prob *= lane_prob
+      
+      '''if (abs(v_curv) < 0.0005 and l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:
         steer_compensation = 1.2 * v_curv * v_ego
         total_left_divergence = (md.model.leftLane.points[5] - md.model.leftLane.points[0]) * r_prob + steer_compensation
         total_right_divergence = -((md.model.rightLane.points[5] - md.model.rightLane.points[0]) * l_prob + steer_compensation)
@@ -74,6 +76,7 @@ class ModelParser(object):
             #l_prob *= 1.5
             l_poly, p_poly = self.fix_polys(map(float, md.model.leftLane.points), map(float, md.model.path.points))
         self.lane_prob = lane_prob
+      '''
 
       self.lead_dist = md.model.lead.dist
       self.lead_prob = md.model.lead.prob
