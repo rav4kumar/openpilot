@@ -35,36 +35,24 @@ class LatControl(object):
                             k_f=CP.steerKf, pos_limit=1.0)
 
   def adjust_angle_gain(self):
-    if self.angle_ff_counter > 100:
-      if abs(self.dampened_desired_angle) > abs(self.last_angle):
-        if self.pid.i > self.starting_integral:
-          if self.pid.f > 0:
-            self.angle_ff_gain *= 1.01
-          else:
-            self.angle_ff_gain *= 0.99
-        elif self.pid.i < self.starting_integral:
-          if self.pid.f < 0:
-            self.angle_ff_gain *= 1.01
-          else:
-            self.angle_ff_gain *= 0.99
-      self.angle_ff_counter = 0
-      self.last_angle = self.dampened_desired_angle
-      self.starting_integral = self.pid.i
-    elif self.angle_ff_counter == 0:
-      self.starting_integral = self.pid.i
-      self.last_angle = self.dampened_desired_angle
-    self.angle_ff_counter += 1
+    if self.pid.i > self.previous_integral:
+      if self.pid.f > 0 and self.pid.i > 0:
+        self.angle_ff_gain *= 1.0001
+      else:
+        self.angle_ff_gain *= 0.9999
+    elif self.pid.i < self.previous_integral:
+      if self.pid.f < 0 and self.pid.i < 0:
+        self.angle_ff_gain *= 1.0001
+      else:
+        self.angle_ff_gain *= 0.9999
+    self.previous_integral = self.pid.i
 
   def adjust_rate_gain(self, steer_rate):
-    self.desired_rate_noise += 0.0001 * (self.dampened_desired_rate**2 - self.desired_rate_noise)
     self.actual_rate_noise += 0.0001 * (steer_rate**2 - self.actual_rate_noise)
-    #if self.rate_ff_counter > 100:
-    if self.actual_rate_noise**0.5 > 0.75 * self.desired_rate_noise**0.5:
+    if self.actual_rate_noise**0.5 > 0.5:
       self.rate_ff_gain *= 0.9999
     else:
       self.rate_ff_gain *= 1.0001
-    #  self.rate_ff_counter = 0
-    #self.rate_ff_counter += 1
 
   def live_tune(self, CP):
     self.mpc_frame += 1
@@ -105,7 +93,7 @@ class LatControl(object):
       self.angle_ff_counter = 0
       self.rate_ff_counter = 0
       self.desired_rate_noise = 0.0
-      self.starting_integral = 0.0
+      self.previous_integral = 0.0
       self.actual_rate_noise = 0.0
       self.last_angle = 0.0
     else:
