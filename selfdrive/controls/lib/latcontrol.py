@@ -133,3 +133,4 @@ class LatControl(object):
       return float(output_steer), float(path_plan.angleSteers)
     else:
       return float(self.dampened_desired_angle), float(path_plan.angleSteers)
+      

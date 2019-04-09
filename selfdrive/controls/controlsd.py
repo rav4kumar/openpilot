@@ -397,7 +397,7 @@ def controlsd_thread(gctx=None, rate=100):
   gc.disable()
 
   # start the loop
-  set_realtime_priority(4)
+  set_realtime_priority(3)
 
   context = zmq.Context()
   params = Params()

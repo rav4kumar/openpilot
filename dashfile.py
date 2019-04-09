@@ -44,7 +44,7 @@ def main(rate=100):
     print("opened")
     dash_writer = csv.writer(dash_file, delimiter=',', quotechar='', quoting=csv.QUOTE_NONE)
     print("initialized")
-    dash_writer.writerow(['ff_rate','ff_angle', 'angle_steers_des','angle_steers','angle_rate','dampened_angle_steers_des','dampened_angle_rate_des','dampened_angle_steers','v_ego','steer_override','p','i','f','time'])
+    dash_writer.writerow(['ff_rate','ff_angle', 'angleGain','rateGain','actualNoise','angle_steers_des','angle_steers','dampened_angle_steers_des','v_ego','steer_override','p','i','f','time'])
     print("first row")
 
     while 1:
@@ -67,16 +67,15 @@ def main(rate=100):
               if (abs(receiveTime - int(time.time() * 1000000000)) > 10000000000):
                 monoTimeOffset = (time.time() * 1000000000) - l100.logMonoTime
                 receiveTime = int(monoTimeOffset + l100.logMonoTime)
-
               frame_count += 1
-              dash_writer.writerow([str(round(l100.live100.rateModeFF, 2)),
-                                    str(round(l100.live100.angleModeFF, 2)),
+              dash_writer.writerow([str(round(1.0 - l100.live100.angleFFRatio, 2)),
+                                    str(round(l100.live100.angleFFRatio, 2)),
+                                    str(round(l100.live100.angleFFGain, 2)),
+                                    str(round(l100.live100.rateFFGain, 5)),
+                                    str(round(l100.live100.angleSteersNoise, 2)),
                                     str(round(l100.live100.angleSteersDes, 2)),
                                     str(round(l100.live100.angleSteers, 2)),
-                                    str(round(angle_rate, 2)),
                                     str(round(l100.live100.dampAngleSteersDes, 2)),
-                                    str(round(l100.live100.dampAngleRateDes, 2)),
-                                    str(round(l100.live100.dampAngleSteers, 2)),
                                     str(round(l100.live100.vEgo, 1)),
                                     1 if l100.live100.steerOverride else 0,
                                     str(round(l100.live100.upSteer, 4)),
