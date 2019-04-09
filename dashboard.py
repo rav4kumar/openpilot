@@ -10,7 +10,7 @@ from selfdrive.controls.lib.latcontrol_helpers import calc_lookahead_offset
 from selfdrive.controls.lib.pathplanner import PathPlanner
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from common.realtime import set_realtime_priority, Ratekeeper
-from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv, calc_poly_curvature
+from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv
 import importlib
 from collections import defaultdict, deque
 from fastcluster import linkage_vector
@@ -140,8 +140,8 @@ def dashboard_thread(rate=300):
               last_actual = l100.live100.angleSteers
               v_curv = l100.live100.curvature
 
-              influxLineString += ("opData,sources=capnp angleGain=%1.2f,rateGain=%1.4f,actualNoise=%1.3f,desiredNoise=%1.3f,ff_rate=%1.3f,ff_angle=%1.3f,ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
-                          (l100.live100.angleGain, l100.live100.rateGain, l100.live100.actualNoise, l100.live100.desiredNoise, l100.live100.rateModeFF, l100.live100.angleModeFF, angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
+              influxLineString += ("opData,sources=capnp angleGain=%1.2f,rateGain=%1.4f,actualNoise=%1.3f,ff_rate=%1.3f,ff_angle=%1.3f,ang_err_noise=%1.1f,des_noise=%1.1f,ang_noise=%1.1f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,v_ego=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f,vCruise=%1.2f %s\n" %
+                          (l100.live100.angleFFGain, l100.live100.rateFFGain, l100.live100.angleSteersNoise, 1.0 - l100.live100.angleFFRatio, l100.live100.angleFFRatio, angle_error_noise, desired_angle_change_noise, actual_angle_change_noise, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.vEgo, l100.live100.steerOverride, l100.live100.vPid,
                           l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, l100.live100.vCruise, receiveTime))
               frame_count += 1
 
@@ -218,11 +218,11 @@ def dashboard_thread(rate=300):
             p_poly = model_polyfit(md.path.points, _path_pinv)
             l_poly = model_polyfit(md.leftLane.points, _path_pinv)
             r_poly = model_polyfit(md.rightLane.points, _path_pinv)
-            p_curv = calc_poly_curvature(p_poly)
+            '''p_curv = calc_poly_curvature(p_poly)
             l_curv = calc_poly_curvature(l_poly)
             r_curv = calc_poly_curvature(r_poly)
 
-            '''far_pinv = [_path_pinv[0][25:50],_path_pinv[1][25:50],_path_pinv[2][25:50],_path_pinv[3][25:50]]
+            far_pinv = [_path_pinv[0][25:50],_path_pinv[1][25:50],_path_pinv[2][25:50],_path_pinv[3][25:50]]
             near_pinv = [_path_pinv[0][0:30],_path_pinv[1][0:30],_path_pinv[2][0:30],_path_pinv[3][0:30]]
 
             p_poly_far = model_polyfit(map(float, md.path.points)[25:50], far_pinv)  # predicted path

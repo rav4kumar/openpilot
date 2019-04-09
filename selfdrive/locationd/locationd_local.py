@@ -174,10 +174,8 @@ def locationd_thread(gctx, addr, disabled_logs):
   poller = zmq.Poller()
 
   car_state_socket = messaging.sub_sock(ctx, service_list['carState'].port, poller, addr=addr, conflate=True)
-  live100_socket = messaging.sub_sock(ctx, service_list['live100'].port, poller, addr=addr, conflate=True)
   sensor_events_socket = messaging.sub_sock(ctx, service_list['sensorEvents'].port, poller, addr=addr, conflate=True)
   camera_odometry_socket = messaging.sub_sock(ctx, service_list['cameraOdometry'].port, poller, addr=addr, conflate=True)
-  path_plan_socket = messaging.sub_sock(ctx, service_list['pathPlan'].port, poller, addr=addr, conflate=True)
 
   kalman_odometry_socket = messaging.pub_sock(ctx, service_list['kalmanOdometry'].port)
   live_parameters_socket = messaging.pub_sock(ctx, service_list['liveParameters'].port)
@@ -203,21 +201,7 @@ def locationd_thread(gctx, addr, disabled_logs):
       'angleOffsetAverage': 0.0,
       'stiffnessFactor': 1.0,
       'steerRatio': VM.sR,
-      'laneWidth': 3.6,
-      'rateGain': 0.2,
-      'angleGain': 1.0
     }
-
-  try:
-    lane_width = params['laneWidth']
-    angle_gain = params['angleGain']
-    rate_gain = params['rateGain']
-
-  except:
-    params['laneWidth'] = 3.6
-    params['angleGain'] = 1.0
-    params['rateGain'] = 0.02
-
     cloudlog.info("Parameter learner resetting to default values")
 
   cloudlog.info("Parameter starting with: %s" % str(params))
@@ -234,14 +218,6 @@ def locationd_thread(gctx, addr, disabled_logs):
     for socket, event in poller.poll(timeout=1000):
       log = messaging.recv_one(socket)
       localizer.handle_log(log)
-
-      if socket is live100_socket:
-        if log.live100.angleGain > 0:
-          angle_gain = float(log.live100.angleGain)
-          rate_gain = float(log.live100.rateGain)
-
-      if socket is path_plan_socket:
-        lane_width = float(log.pathPlan.laneWidth)
 
       if socket is car_state_socket:
         if not localizer.kf.t:
@@ -264,19 +240,12 @@ def locationd_thread(gctx, addr, disabled_logs):
           params.liveParameters.angleOffsetAverage = float(math.degrees(learner.slow_ao))
           params.liveParameters.stiffnessFactor = float(learner.x)
           params.liveParameters.steerRatio = float(learner.sR)
-          params.liveParameters.laneWidth = float(lane_width)
-          params.liveParameters.angleGain = float(angle_gain)
-          params.liveParameters.rateGain = float(rate_gain)
           live_parameters_socket.send(params.to_bytes())
 
         if i % 6000 == 0:   # once a minute
           params = learner.get_values()
           params['carFingerprint'] = CP.carFingerprint
-          params['laneWidth'] = float(lane_width)
-          params['rateGain'] = float(rate_gain)
-          params['angleGain'] = float(angle_gain)
           params_reader.put("LiveParameters", json.dumps(params))
-          #print(params)
 
         i += 1
       elif socket is camera_odometry_socket:

@@ -391,20 +391,18 @@ struct Live100Data {
   upSteer @8 :Float32;
   uiSteer @9 :Float32;
   ufSteer @34 :Float32;
+  angleFFRatio @52 :Float32;
+  rateFFGain @53 :Float32;
+  angleFFGain @54 :Float32;
   aTargetMinDEPRECATED @10 :Float32;
   aTargetMaxDEPRECATED @11 :Float32;
   aTarget @35 :Float32;
   jerkFactor @12 :Float32;
   angleSteers @13 :Float32;     # Steering angle in degrees.
   angleSteersDes @29 :Float32;
-  dampAngleSteersDes @52 :Float32;
-  dampRateSteersDes @53 :Float32;
-  rateModeFF @54 :Float32;
-  angleModeFF @55 :Float32;
-  angleGain @57 :Float32;
-  rateGain @56 :Float32;
-  desiredNoise @58 :Float32;
-  actualNoise @59 :Float32;
+  dampAngleSteersDes @55 :Float32;
+  dampRateSteersDes @56 :Float32;
+  angleSteersNoise @57 :Float32;
   curvature @37 :Float32;       # path curvature from vehicle model
   hudLeadDEPRECATED @14 :Int32;
   cumLagMs @15 :Float32;
@@ -1624,9 +1622,6 @@ struct LiveParametersData {
   angleOffsetAverage @3 :Float32;
   stiffnessFactor @4 :Float32;
   steerRatio @5 :Float32;
-  laneWidth @6 :Float32;
-  angleGain @7 :Float32;
-  rateGain @8 :Float32;
 }
 
 struct LiveMapData {
