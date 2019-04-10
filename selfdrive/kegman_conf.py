@@ -12,12 +12,6 @@ class kegman_conf():
     if self.conf['tuneGernby'] == "-1":
       self.conf['tuneGernby'] = str(1)
       write_conf = True
-    if self.conf['rateFF'] == "-1":
-      self.conf['rateFF'] = "0.1"
-      write_conf = True
-    if self.conf['angleFF'] == "-1":
-      self.conf['angleFF'] = "1.0"
-      write_conf = True
     if self.conf['reactMPC'] == "-1":
       self.conf['reactMPC'] = str(round(CP.steerMPCReactTime,3))
       write_conf = True
@@ -48,25 +42,11 @@ class kegman_conf():
         self.element_updated = True
 
       if "tuneGernby" not in self.config:
-        self.config.update({"tuneGernby":"0"})
-        self.config.update({"react":"-1"})
+        self.config.update({"tuneGernby":"1"})
         self.config.update({"Kp":"-1"})
         self.config.update({"Ki":"-1"})
-        self.element_updated = True
-
-      if "rateFF" not in self.config:
-        self.config.update({"rateFF":"0.1"})
-        self.config.update({"angleFF":"1.0"})
-        self.element_updated = True
-
-      if "dampMPC" not in self.config:
         self.config.update({"dampMPC":"-1"})
-        self.config.update({"dampSteer":"-1"})
-        self.element_updated = True
-
-      if "reactMPC" not in self.config:
         self.config.update({"reactMPC":"-1"})
-        self.config.update({"reactSteer":"-1"})
         self.element_updated = True
 
       # Force update battery charge limits to higher values for Big Model
@@ -81,8 +61,8 @@ class kegman_conf():
     else:
       self.config = {"cameraOffset":"0.06", "lastTrMode":"1", "battChargeMin":"60", "battChargeMax":"70", \
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
-                     "brakeStoppingTarget":"0.25", "tuneGernby":"0", "reactSteer":"-1", "reactMPC":"-1", \
-                     "dampMPC":"-1", "dampSteer":"-1", "rateFF":"0.1", "angleFF":"1.0", "Kp":"-1", "Ki":"-1"}
+                     "brakeStoppingTarget":"0.25", "tuneGernby":"1", "reactMPC":"-1", \
+                     "dampMPC":"-1", "Kp":"-1", "Ki":"-1"}
 
       self.write_config(self.config)
     return self.config
