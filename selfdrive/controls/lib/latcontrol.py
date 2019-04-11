@@ -57,7 +57,9 @@ class LatControl(object):
         self.pid._k_p = ([0.], KpV)
         print(self.angle_ff_gain, self.rate_ff_gain, self.total_desired_projection, self.desired_smoothing, self.gernbySteer)
       else:
+        print(self.angle_ff_gain, self.angle_ff_ratio, self.total_desired_projection, self.desired_smoothing, self.gernbySteer)
         self.gernbySteer = False
+        self.angle_ff_ratio = 1.0
       self.mpc_frame = 0
 
   def reset(self):
@@ -110,16 +112,20 @@ class LatControl(object):
         self.pid.neg_limit = -steers_max
         deadzone = 0.0
 
-        angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
-        self.angle_ff_ratio = interp(abs(angle_feedforward), self.angle_ff_bp[0], self.angle_ff_bp[1])
-        angle_feedforward *= self.angle_ff_ratio * self.angle_ff_gain
-        rate_feedforward = (1.0 - self.angle_ff_ratio) * self.rate_ff_gain * self.dampened_desired_rate
-        steer_feedforward = v_ego**2 * (rate_feedforward + angle_feedforward)
+        if self.gernbySteer:
+          angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
+          self.angle_ff_ratio = interp(abs(angle_feedforward), self.angle_ff_bp[0], self.angle_ff_bp[1])
+          angle_feedforward *= self.angle_ff_ratio * self.angle_ff_gain
+          rate_feedforward = (1.0 - self.angle_ff_ratio) * self.rate_ff_gain * self.dampened_desired_rate
+          steer_feedforward = v_ego**2 * (rate_feedforward + angle_feedforward)
+        else:
+          steer_feedforward = v_ego**2 * (self.dampened_desired_angle - path_plan.angleOffset)
+          print(steer_feedforward)
 
         output_steer = self.pid.update(self.dampened_desired_angle, angle_steers, check_saturation=(v_ego > 10),
                                       override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
 
-        if not steer_override and v_ego > 10.0:
+        if self.gernbySteer and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
             self.adjust_angle_gain()
           else:
@@ -133,4 +139,3 @@ class LatControl(object):
       return float(output_steer), float(path_plan.angleSteers)
     else:
       return float(self.dampened_desired_angle), float(path_plan.angleSteers)
-      
