@@ -80,7 +80,7 @@ class CarInterface(object):
       stop_and_go = True
       ret.safetyParam = 66  # see conversion factor for STEER_TORQUE_EPS in dbc file
       ret.wheelbase = 2.70
-      ret.steerRatio = 15.00   # unknown end-to-end spec
+      ret.steerRatio = 13.40   # bullshit, the known spec is 13.4 https://priuschat.com/threads/2017-prius-prime-steering-ratio-what-is-it.195126/
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3045 * CV.LB_TO_KG + std_cargo
       ret.steerKpV, ret.steerKiV = [[0.4], [0.01]]
