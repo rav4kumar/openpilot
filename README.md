@@ -1,5 +1,7 @@
 **THIS IS A FORK, use at your own risk!**
 
+This goes for all of OpenPilot -- **WARNING: Do NOT depend on OP to stop the car in time if you are approaching an object which is not in motion in the same direction as your car. The radar will NOT detect the stationary object in time to slow your car enough to stop. If you are approaching a stopped vehicle you must disengage and brake as radars ignore objects that are not in motion.**
+
 I drive a 2019 Toyota Prius Prime Advanced. These are my mods.
 
 I'm obsessive about documentation. **READ THE COMMITS** for full details of each change! They are listed below.
