@@ -53,6 +53,7 @@ class PathPlanner(object):
   def update(self, CP, VM, CS, md, live100, live_parameters):
     v_ego = CS.carState.vEgo
     angle_steers = live100.live100.angleSteers
+    angle_rate = live100.live100.angleRate
     v_curv = live100.live100.curvature
     active = live100.live100.active
 
@@ -71,8 +72,9 @@ class PathPlanner(object):
     p_poly = libmpc_py.ffi.new("double[4]", list(self.MP.p_poly))
 
     # account for actuation delay
+    projected_angle_steers = angle_steers + (CP.steerActuatorDelay * angle_rate)
     self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
-    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers, curvature_factor, VM.sR, CP.steerActuatorDelay)
+    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, projected_angle_steers, curvature_factor, VM.sR, CP.steerActuatorDelay)
 
     v_ego_mpc = max(v_ego, 5.0)  # avoid mpc roughness due to low speed
     self.libmpc.run_mpc(self.cur_state, self.mpc_solution,

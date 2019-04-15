@@ -351,6 +351,8 @@ struct CarParams {
   steerLimitAlert @29 :Bool;
   steerMPCReactTime @51 :Float32;
   steerMPCDampTime @52 :Float32;
+  steerDampTime @54 :Float32;
+  steerReactTime @55 :Float32;
 
   vEgoStopping @30 :Float32; # Speed at which the car goes into stopping state
   directAccelControl @31 :Bool; # Does the car have direct accel control or just gas/brake
