@@ -1,4 +1,4 @@
-**THIS IS A FORK, use at your own risk!**
+**THIS IS AN EXPERIMENTAL FORK, use at your own risk!**
 
 This goes for all of OpenPilot -- **WARNING: Do NOT depend on OP to stop the car in time if you are approaching an object which is not in motion in the same direction as your car. The radar will NOT detect the stationary object in time to slow your car enough to stop. If you are approaching a stopped vehicle you must disengage and brake as radars ignore objects that are not in motion.**
 
@@ -8,6 +8,7 @@ I'm obsessive about documentation. **READ THE COMMITS** for full details of each
 
 **Modifications**:
 * Stop and go without Toyota Factory `standstill` mode (may not work on all Toyota models, works on my Prius Prime! Check commit for comments) https://github.com/zorrobyte/openpilot/commit/4b70e41e9b87c6a01f7fff3f018ab1739e0038f2
+* TESTING: VSR merge into 0510: https://github.com/zorrobyte/openpilot/commit/901d0b183784d7a5d39a3188d8bad36fab2d363a
 
 Other mods (you have to manually install these):
 * Automatic cleanup script to prevent OP from turning off when storage is full & auto shutdown script for battery life after uploads finish:
