@@ -129,8 +129,8 @@ def dashboard_thread(rate=100):
               receiveTime = int(monoTimeOffset + l100.logMonoTime)
               #print(int(time.time() * 1000000000), receiveTime, monoTimeOffset, l100.logMonoTime)
 
-            influxLineString += (user_id + ",sources=capnp angleGain=%1.2f,rateGain=%1.5f,ff_standard=%1.2f,ff_rate=%1.3f,ff_angle=%1.3f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f %s\n" %
-                        (l100.live100.angleFFGain, l100.live100.rateFFGain, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio, l100.live100.angleFFRatio, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.steerOverride, vEgo,
+            influxLineString += (user_id + ",sources=capnp apply_steer=%d,angleGain=%1.2f,rateGain=%1.5f,ff_standard=%1.2f,ff_rate=%1.3f,ff_angle=%1.3f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f %s\n" %
+                        (l100.live100.steeringRequested, l100.live100.angleFFGain, l100.live100.rateFFGain, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio, l100.live100.angleFFRatio, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.steerOverride, vEgo,
                         l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, receiveTime))
 
             frame_count += 1

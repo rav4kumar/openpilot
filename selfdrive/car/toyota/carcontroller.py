@@ -160,7 +160,8 @@ class CarController(object):
     else:
       apply_steer_req = 1
 
-    CS.steeringTorqueClipped = (orig_apply_steer != apply_steer)
+    CS.torque_clipped = (orig_apply_steer != apply_steer)
+    CS.apply_steer = apply_steer
 
     self.steer_angle_enabled, self.ipas_reset_counter = \
       ipas_state_transition(self.steer_angle_enabled, enabled, CS.ipas_active, self.ipas_reset_counter)

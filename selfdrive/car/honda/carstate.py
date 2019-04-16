@@ -186,6 +186,7 @@ class CarState(object):
     self.steer_good_count = 0
     self.steer_data_skipped = 0
     self.torque_clipped = False
+    self.apply_steer = 0
     self.left_blinker_on = 0
     self.right_blinker_on = 0
 

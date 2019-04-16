@@ -89,6 +89,8 @@ class CarState(object):
     self.shifter_values = self.can_define.dv["GEAR_PACKET"]['GEAR']
     self.left_blinker_on = 0
     self.right_blinker_on = 0
+    self.torque_clipped = False
+    self.apply_steer = 0
 
     # initialize can parser
     self.car_fingerprint = CP.carFingerprint
