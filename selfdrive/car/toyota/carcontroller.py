@@ -144,9 +144,10 @@ class CarController(object):
     apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
 
     # steer torque
-    apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
+    orig_apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
 
-    apply_steer = apply_toyota_steer_torque_limits(apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
+    apply_steer = apply_toyota_steer_torque_limits(orig_apply_steer, self.last_steer, CS.steer_torque_motor,
+                                SteerLimitParams, CS.angle_steers, actuators.steerAngle)
 
     # only cut torque when steer state is a known fault
     if CS.steer_state in [9, 25]:
@@ -158,6 +159,8 @@ class CarController(object):
       apply_steer_req = 0
     else:
       apply_steer_req = 1
+
+    CS.steeringTorqueClipped = (orig_apply_steer != apply_steer)
 
     self.steer_angle_enabled, self.ipas_reset_counter = \
       ipas_state_transition(self.steer_angle_enabled, enabled, CS.ipas_active, self.ipas_reset_counter)

@@ -162,7 +162,9 @@ class CarController(object):
     # steer torque is converted back to CAN reference (positive when steering right)
     apply_gas = clip(actuators.gas, 0., 1.)
     apply_brake = int(clip(self.brake_last * BRAKE_MAX, 0, BRAKE_MAX - 1))
-    apply_steer = int(clip(-actuators.steer * STEER_MAX, -STEER_MAX, STEER_MAX))
+    orig_apply_steer = int(-actuators.steer * STEER_MAX)
+    apply_steer = int(clip(orig_apply_steer, -STEER_MAX, STEER_MAX))
+    CS.torque_clipped = not (orig_apply_steer == apply_steer)
 
     lkas_active = enabled and not CS.steer_not_allowed
 

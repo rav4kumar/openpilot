@@ -78,7 +78,7 @@ class LatControl(object):
       self.angle_ff_gain *= 0.9999
     self.previous_integral = self.pid.i
 
-  def update(self, active, v_ego, angle_steers, angle_rate, steer_override, CP, VM, path_plan):
+  def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
     self.live_tune(CP)
 
@@ -122,7 +122,8 @@ class LatControl(object):
           print(steer_feedforward)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                      override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
+                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone,
+                                    freeze_integrator=torque_clipped)
 
         if self.gernbySteer and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):

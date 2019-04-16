@@ -439,6 +439,7 @@ class CarInterface(object):
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override
+    ret.steeringTorqueClipped = self.CS.torque_clipped
 
     # cruise state
     ret.cruiseState.enabled = self.CS.pcm_acc_status != 0

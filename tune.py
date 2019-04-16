@@ -132,6 +132,7 @@ while True:
       j = len(param) - 1
 
   elif (char == "z"):
+    process.kill()
     break
 
 
@@ -182,3 +183,5 @@ while True:
     kegman.write_config(kegman.conf)
 
   time.sleep(button_delay)
+else:
+  process.kill()
