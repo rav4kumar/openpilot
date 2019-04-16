@@ -32,7 +32,7 @@ def apply_toyota_steer_torque_limits(apply_torque, apply_torque_last, motor_torq
   max_lim = min(max(motor_torque + LIMITS.STEER_ERROR_MAX, LIMITS.STEER_ERROR_MAX), LIMITS.STEER_MAX)
   min_lim = max(min(motor_torque - LIMITS.STEER_ERROR_MAX, -LIMITS.STEER_ERROR_MAX), -LIMITS.STEER_MAX)
   delta_factor_up= interp(abs(angle_steers - angle_steers_des), [0.5, 0.75, 1.15, 2.25, 3.75, 4.75], [1.0, 0.9, 0.8, 0.6, 0.45, 0.4 ])
-  delta_factor_down = interp(angle_steers_des, [1.0, 1.5, 2.5, 4.0, 7.0, 12.0],[1.0, 0.85, 0.7, 0.55, 0.4, 0.3 ])
+  delta_factor_down = interp(abs(angle_steers_des), [1.0, 1.5, 2.5, 4.0, 7.0, 12.0],[1.0, 0.85, 0.7, 0.55, 0.4, 0.3 ])
   delta_factor_down *= interp(abs(angle_steers - angle_steers_des), [0.0, 0.1 ,0.2], [0.1, 0.35, 1.0])
 
   delta_up = LIMITS.STEER_DELTA_UP * delta_factor_up
