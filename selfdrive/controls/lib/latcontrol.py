@@ -125,7 +125,7 @@ class LatControl(object):
                                     override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone,
                                     freeze_integrator=torque_clipped)
 
-        if self.gernbySteer and not steer_override and v_ego > 10.0:
+        if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
             self.adjust_angle_gain()
           else:
