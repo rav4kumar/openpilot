@@ -146,8 +146,7 @@ class CarController(object):
     # steer torque
     orig_apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
 
-    apply_steer = apply_toyota_steer_torque_limits(orig_apply_steer, self.last_steer, CS.steer_torque_motor,
-                                SteerLimitParams, CS.angle_steers, actuators.steerAngle, actuators.steerRate)
+    apply_steer = apply_toyota_steer_torque_limits(orig_apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
 
     # only cut torque when steer state is a known fault
     if CS.steer_state in [9, 25]:
