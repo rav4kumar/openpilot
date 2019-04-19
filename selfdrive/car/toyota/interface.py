@@ -72,9 +72,14 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.steerDampTime = 0.01
+    ret.steerReactTime = -0.01
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
+    ret.rateFFGain = 0.01
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
-    ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
+    ret.steerActuatorDelay = 0.05  # Default delay, Prius has larger delay
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -95,9 +100,14 @@ class CarInterface(object):
       ret.steerRatio = 16.30   # 14.5 is spec end-to-end
       tire_stiffness_factor = 0.5533
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
-      ret.steerKpV, ret.steerKiV = [[0.6], [0.05]]
-      ret.steerKf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
-
+      ret.steerKpV, ret.steerKiV = [[0.3], [0.03]] # [[0.6], [0.05]]
+      ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
+      ret.steerActuatorDelay = 0.001
+      ret.steerDampTime = 0.007
+      ret.steerReactTime = 0.0
+      ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
+      ret.steerMPCDampTime = 0.25       # dampen desired angle over 250ms (5 mpc cycles)
+      ret.rateFFGain = 0.4
     elif candidate == CAR.COROLLA:
       stop_and_go = False
       ret.safetyParam = 100 # see conversion factor for STEER_TORQUE_EPS in dbc file
@@ -219,7 +229,7 @@ class CarInterface(object):
     # ******************* do can recv *******************
     canMonoTimes = []
 
-    self.cp.update(int(sec_since_boot() * 1e9), False)
+    self.cp.update(int(sec_since_boot() * 1e9), True)
 
     # run the cam can update for 10s as we just need to know if the camera is alive
     if self.frame < 1000:
@@ -263,6 +273,9 @@ class CarInterface(object):
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override
+
+    ret.steeringRequested = self.CS.apply_steer
+    ret.steeringTorqueClipped = self.CS.torque_clipped
 
     # cruise state
     ret.cruiseState.enabled = self.CS.pcm_acc_active

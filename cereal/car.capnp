@@ -105,6 +105,8 @@ struct CarState {
   steeringRate @15 :Float32;   # deg/s
   steeringTorque @8 :Float32;  # TODO: standardize units
   steeringPressed @9 :Bool;    # if the user is using the steering wheel
+  steeringTorqueClipped @26 :Bool;  # if the requested torque is adjusted
+  steeringRequested @27 :Float32;
 
   # cruise state
   cruiseState @10 :CruiseState;
@@ -229,6 +231,7 @@ struct CarControl {
     # range from -1.0 - 1.0
     steer @2: Float32;
     steerAngle @3: Float32;
+    steerRate @4: Float32;
   }
 
   struct CruiseControl {
@@ -341,14 +344,18 @@ struct CarParams {
   steerKpDEPRECATED @15 :Float32;
   steerKiDEPRECATED @16 :Float32;
   steerKf @25 :Float32;
+  rateFFGain @53 :Float32;
 
   # Kp and Ki for the longitudinal control
   longitudinalKpBP @36 :List(Float32);
   longitudinalKpV @37 :List(Float32);
   longitudinalKiBP @38 :List(Float32);
   longitudinalKiV @39 :List(Float32);
-
   steerLimitAlert @29 :Bool;
+  steerMPCReactTime @51 :Float32;
+  steerMPCDampTime @52 :Float32;
+  steerDampTime @54 :Float32;
+  steerReactTime @55 :Float32;
 
   vEgoStopping @30 :Float32; # Speed at which the car goes into stopping state
   directAccelControl @31 :Bool; # Does the car have direct accel control or just gas/brake

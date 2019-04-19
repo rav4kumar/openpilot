@@ -175,6 +175,8 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -186,6 +188,7 @@ class CarInterface(object):
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
 
     ret.steerKf = 0.00006 # conservative feed-forward
+    ret.rateFFGain = 0.01
 
     if candidate in [CAR.CIVIC, CAR.CIVIC_BOSCH]:
       stop_and_go = True
@@ -260,6 +263,20 @@ class CarInterface(object):
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
 
+    elif candidate == CAR.CRV_HYBRID:
+      stop_and_go = True
+      ret.safetyParam = 1 # Accord and CRV 5G use an alternate user brake msg
+      ret.mass = 1667. + std_cargo # mean of 4 models in kg
+      ret.wheelbase = 2.66
+      ret.centerToFront = ret.wheelbase * 0.41
+      ret.steerRatio = 16.0   # 12.3 is spec end-to-end
+      tire_stiffness_factor = 0.677
+      ret.steerKpV, ret.steerKiV = [[0.6], [0.18]]
+      ret.longitudinalKpBP = [0., 5., 35.]
+      ret.longitudinalKpV = [1.2, 0.8, 0.5]
+      ret.longitudinalKiBP = [0., 35.]
+      ret.longitudinalKiV = [0.18, 0.12]
+
     elif candidate == CAR.ACURA_RDX:
       stop_and_go = False
       ret.mass = 3935 * CV.LB_TO_KG + std_cargo
@@ -280,6 +297,19 @@ class CarInterface(object):
       ret.centerToFront = ret.wheelbase * 0.41
       ret.steerRatio = 14.35        # as spec
       tire_stiffness_factor = 0.82
+      ret.steerKpV, ret.steerKiV = [[0.45], [0.135]]
+      ret.longitudinalKpBP = [0., 5., 35.]
+      ret.longitudinalKpV = [1.2, 0.8, 0.5]
+      ret.longitudinalKiBP = [0., 35.]
+      ret.longitudinalKiV = [0.18, 0.12]
+
+    elif candidate == CAR.ODYSSEY_CHN:
+      stop_and_go = False
+      ret.mass = 1849.2 + std_cargo # mean of 4 models in kg
+      ret.wheelbase = 2.90 # spec
+      ret.centerToFront = ret.wheelbase * 0.41 # from CAR.ODYSSEY
+      ret.steerRatio = 14.35 # from CAR.ODYSSEY
+      tire_stiffness_factor = 0.82 # from CAR.ODYSSEY
       ret.steerKpV, ret.steerKiV = [[0.45], [0.135]]
       ret.longitudinalKpBP = [0., 5., 35.]
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
@@ -357,7 +387,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.5
+    ret.steerRateCost = 0.4
 
     return ret
 
@@ -366,7 +396,7 @@ class CarInterface(object):
     # ******************* do can recv *******************
     canMonoTimes = []
 
-    self.cp.update(int(sec_since_boot() * 1e9), False)
+    self.cp.update(int(sec_since_boot() * 1e9), True)
     self.cp_cam.update(int(sec_since_boot() * 1e9), False)
 
     self.CS.update(self.cp, self.cp_cam)
@@ -409,7 +439,9 @@ class CarInterface(object):
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override
-
+    ret.steeringTorqueClipped = self.CS.torque_clipped
+    ret.steeringRequested = self.CS.apply_steer
+    if ret.steeringTorqueClipped: print("    clipped!")
     # cruise state
     ret.cruiseState.enabled = self.CS.pcm_acc_status != 0
     ret.cruiseState.speed = self.CS.v_cruise_pcm * CV.KPH_TO_MS
@@ -481,6 +513,8 @@ class CarInterface(object):
         events.append(create_event('commIssue', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     else:
       self.can_invalid_count = 0
+    if self.can_invalid_count > 0:
+      print( " can_invalid_count = %d" % (self.can_invalid_count))
 
     if not self.CS.cam_can_valid and self.CP.enableCamera:
       self.cam_can_invalid_count += 1

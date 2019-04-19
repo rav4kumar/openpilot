@@ -57,6 +57,8 @@ class CarInterface(object):
     ret.carFingerprint = candidate
 
     ret.enableCruise = False
+    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
+    ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
 
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
@@ -190,13 +192,14 @@ class CarInterface(object):
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
     ret.steerControlType = car.CarParams.SteerControlType.torque
+    ret.rateFFGain = 0.01
 
     return ret
 
   # returns a car.CarState
   def update(self, c):
 
-    self.pt_cp.update(int(sec_since_boot() * 1e9), False)
+    self.pt_cp.update(int(sec_since_boot() * 1e9), True)
     self.CS.update(self.pt_cp)
 
     # create message
