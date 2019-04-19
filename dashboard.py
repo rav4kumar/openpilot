@@ -28,7 +28,7 @@ def dashboard_thread(rate=100):
 
   #url_string = 'http://192.168.1.61:8086/write?db=carDB'
   #url_string = 'http://192.168.43.221:8086/write?db=carDB'
-  url_string = 'http://192.168.137.1:8086/write?db=carDB'
+  url_string = 'http://192.168.1.176:8086/write?db=carDB'
   #url_string = 'http://kevo.live:8086/write?db=carDB'
 
   nextString = ""
