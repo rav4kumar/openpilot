@@ -163,10 +163,11 @@ class CarController(object):
     apply_gas = clip(actuators.gas, 0., 1.)
     apply_brake = int(clip(self.brake_last * BRAKE_MAX, 0, BRAKE_MAX - 1))
     orig_apply_steer = int(-actuators.steer * STEER_MAX)
-    apply_steer = int(clip(orig_apply_steer, -STEER_MAX, STEER_MAX))
+    apply_steer = int(clip(orig_apply_steer, -STEER_MAX + 1, STEER_MAX - 1))
     CS.apply_steer = apply_steer
-    CS.torque_clipped = not (orig_apply_steer == apply_steer)
-
+    #CS.torque_clipped = False if orig_apply_steer == apply_steer else True
+    CS.torque_clipped = (orig_apply_steer != apply_steer)
+    if CS.torque_clipped: print("clipped!")
     lkas_active = enabled and not CS.steer_not_allowed
 
     # Send CAN commands.

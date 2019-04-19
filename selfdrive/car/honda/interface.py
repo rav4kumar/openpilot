@@ -441,7 +441,7 @@ class CarInterface(object):
     ret.steeringPressed = self.CS.steer_override
     ret.steeringTorqueClipped = self.CS.torque_clipped
     ret.steeringRequested = self.CS.apply_steer
-    
+    if ret.steeringTorqueClipped: print("    clipped!")
     # cruise state
     ret.cruiseState.enabled = self.CS.pcm_acc_status != 0
     ret.cruiseState.speed = self.CS.v_cruise_pcm * CV.KPH_TO_MS

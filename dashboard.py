@@ -28,9 +28,10 @@ def dashboard_thread(rate=100):
 
   #url_string = 'http://192.168.1.61:8086/write?db=carDB'
   #url_string = 'http://192.168.43.221:8086/write?db=carDB'
-  #url_string = 'http://192.168.137.1:8086/write?db=carDB'
-  url_string = 'http://kevo.live:8086/write?db=carDB'
+  url_string = 'http://192.168.137.1:8086/write?db=carDB'
+  #url_string = 'http://kevo.live:8086/write?db=carDB'
 
+  nextString = ""
   context = zmq.Context()
   poller = zmq.Poller()
   ipaddress = "127.0.0.1"
@@ -487,13 +488,18 @@ def dashboard_thread(rate=100):
         frame_count += 1
         canDataString = ""
 
-      if frame_count >= 100:
+      if frame_count >= 20:
         r = requests.post(url_string, data=influxLineString)
+        #nextString = influxLineString
         #print ('%d %d  %s' % (frame_count, len(influxLineString), r))
 
         frame_count = 0
         can_count = 0
         influxLineString = ""
+      #elif nextString != "":
+      #  r = requests.post(url_string2, data=nextString)
+      #  nextString = ""
+
 
 def main(rate=200):
   dashboard_thread(rate)
