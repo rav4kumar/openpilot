@@ -401,6 +401,7 @@ struct Live100Data {
   jerkFactor @12 :Float32;
   angleSteers @13 :Float32;     # Steering angle in degrees.
   angleRate @61 :Float32;
+  delaySteer @64 :Float32;
   angleSteersDes @29 :Float32;
   dampAngleSteersDes @55 :Float32;
   dampRateSteersDes @56 :Float32;

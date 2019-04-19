@@ -175,8 +175,11 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
-    ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
+    ret.steerMPCReactTime = 0.01  
+    ret.steerMPCDampTime = 0.01
+    ret.steerReactTime = 0.001
+    ret.steerDampTime = 0.0
+    ret.rateFFGain = 0.2
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -188,7 +191,6 @@ class CarInterface(object):
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
 
     ret.steerKf = 0.00006 # conservative feed-forward
-    ret.rateFFGain = 0.01
 
     if candidate in [CAR.CIVIC, CAR.CIVIC_BOSCH]:
       stop_and_go = True
@@ -222,6 +224,11 @@ class CarInterface(object):
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
+      ret.steerMPCReactTime = 0.025
+      ret.steerMPCDampTime = 0.2
+      ret.steerReactTime = 0.02
+      ret.steerDampTime = 0.25
+      ret.rateFFGain = 0.2
 
     elif candidate == CAR.ACURA_ILX:
       stop_and_go = False

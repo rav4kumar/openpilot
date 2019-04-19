@@ -26,38 +26,23 @@ def apply_std_steer_torque_limits(apply_torque, apply_torque_last, driver_torque
   return int(round(apply_torque))
 
 
-def apply_toyota_steer_torque_limits(apply_torque, apply_torque_last, motor_torque, LIMITS, angle_steers, angle_steers_des, angle_rate_des):
+def apply_toyota_steer_torque_limits(apply_torque, apply_torque_last, motor_torque, LIMITS):
 
-  starting_torque = apply_torque
   # limits due to comparison of commanded torque VS motor reported torque
   max_lim = min(max(motor_torque + LIMITS.STEER_ERROR_MAX, LIMITS.STEER_ERROR_MAX), LIMITS.STEER_MAX)
   min_lim = max(min(motor_torque - LIMITS.STEER_ERROR_MAX, -LIMITS.STEER_ERROR_MAX), -LIMITS.STEER_MAX)
+
   apply_torque = clip(apply_torque, min_lim, max_lim)
-
-  '''delta_factor_up =  interp(abs(angle_steers - angle_steers_des), [0.5, 0.75, 1.15, 2.25, 3.75, 4.75], [1.0, 0.9, 0.8, 0.6, 0.45, 0.4 ])
-  delta_factor_up = rate_factor
-
-  delta_factor_down = interp(abs(angle_steers_des), [1.0, 1.5, 2.5, 4.0, 7.0, 12.0],[1.0, 0.85, 0.7, 0.55, 0.4, 0.3 ])
-  delta_factor_down *= interp(abs(angle_steers - angle_steers_des), [0.0 ,0.2], [0.0, 1.0])
-  delta_factor_down = rate_factor
-  '''
-
-  rate_factor = interp(abs(angle_rate_des), [0.0, 2.0], [1.0, 1.0])
-  delta_up = LIMITS.STEER_DELTA_UP * rate_factor
-  delta_down = LIMITS.STEER_DELTA_DOWN * rate_factor
 
   # slow rate if steer torque increases in magnitude
   if apply_torque_last > 0:
     apply_torque = clip(apply_torque,
-                        max(apply_torque_last - delta_down, -delta_up),
-                        apply_torque_last + delta_up)
+                        max(apply_torque_last - LIMITS.STEER_DELTA_DOWN, -LIMITS.STEER_DELTA_UP),
+                        apply_torque_last + LIMITS.STEER_DELTA_UP)
   else:
     apply_torque = clip(apply_torque,
-                        apply_torque_last - delta_up,
-                        min(apply_torque_last + delta_down, delta_up))
-
-  if starting_torque != apply_torque:  print("desired rate: %1.1f   angle error: % 1.1f  rate_factor:  %1.1f" % (angle_rate_des, angle_steers_des - angle_steers, rate_factor))   #, delta_factor_up, -delta_factor_down)
-
+                        apply_torque_last - LIMITS.STEER_DELTA_UP,
+                        min(apply_torque_last + LIMITS.STEER_DELTA_DOWN, LIMITS.STEER_DELTA_UP))
 
   return int(round(apply_torque))
 
