@@ -88,7 +88,7 @@ class CarInterface(object):
       ret.steerRatio = 16.27   # unknown end-to-end spec
       tire_stiffness_factor = 0.7549   # hand-tune
       ret.mass = 3375 * CV.LB_TO_KG + std_cargo
-      ret.steerKpV, ret.steerKiV = [[0.4], [0.03]]
+      ret.steerKpV, ret.steerKiV = [[0.25], [0.03]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       #ret.steerActuatorDelay = 0.01
