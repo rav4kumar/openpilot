@@ -28,9 +28,9 @@ def dashboard_thread(rate=100):
 
   #url_string = 'http://192.168.1.61:8086/write?db=carDB'
   #url_string = 'http://192.168.43.221:8086/write?db=carDB'
-  #url_string = 'http://192.168.137.1:8086/write?db=carDB'
+  url_string = 'http://192.168.137.1:8086/write?db=carDB'
   #url_string = 'http://kevo.live:8086/write?db=carDB'
-  url_string = 'http://gernstation.synology.me:8086/write?db=carDB&u=liveOP&p=liveOP'
+  #url_string = 'http://gernstation.synology.me:8086/write?db=carDB&u=liveOP&p=liveOP'
 
   nextString = ""
   context = zmq.Context()
@@ -131,8 +131,8 @@ def dashboard_thread(rate=100):
               receiveTime = int(monoTimeOffset + l100.logMonoTime)
               #print(int(time.time() * 1000000000), receiveTime, monoTimeOffset, l100.logMonoTime)
 
-            influxLineString += (user_id + ",sources=capnp apply_steer=%d,angleGain=%1.2f,rateGain=%1.5f,ff_standard=%1.2f,ff_rate=%1.3f,ff_angle=%1.3f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f %s\n" %
-                        (l100.live100.steeringRequested, l100.live100.angleFFGain, l100.live100.rateFFGain, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio, l100.live100.angleFFRatio, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.steerOverride, vEgo,
+            influxLineString += (user_id + ",sources=capnp apply_steer=%d,ff_standard=%1.2f,ff_rate=%1.3f,ff_angle=%1.3f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f %s\n" %
+                        (l100.live100.steeringRequested, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio, l100.live100.angleFFRatio, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes, l100.live100.steerOverride, vEgo,
                         l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, receiveTime))
 
             frame_count += 1
@@ -472,11 +472,12 @@ def dashboard_thread(rate=100):
               dampMPC = config['dampMPC']
               reactSteer = config['reactSteer']
               dampSteer = config['dampSteer']
+              delaySteer = config['delaySteer']
               steerKpV = config['Kp']
               steerKiV = config['Ki']
               rateFF = config['rateFF']
-              influxLineString += (user_id + ",sources=capnp dampMPC=%s,reactMPC=%s,dampSteer=%s,reactSteer=%s,KpV=%s,KiV=%s,rateFF=%s %s\n" % \
-                    (dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, receiveTime))
+              influxLineString += (user_id + ",sources=capnp dampMPC=%s,reactMPC=%s,dampSteer=%s,reactSteer=%s,KpV=%s,KiV=%s,rateFF=%s,angleFF=%s,delaySteer=%s %s\n" % \
+                    (dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, l100.live100.angleFFGain, delaySteer, receiveTime))
 
           #except:
           #  kegman_valid = False
@@ -489,7 +490,7 @@ def dashboard_thread(rate=100):
         frame_count += 1
         canDataString = ""
 
-      if frame_count >= 20:
+      if frame_count >= 100:
         r = requests.post(url_string, data=influxLineString)
         #nextString = influxLineString
         print ('%d %d  %s' % (frame_count, len(influxLineString), r))

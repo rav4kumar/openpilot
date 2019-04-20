@@ -58,7 +58,7 @@ class PathPlanner(object):
     active = live100.live100.active
     delaySteer = live100.live100.delaySteer
     print(delaySteer)
-    
+
     angle_offset_bias = live100.live100.angleModelBias + live_parameters.liveParameters.angleOffsetAverage
 
     self.MP.update(v_ego, md, v_curv)
@@ -84,19 +84,19 @@ class PathPlanner(object):
                         self.MP.l_prob, self.MP.r_prob, self.MP.p_prob, curvature_factor, v_ego_mpc, self.MP.lane_width)
 
     # reset to current steer angle if not active or overriding
-    if active:
-      self.mpc_angles[0] = live100.live100.dampAngleSteersDes
-      self.mpc_times[0] = live100.logMonoTime * 1e-9
-      for i in range(1,20):
-        self.mpc_times[i] = self.mpc_times[i-1] + _DT_MPC
-        self.mpc_angles[i] = float(math.degrees(self.mpc_solution[0].delta[i] * VM.sR) + angle_offset_bias)
-        self.mpc_rates[i-1] = (self.mpc_angles[i] - self.mpc_angles[i-1]) / (self.mpc_times[i] - self.mpc_times[i-1])
+    #if active:
+    self.mpc_angles[0] = live100.live100.dampAngleSteersDes
+    self.mpc_times[0] = live100.logMonoTime * 1e-9
+    for i in range(1,20):
+      self.mpc_times[i] = self.mpc_times[i-1] + _DT_MPC
+      self.mpc_angles[i] = float(math.degrees(self.mpc_solution[0].delta[i] * VM.sR) + angle_offset_bias)
+      self.mpc_rates[i-1] = (self.mpc_angles[i] - self.mpc_angles[i-1]) / (self.mpc_times[i] - self.mpc_times[i-1])
 
-      delta_desired = self.mpc_solution[0].delta[1]
-      rate_desired = math.degrees(self.mpc_solution[0].rate[0] * VM.sR)
-    else:
-      delta_desired = math.radians(angle_steers - angle_offset_bias) / VM.sR
-      rate_desired = 0.0
+    delta_desired = self.mpc_solution[0].delta[1]
+    rate_desired = math.degrees(self.mpc_solution[0].rate[0] * VM.sR)
+    #else:
+    #delta_desired = math.radians(angle_steers - angle_offset_bias) / VM.sR
+    #rate_desired = 0.0
 
     self.cur_state[0].delta = delta_desired
 
