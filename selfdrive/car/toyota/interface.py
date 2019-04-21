@@ -93,7 +93,7 @@ class CarInterface(object):
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       #ret.steerActuatorDelay = 0.01
       ret.steerActuatorDelay = 0.018
-      ret.steerDampTime = 0.007
+      ret.steerDampTime = 0
       ret.steerReactTime = 0.0
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
