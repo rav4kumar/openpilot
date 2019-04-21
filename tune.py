@@ -181,6 +181,18 @@ while True:
   if float(kegman.conf['delaySteer']) < 0:
     kegman.conf['delaySteer'] = "0.001"
 
+  if float(kegman.conf['reactSteer']) + float(kegman.conf['dampSteer']) < 0:
+    if param[j] == 'reactSteer':
+      kegman.conf['reactSteer'] = str(-1 * float(kegman.conf['dampSteer']))
+    else:
+      kegman.conf['dampSteer'] = str(-1 * float(kegman.conf['reactSteer']))
+
+  if float(kegman.conf['reactMPC']) + float(kegman.conf['dampMPC']) < 0:
+    if param[j] == 'reactMPC':
+      kegman.conf['reactMPC'] = str(-1 * float(kegman.conf['dampMPC']))
+    else:
+      kegman.conf['dampMPC'] = str(-1 * float(kegman.conf['reactMPC']))
+
   if write_json:
     kegman.write_config(kegman.conf)
 
