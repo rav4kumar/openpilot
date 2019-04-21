@@ -88,16 +88,16 @@ class CarInterface(object):
       ret.steerRatio = 16.27   # unknown end-to-end spec
       tire_stiffness_factor = 0.7549   # hand-tune
       ret.mass = 3375 * CV.LB_TO_KG + std_cargo
-      ret.steerKpV, ret.steerKiV = [[0.25], [0.03]]
+      ret.steerKpV, ret.steerKiV = [[0.4], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       #ret.steerActuatorDelay = 0.01
-      ret.steerActuatorDelay = 0.001
+      ret.steerActuatorDelay = 0.018
       ret.steerDampTime = 0.007
       ret.steerReactTime = 0.0
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
-      ret.steerMPCDampTime = 0.25       # dampen desired angle over 250ms (5 mpc cycles)
-      ret.rateFFGain = 0.3
+      ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
+      ret.rateFFGain = 0.4
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
