@@ -493,7 +493,7 @@ def dashboard_thread(rate=100):
       if frame_count >= 100:
         r = requests.post(url_string, data=influxLineString)
         #nextString = influxLineString
-        print ('%d %d  %s' % (frame_count, len(influxLineString), r))
+        #print ('%d %d  %s' % (frame_count, len(influxLineString), r))
 
         frame_count = 0
         can_count = 0
