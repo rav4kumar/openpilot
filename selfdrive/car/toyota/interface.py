@@ -26,6 +26,10 @@ class CarInterface(object):
     self.cam_can_valid_count = 0
     self.cruise_enabled_prev = False
     self.angle_steers_des = 0.0
+    self.prev_angle_steers = 0.0
+    self.steer_counter = 0
+    self.steer_counter_prev = 0
+    self.rough_steers_rate = 0.0
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -279,9 +283,18 @@ class CarInterface(object):
     angle_error_factor = interp(abs(self.angle_steers_des), [1.0, 2.0], [0.5, 1.0])
     angle_error = self.angle_steers_des - self.CS.angle_steers
     ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
-    print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
+    #print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
 
-    ret.steeringRate = self.CS.angle_steers_rate
+    if self.CS.angle_steers != self.prev_angle_steers:
+      self.steer_counter_prev = self.steer_counter
+      self.rough_steers_rate = (self.rough_steers_rate + 100.0 * (self.CS.angle_steers - self.prev_angle_steers) / self.steer_counter_prev) / 2.0
+      self.steer_counter = 0.0
+    elif self.steer_counter >= self.steer_counter_prev:
+      self.rough_steers_rate = (self.steer_counter * self.rough_steers_rate) / (self.steer_counter + 1.0)
+    self.steer_counter += 1.0
+    angle_rate = self.rough_steers_rate
+    self.prev_angle_steers = self.CS.angle_steers
+    ret.steeringRate = angle_rate
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override
