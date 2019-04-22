@@ -28,7 +28,6 @@ class CarInterface(object):
     self.cruise_enabled_prev = False
     self.angle_steers_des = 0.0
     self.prev_angle_steers = 0.0
-    self.angle_model_bias = 0.0
     self.steer_counter = 1
     self.steer_counter_prev = 0
     self.rough_steers_rate = 0.0
@@ -283,7 +282,7 @@ class CarInterface(object):
 
     # steering wheel
     if self.CP.carFingerprint in [CAR.PRIUS]:
-      angle_error_factor = interp(abs(self.angle_steers_des - self.angle_model_bias), [1.0, 2.0], [0.5, 1.0])
+      angle_error_factor = interp(abs(self.angle_steers_des - self.angle_offset_bias), [1.0, 2.0], [0.5, 1.0])
       angle_error = self.angle_steers_des - self.CS.angle_steers
       ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
       #print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
