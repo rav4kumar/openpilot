@@ -28,7 +28,7 @@ class CarInterface(object):
     self.cruise_enabled_prev = False
     self.angle_steers_des = 0.0
     self.prev_angle_steers = 0.0
-    self.steer_counter = 0
+    self.steer_counter = 1
     self.steer_counter_prev = 0
     self.rough_steers_rate = 0.0
 
