@@ -126,8 +126,7 @@ class LatControl(object):
           steer_feedforward = v_ego**2 * (self.dampened_desired_angle - path_plan.angleOffset)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone, 
-                                    freeze_integrator=torque_clipped)
+                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
