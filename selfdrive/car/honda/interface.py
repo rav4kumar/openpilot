@@ -90,6 +90,7 @@ class CarInterface(object):
     self.brake_pressed_prev = False
     self.can_invalid_count = 0
     self.cam_can_invalid_count = 0
+    self.angle_model_bias = 0.0
 
     self.cp = get_can_parser(CP)
     self.cp_cam = get_cam_can_parser(CP)
