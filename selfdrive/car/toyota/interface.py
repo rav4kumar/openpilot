@@ -280,10 +280,10 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    #ret.steeringAngle = self.CS.angle_steers
-    angle_error_factor = interp(abs(self.angle_steers_des), [1.0, 2.0], [0.5, 1.0])
-    angle_error = self.angle_steers_des - self.CS.angle_steers
-    ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
+    ret.steeringAngle = self.CS.angle_steers
+    #angle_error_factor = interp(abs(self.angle_steers_des), [1.0, 2.0], [0.5, 1.0])
+    #angle_error = self.angle_steers_des - self.CS.angle_steers
+    #ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
     #print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
 
     if self.CS.angle_steers != self.prev_angle_steers:
