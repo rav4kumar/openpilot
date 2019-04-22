@@ -25,6 +25,7 @@ class CarInterface(object):
     self.can_invalid_count = 0
     self.cam_can_valid_count = 0
     self.cruise_enabled_prev = False
+    self.angle_steers_des = 0.0
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -92,8 +93,8 @@ class CarInterface(object):
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       #ret.steerActuatorDelay = 0.01
-      ret.steerActuatorDelay = 0.018
-      ret.steerDampTime = 0
+      ret.steerActuatorDelay = 0.0
+      ret.steerDampTime = 0.007
       ret.steerReactTime = 0.0
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
@@ -274,7 +275,12 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    ret.steeringAngle = self.CS.angle_steers
+    #ret.steeringAngle = self.CS.angle_steers
+    angle_error_factor = interp(abs(self.angle_steers_des), [1.0, 2.0], [0.5, 1.0])
+    angle_error = self.angle_steers_des - self.CS.angle_steers
+    ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
+    print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
+
     ret.steeringRate = self.CS.angle_steers_rate
 
     ret.steeringTorque = self.CS.steer_torque_driver
@@ -389,6 +395,8 @@ class CarInterface(object):
                    c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert,
                    c.hudControl.audibleAlert, self.forwarding_camera,
                    c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible)
+
+    self.angle_steers_des = c.actuators.steerAngle
 
     self.frame += 1
     return False
