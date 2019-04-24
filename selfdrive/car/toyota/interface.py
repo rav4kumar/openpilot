@@ -33,7 +33,8 @@ class CarInterface(object):
     self.steer_counter_prev = 0
     self.rough_steers_rate = 0.0
     self.angle_offset_bias = 0.0
-    self.des_angles = np.zeros((250))
+    self.angles_error = np.zeros((500))
+    self.avg_error = 0.0
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -283,16 +284,11 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    if self.CP.carFingerprint in [CAR.PRIUS]:
-      #angle_error_factor = interp(abs(self.angle_steers_des - self.angle_offset_bias), [1.0, 2.0], [0.5, 1.0])
-      #angle_error = self.angle_steers_des - self.CS.angle_steers
-      #ret.steeringAngle = self.angle_steers_des - angle_error_factor * angle_error
-      #print("angle: %1.1f  error: %1.2f  adjusted angle: %1.2f" % (self.CS.angle_steers, angle_error_factor, ret.steeringAngle))
-      cancellation = np.interp(abs(self.des_angles[self.frame % 250]), [2.0, 3.0], [0.5, 0.0])
-      ret.steeringAngle = self.CS.angle_steers - float(self.des_angles[self.frame % 250]) * cancellation
-
-    else:
-      ret.steeringAngle = self.CS.angle_steers
+    cancellation = np.interp(max(abs(self.avg_error), self.CS.angle_steers - self.angle_offset_bias), [1.0, 2.0], [0.5, 0.0])
+    projected_error = float(self.angles_error[(self.frame - 220) % 500] - self.avg_error)
+    ret.steeringAngle = self.CS.angle_steers + projected_error * cancellation
+    ret.steeringRate = self.CS.angle_steers_rate
+    print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.CS.angle_steers, self.angles_error[(self.frame - 220) % 500] , projected_error, cancellation, ret.steeringAngle))
 
     if self.CS.angle_steers != self.prev_angle_steers:
       self.steer_counter_prev = self.steer_counter
@@ -418,8 +414,8 @@ class CarInterface(object):
                    c.hudControl.audibleAlert, self.forwarding_camera,
                    c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible)
 
-    self.angle_steers_des = c.actuators.steerAngle
+    self.angles_error[self.frame % 500] = (c.actuators.steerAngle - self.CS.angle_steers)
+    self.avg_error += ((self.angles_error[self.frame % 500] - self.avg_error) / (220 * 2))
 
     self.frame += 1
-    self.des_angles[self.frame % 250] = abs(c.actuators.steerAngle - self.angle_offset_bias)
     return False
