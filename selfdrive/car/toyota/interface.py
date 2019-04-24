@@ -34,7 +34,10 @@ class CarInterface(object):
     self.rough_steers_rate = 0.0
     self.angle_offset_bias = 0.0
     self.angles_error = np.zeros((500))
-    self.avg_error = 0.0
+    self.avg_error1 = 0.0
+    self.avg_error2 = 0.0
+    self.oscillation_frames = int(CP.oscillationPeriod * 50)
+    self.oscillation_factor = CP.oscillationFactor
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -284,11 +287,11 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    cancellation = np.interp(max(abs(self.avg_error), self.CS.angle_steers - self.angle_offset_bias), [1.0, 2.0], [0.5, 0.0])
-    projected_error = float(self.angles_error[(self.frame - 250) % 500] - self.avg_error)
+    cancellation = np.interp(max(abs(self.avg_error1), self.CS.angle_steers - self.angle_offset_bias), [1.0, 2.0], [self.oscillation_factor, 0.0])
+    projected_error = float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1)
     ret.steeringAngle = self.CS.angle_steers + projected_error * cancellation
     ret.steeringRate = self.CS.angle_steers_rate
-    print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.CS.angle_steers, self.angles_error[(self.frame - 250) % 500] , projected_error, cancellation, ret.steeringAngle))
+    #print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.oscillation_frames, self.oscillation_factor, projected_error, cancellation, ret.steeringAngle))
 
     if self.CS.angle_steers != self.prev_angle_steers:
       self.steer_counter_prev = self.steer_counter
@@ -414,8 +417,10 @@ class CarInterface(object):
                    c.hudControl.audibleAlert, self.forwarding_camera,
                    c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible)
 
-    self.angles_error[self.frame % 500] = (c.actuators.steerAngle - self.CS.angle_steers)
-    self.avg_error += ((self.angles_error[self.frame % 500] - self.avg_error) / (250 * 2))
+    steer_error = (c.actuators.steerAngle - self.CS.angle_steers)
+    self.avg_error1 += ((steer_error - self.avg_error1) / 500)
+    self.avg_error2 += ((steer_error - self.avg_error2) / 25)
+    self.angles_error[self.frame % 500] = self.avg_error2
 
     self.frame += 1
     return False

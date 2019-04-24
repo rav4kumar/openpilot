@@ -41,7 +41,7 @@ button_delay = 0.2
 kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
-param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "rateFF", "Kp", "Ki", "delaySteer"]
+param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "rateFF", "Kp", "Ki", "delaySteer", "oscPeriod", "oscFactor"]
 
 cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
 process = subprocess.Popen(cmd, shell=True,
@@ -180,6 +180,13 @@ while True:
 
   if float(kegman.conf['delaySteer']) < 0:
     kegman.conf['delaySteer'] = "0.001"
+
+  if float(kegman.conf['oscFactor']) < 0:
+    kegman.conf['oscFactor'] = "0.0"
+
+  if float(kegman.conf['oscPeriod']) <= 0:
+    kegman.conf['oscPeriod'] = "0.01"
+    kegman.conf['oscFactor'] = "0.0"
 
   if float(kegman.conf['reactSteer']) + float(kegman.conf['dampSteer']) < 0:
     if param[j] == 'reactSteer':

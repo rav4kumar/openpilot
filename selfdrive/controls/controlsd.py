@@ -316,6 +316,9 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     CC.hudControl.visualAlert = AM.visual_alert
     CC.hudControl.audibleAlert = AM.audible_alert
     CI.angle_offset_bias = path_plan.pathPlan.angleOffset + angle_model_bias
+    CI.oscillation_frames = int(LaC.oscillation_period * 50)
+    CI.oscillation_factor = float(LaC.oscillation_factor)
+
     # send car controls over can
     CI.apply(CC)
 

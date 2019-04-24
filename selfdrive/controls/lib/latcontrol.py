@@ -34,6 +34,8 @@ class LatControl(object):
     self.rate_ff_gain = CP.rateFFGain
     self.average_angle_steers = 0.
     self.angle_ff_bp = [[0.5, 5.0],[0.0, 1.0]]
+    self.oscillation_period = CP.oscillationPeriod
+    self.oscillation_factor = CP.oscillationFactor
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -56,6 +58,8 @@ class LatControl(object):
         self.rate_ff_gain = float(kegman.conf['rateFF'])
         self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1)
         self.delaySteer = float(kegman.conf['delaySteer'])
+        self.oscillation_factor = float(kegman.conf['oscFactor'])
+        self.oscillation_period = float(kegman.conf['oscPeriod'])
 
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
