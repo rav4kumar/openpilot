@@ -36,6 +36,7 @@ class CarInterface(object):
     self.angles_error = np.zeros((500))
     self.avg_error1 = 0.0
     self.avg_error2 = 0.0
+    self.steer_error = 0.0
     self.oscillation_frames = int(CP.oscillationPeriod * 50)
     self.oscillation_factor = CP.oscillationFactor
 
@@ -417,9 +418,9 @@ class CarInterface(object):
                    c.hudControl.audibleAlert, self.forwarding_camera,
                    c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible)
 
-    steer_error = (c.actuators.steerAngle - self.CS.angle_steers)
-    self.avg_error1 += ((steer_error - self.avg_error1) / 500)
-    self.avg_error2 += ((steer_error - self.avg_error2) / 25)
+    #steer_error = (c.actuators.steerAngle - self.CS.angle_steers)
+    self.avg_error1 += ((self.steer_error - self.avg_error1) / 500)
+    self.avg_error2 += ((self.steer_error - self.avg_error2) / 25)
     self.angles_error[self.frame % 500] = self.avg_error2
 
     self.frame += 1
