@@ -91,6 +91,7 @@ class CarInterface(object):
     self.can_invalid_count = 0
     self.cam_can_invalid_count = 0
     self.angle_offset_bias = 0.0
+    self.des_angles = np.zeros((250))
 
     self.cp = get_can_parser(CP)
     self.cp_cam = get_cam_can_parser(CP)
@@ -439,8 +440,10 @@ class CarInterface(object):
                            c.actuators.brake > brakelights_threshold)
 
     # steering wheel
-    ret.steeringAngle = self.CS.angle_steers
+    cancellation = np.interp(abs(self.des_angles[self.frame % 250]), [2.0, 3.0], [0.5, 0.0])
+    ret.steeringAngle = self.CS.angle_steers - float(self.des_angles[self.frame % 250]) * cancellation
     ret.steeringRate = self.CS.angle_steers_rate
+    print("%1.1f   %1.1f    %1.2f   %1.1f" % (self.CS.angle_steers, self.des_angles[self.frame % 250], cancellation, ret.steeringAngle))
 
     # gear shifter lever
     ret.gearShifter = self.CS.gear_shifter
@@ -642,3 +645,4 @@ class CarInterface(object):
                    snd_chime=snd_chime)
 
     self.frame += 1
+    self.des_angles[self.frame % 250] = abs(c.actuators.steerAngle - self.angle_offset_bias)

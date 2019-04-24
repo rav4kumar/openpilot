@@ -124,11 +124,11 @@ def dashboard_thread(rate=100):
         for l100 in _live100:
           vEgo = l100.live100.vEgo
           if vEgo > 0: # and l100.live100.active:
-            receiveTime = int(monoTimeOffset + l100.logMonoTime)
+            receiveTime = int(monoTimeOffset + l100.logMonoTime + 6000000000)
 
             if (abs(receiveTime - int(time.time() * 1000000000)) > 10000000000):
               monoTimeOffset = (time.time() * 1000000000) - l100.logMonoTime
-              receiveTime = int(monoTimeOffset + l100.logMonoTime)
+              receiveTime = int(monoTimeOffset + l100.logMonoTime + 6000000000)
               #print(int(time.time() * 1000000000), receiveTime, monoTimeOffset, l100.logMonoTime)
 
             influxLineString += (user_id + ",sources=capnp apply_steer=%d,ff_standard=%1.2f,ff_rate=%1.3f,ff_angle=%1.3f,angle_steers_des=%1.2f,angle_steers=%1.2f,dampened_angle_steers_des=%1.2f,steer_override=%1.2f,v_ego=%1.4f,p=%1.2f,i=%1.4f,f=%1.4f,cumLagMs=%1.2f %s\n" %
