@@ -59,7 +59,8 @@ class PathPlanner(object):
     delaySteer = live100.live100.delaySteer
     print(delaySteer)
 
-    angle_offset_bias = live100.live100.angleModelBias + live_parameters.liveParameters.angleOffsetAverage
+    angle_offset_average = live_parameters.liveParameters.angleOffsetAverage
+    angle_offset_bias = live100.live100.angleModelBias + angle_offset_average
 
     self.MP.update(v_ego, md, v_curv)
 
@@ -74,7 +75,7 @@ class PathPlanner(object):
     p_poly = libmpc_py.ffi.new("double[4]", list(self.MP.p_poly))
 
     # account for actuation delay
-    projected_angle_steers = angle_steers + (delaySteer * angle_rate)
+    projected_angle_steers = angle_steers + (delaySteer * angle_rate) - angle_offset_average
     self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, projected_angle_steers, curvature_factor, VM.sR, delaySteer)
 
@@ -132,11 +133,11 @@ class PathPlanner(object):
     plan_send.pathPlan.rProb = float(self.MP.r_prob)
     plan_send.pathPlan.angleSteers = float(self.angle_steers_des_mpc)
     plan_send.pathPlan.rateSteers = float(rate_desired)
-    plan_send.pathPlan.angleOffset = float(live_parameters.liveParameters.angleOffsetAverage)
     plan_send.pathPlan.mpcAngles = map(float, self.mpc_angles)
     plan_send.pathPlan.mpcRates = map(float, self.mpc_rates)
     plan_send.pathPlan.mpcTimes = map(float, self.mpc_times)
     plan_send.pathPlan.laneProb =float(self.MP.lane_prob)
+    plan_send.pathPlan.angleOffset = float(angle_offset_average)
     plan_send.pathPlan.valid = bool(plan_valid)
     plan_send.pathPlan.paramsValid = bool(live_parameters.liveParameters.valid)
 

@@ -103,7 +103,6 @@ def get_can_signals(CP):
                 ("CRUISE_SPEED_PCM", "CRUISE", 0),
                 ("CRUISE_SPEED_OFFSET", "CRUISE_PARAMS", 0)]
     checks += [("STANDSTILL", 50)]
-
     if CP.carFingerprint == CAR.ODYSSEY_CHN:
       checks += [("CRUISE_PARAMS", 10)]
     else:
@@ -112,6 +111,7 @@ def get_can_signals(CP):
     signals += [("DRIVERS_DOOR_OPEN", "SCM_FEEDBACK", 1),
                 ("LEAD_DISTANCE", "RADAR_HUD", 0)]
     checks += [("RADAR_HUD", 50)]
+
   elif CP.carFingerprint == CAR.ODYSSEY_CHN:
     signals += [("DRIVERS_DOOR_OPEN", "SCM_BUTTONS", 1)]
   else:
