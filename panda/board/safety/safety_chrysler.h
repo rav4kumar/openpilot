@@ -153,8 +153,5 @@ const safety_hooks chrysler_hooks = {
   .tx_lin = nooutput_tx_lin_hook,
   .ignition = default_ign_hook,
   .fwd = chrysler_fwd_hook,
-<<<<<<< HEAD
-=======
   .relay = nooutput_relay_hook,
->>>>>>> 2f92d577f995ff6ae1945ef6b89df3cb69b92999
 };
