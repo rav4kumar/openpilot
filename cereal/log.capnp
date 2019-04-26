@@ -407,10 +407,10 @@ struct Live100Data {
   dampRateSteersDes @56 :Float32;
   angleSteersNoise @57 :Float32;
   angleSteersDesNoise @58 :Float32;
-  angleErrorNoise @59 :Float32;
+  noiseFeedback @59 :Float32;
   dampAngleSteers @62 :Float32;
   steeringRequested @63 :Float32;
-  oscillationPeriod @65 :Int16;
+  oscillationPeriod @65 :Float32;
   oscillationFactor @66 :Float32;
 
   curvature @37 :Float32;       # path curvature from vehicle model

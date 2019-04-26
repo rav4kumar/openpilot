@@ -88,10 +88,10 @@ class CarInterface(object):
     tireStiffnessRear_civic = 202500
     ret.steerDampTime = 0.0
     ret.steerReactTime = 0.001
-    ret.steerMPCReactTime = -0.1
-    ret.steerMPCDampTime = 0.15
+    ret.steerMPCReactTime = 0.001
+    ret.steerMPCDampTime = 0.01
     ret.rateFFGain = 0.2
-    ret.steerActuatorDelay = 0.01
+    ret.steerActuatorDelay = 0.12
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
 
@@ -289,7 +289,8 @@ class CarInterface(object):
 
     # steering wheel
     cancellation = np.interp(max(abs(self.avg_error1), self.CS.angle_steers - self.angle_offset_bias), [1.0, 2.0], [self.oscillation_factor, 0.0])
-    projected_error = float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1)
+    oscillation_frames = int(np.interp(self.CS.v_ego, [40, 70],[frames_low, frames_high]))
+    projected_error = float(self.angles_error[(self.frame - oscillation_frames) % 500] - self.avg_error1)
     ret.steeringAngle = self.CS.angle_steers + projected_error * cancellation
     ret.steeringRate = self.CS.angle_steers_rate
     #print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.oscillation_frames, self.oscillation_factor, projected_error, cancellation, ret.steeringAngle))

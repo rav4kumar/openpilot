@@ -246,7 +246,7 @@ def locationd_thread(gctx, addr, disabled_logs):
           params = learner.get_values()
           params['carFingerprint'] = CP.carFingerprint
           params_reader.put("LiveParameters", json.dumps(params))
-          params_reader.put("ControlsParams", json.dumps({'angle_model_bias': log.live100.angleModelBias}))
+          params_reader.put("ControlsParams", json.dumps({'angle_model_bias': log.live100.angleModelBias, 'angle_ff_gain': log.live100.angleFFGain}))
 
         i += 1
       elif socket is camera_odometry_socket:

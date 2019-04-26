@@ -449,7 +449,8 @@ class CarInterface(object):
     # steering wheel
     cancellation = np.interp(max(abs(self.avg_error1), self.CS.angle_steers - self.angle_offset_bias), [1.0, 2.0], [self.oscillation_factor, 0.0])
     projected_error = float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1)
-    ret.steeringAngle = self.CS.angle_steers + projected_error * cancellation
+    self.noise_feedback = projected_error * cancellation
+    ret.steeringAngle = self.CS.angle_steers + self.noise_feedback
     ret.steeringRate = self.CS.angle_steers_rate
     #print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.oscillation_frames, self.oscillation_factor, projected_error, cancellation, ret.steeringAngle))
 
