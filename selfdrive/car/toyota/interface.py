@@ -288,7 +288,7 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    cancellation = np.interp(max(abs(self.avg_error1), [1.0, 2.0], [self.oscillation_factor, 0.0])
+    cancellation = np.interp(abs(self.avg_error1), [1.0, 2.0], [self.oscillation_factor, 0.0])
     projected_error = float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1)
     self.noise_feedback = projected_error * cancellation
     ret.steeringAngle = self.CS.angle_steers + self.noise_feedback

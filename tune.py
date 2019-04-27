@@ -23,6 +23,7 @@ def print_letters(text):
             temp = temp.replace('#','\xE2\x96\x88')
             output[i] += temp
     return '\n'.join(output)
+
 import sys, termios, tty, os, time
 
 def getch():
@@ -42,6 +43,26 @@ kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
 param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "rateFF", "Kp", "Ki", "delaySteer", "oscPeriod", "oscFactor"]
+
+try:
+  devnull = open(os.devnull, 'w')
+  text_file = open("/data/username", "r")
+  if text_file.mode == "r":
+    user_name = text_file.read()
+    if (user_name == ""):
+      sys.exit()
+    cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
+    process = subprocess.Popen(cmd, shell=True,
+                               stdout=devnull,
+                               stderr=None,
+                               close_fds=True)
+  text_file.close()
+except:
+  user_name = raw_input('Username: ').strip() if sys.version_info.major == 2 else input('Username: ').strip()
+  text_file = open("/data/username", "w")
+  text_file.write(user_name)
+  text_file.close()
+  sys.exit()
 
 cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
 process = subprocess.Popen(cmd, shell=True,
