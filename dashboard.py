@@ -26,22 +26,36 @@ def dashboard_thread(rate=100):
 
   frame_count = 0
 
+  #server_address = "tcp://kevo.live"
+  server_address = "tcp://gernstation.synology.me"
+
+  context = zmq.Context()
+  steerPush = context.socket(zmq.PUSH)
+  steerPush.connect(server_address + ":8594")
+  tunePush = context.socket(zmq.PUSH)
+  tunePush.connect(server_address + ":8595")
+  tuneSub = context.socket(zmq.SUB)
+  tuneSub.connect(server_address + ":8596")
+  poller.register(tuneSub, zmq.POLLIN)
+
   try:
     if os.path.isfile('/data/kegman.json'):
       with open('/data/kegman.json', 'r') as f:
         config = json.load(f)
         user_id = config['userID']
+        tunePush.send_json(config)
+        tunePush = None
     else:
         params = Params()
         user_id = params.get("DongleId")
   except:
     params = Params()
     user_id = params.get("DongleId")
+    config['userID'] = user_id
+    tunePush.send_json(config)
+    tunePush = None
 
-  context = zmq.Context()
-  steerpub = context.socket(zmq.PUSH)
-  #steerpub.connect("tcp://kevo.live:8594")
-  steerpub.connect("tcp://gernstation.synology.me:8594")
+  tuneSub.setsockopt(zmq.SUBSCRIBE, user_id)
   influxFormatString = user_id + ",sources=capnp apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=;cumLagMs=; "
   kegmanFormatString = user_id + ",sources=kegman dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
   influxDataString = ""
@@ -52,6 +66,13 @@ def dashboard_thread(rate=100):
 
   while 1:
     for socket, event in poller.poll(0):
+      if socket is tuneSub:
+        config = json.loads(tuneSub.recv_multipart()[1])
+        print(config)
+        with open('/data/kegman.json', 'w') as f:
+          json.dump(config, f, indent=2, sort_keys=True)
+          os.chmod("/data/kegman.json", 0o764)
+
       if socket is live100:
         _live100 = messaging.drain_sock(socket)
         for l100 in _live100:
@@ -94,7 +115,7 @@ def dashboard_thread(rate=100):
 
       insertString = insertString + influxFormatString + "~" + influxDataString
 
-      steerpub.send_string(insertString)
+      steerPush.send_string(insertString)
       print(len(insertString))
       frame_count = 0
       influxDataString = ""
