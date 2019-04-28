@@ -289,6 +289,7 @@ BO_ 927 RADAR_HUD: 8 RADAR
  SG_ SET_TO_1 : 13|1@0+ (1,0) [0|1] "" BDY
  SG_ ZEROS_BOH2 : 11|4@0+ (1,0) [0|1] "" XXX
  SG_ APPLY_BRAKES_FOR_CANC : 23|1@0+ (1,0) [0|1] "" XXX
+ SG_ LEAD_DISTANCE : 39|8@0+ (1,0) [0|255] "" XXX
  SG_ ACC_ALERTS : 20|5@0+ (1,0) [0|1] "" BDY
  SG_ SET_TO_0 : 22|1@0+ (1,0) [0|1] "" XXX
  SG_ COUNTER : 61|2@0+ (1,0) [0|3] "" XXX
