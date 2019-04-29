@@ -55,7 +55,7 @@ def dashboard_thread(rate=100):
     tunePush.send_json(config)
     tunePush = None
 
-  tuneSub.setsockopt(zmq.SUBSCRIBE, user_id)
+  tuneSub.setsockopt_string(zmq.SUBSCRIBE, user_id)
   influxFormatString = user_id + ",sources=capnp apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=;cumLagMs=; "
   kegmanFormatString = user_id + ",sources=kegman dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
   influxDataString = ""
