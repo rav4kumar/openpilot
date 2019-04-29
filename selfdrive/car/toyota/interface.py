@@ -89,9 +89,9 @@ class CarInterface(object):
     ret.steerDampTime = 0.0
     ret.steerReactTime = 0.001
     ret.steerMPCReactTime = 0.001
-    ret.steerMPCDampTime = 0.01
-    ret.rateFFGain = 0.2
-    ret.steerActuatorDelay = 0.12
+    ret.steerMPCDampTime = 0.0
+    ret.rateFFGain = 0.01
+    ret.steerActuatorDelay = 0.001
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
 
