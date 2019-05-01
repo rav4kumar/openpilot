@@ -11,6 +11,14 @@ _LANE_WIDTH_V = [3., 3.8]
 # break points of speed
 _LANE_WIDTH_BP = [0., 31.]
 
+def calc_curvature(_poly):
+  pts_len = 50.  # m
+  if len(_poly) > 0:
+    pts = np.polyval([6 * _poly[0], 2 * _poly[1]], np.arange(0, pts_len))
+  else:
+    pts = 0.
+  return np.sum(pts) / pts_len
+
 
 def calc_d_lookahead(v_ego, d_poly):
   # this function computes how far too look for lateral control

@@ -1,6 +1,7 @@
 import math
 from common.numpy_fast import interp, clip
-from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv
+import zmq
+from selfdrive.controls.lib.latcontrol_helpers import model_polyfit, calc_desired_path, compute_path_pinv, calc_curvature
 
 CAMERA_OFFSET = 0.06  # m from center car to camera
 
@@ -28,7 +29,7 @@ class ModelParser(object):
       path_points[i] = path_points[i-1] + step_size
     return model_polyfit(winner_points, self._path_pinv), model_polyfit(path_points, self._path_pinv)
 
-  def update(self, v_ego, md, v_curv=0.0):
+  def update(self, v_ego, md, lm=None, v_curv=0.0):
     if md is not None:
       p_poly = model_polyfit(md.model.path.points, self._path_pinv)  # predicted path
       l_poly = model_polyfit(md.model.leftLane.points, self._path_pinv)  # left line
@@ -54,8 +55,21 @@ class ModelParser(object):
       lane_width_diff = abs(self.lane_width - current_lane_width)
       lane_prob = interp(lane_width_diff, [0.3, interp(v_ego, [20.0, 25.0], [1.0, 0.4])], [1.0, 0.0])
 
-      r_prob *= lane_prob
-      
+      if not lm is None and len(lm.liveMapData.roadCurvature) > 0:
+        self.l_curv = int(1000000 * calc_curvature(l_poly))
+        self.p_curv = int(1000000 * calc_curvature(p_poly))
+        self.r_curv = int(1000000 * calc_curvature(r_poly))
+        self.v_curv2 = int(1000000 * v_curv)
+        self.map_curv = int(1000000 * lm.liveMapData.curvature)
+        self.map_rcurv = int(1000000 * lm.liveMapData.roadCurvature[0])
+        self.map_rcurvx = int(1000000 * lm.liveMapData.roadCurvatureX[0])
+        self.l_diverge = int(1000 * (md.model.leftLane.points[5] - md.model.leftLane.points[0]))
+        self.r_diverge = -int(1000 * (md.model.rightLane.points[5] - md.model.rightLane.points[0]))
+        #print("v_curv:  %d  map_curv:  %d  l_curv:  %d  r_curv:  %d  p_curv:  %d  l_diverge:  %d  r_diverge:  %d" %
+        #                       (v_curv2, map_curv, l_curv, r_curv, p_curv, l_diverge, r_diverge))
+
+      #r_prob *= lane_prob
+
       '''if (abs(v_curv) < 0.0005 and l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:
         steer_compensation = 1.2 * v_curv * v_ego
         total_left_divergence = (md.model.leftLane.points[5] - md.model.leftLane.points[0]) * r_prob + steer_compensation

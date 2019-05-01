@@ -67,6 +67,8 @@ def radard_thread(gctx=None):
   model = messaging.sub_sock(context, service_list['model'].port, conflate=True, poller=poller)
   live100 = messaging.sub_sock(context, service_list['live100'].port, conflate=True, poller=poller)
   live_parameters_sock = messaging.sub_sock(context, service_list['liveParameters'].port, conflate=True, poller=poller)
+  live_map_data = messaging.sub_sock(context, service_list['liveMapData'].port, conflate=True, poller=poller)
+
 
   # Default parameters
   live_parameters = messaging.new_message()
@@ -125,6 +127,8 @@ def radard_thread(gctx=None):
         l100 = messaging.recv_one(socket)
       elif socket is model:
         md = messaging.recv_one(socket)
+      #elif socket is live_map_data:
+      #  lm = messaging.recv_one(socket)
       elif socket is live_parameters_sock:
         live_parameters = messaging.recv_one(socket)
         VM.update_params(live_parameters.liveParameters.stiffnessFactor, live_parameters.liveParameters.steerRatio)
@@ -148,7 +152,7 @@ def radard_thread(gctx=None):
       last_md_ts = md.logMonoTime
 
     # *** get path prediction from the model ***
-    MP.update(v_ego, md, v_curv)
+    MP.update(v_ego, md, None, v_curv)
 
     # run kalman filter only if prob is high enough
     if MP.lead_prob > 0.7:

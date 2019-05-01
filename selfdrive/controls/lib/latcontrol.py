@@ -36,6 +36,7 @@ class LatControl(object):
     self.angle_ff_bp = [[0.5, 5.0],[0.0, 1.0]]
     self.oscillation_period = CP.oscillationPeriod
     self.oscillation_factor = CP.oscillationFactor
+    self.deadzone = -CP.steerBacklash
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -60,6 +61,7 @@ class LatControl(object):
         self.delaySteer = float(kegman.conf['delaySteer'])
         self.oscillation_factor = float(kegman.conf['oscFactor'])
         self.oscillation_period = float(kegman.conf['oscPeriod'])
+        self.deadzone = -float(kegman.conf['backlash'])
 
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
@@ -118,7 +120,6 @@ class LatControl(object):
         steers_max = get_steer_max(CP, v_ego)
         self.pid.pos_limit = steers_max
         self.pid.neg_limit = -steers_max
-        deadzone = 0.0
 
         if self.gernbySteer:
           angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
@@ -130,7 +131,7 @@ class LatControl(object):
           steer_feedforward = v_ego**2 * (self.dampened_desired_angle - path_plan.angleOffset)
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
+                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):

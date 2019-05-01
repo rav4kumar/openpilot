@@ -92,6 +92,7 @@ class CarInterface(object):
     ret.steerMPCDampTime = 0.0
     ret.rateFFGain = 0.01
     ret.steerActuatorDelay = 0.001
+    ret.steerBacklash = 0.0
 
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
 

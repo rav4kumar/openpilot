@@ -1,5 +1,6 @@
 import zmq
 import math
+import json
 import numpy as np
 
 from common.realtime import sec_since_boot
@@ -27,6 +28,7 @@ class PathPlanner(object):
     context = zmq.Context()
     self.plan = messaging.pub_sock(context, service_list['pathPlan'].port)
     self.livempc = messaging.pub_sock(context, service_list['liveMpc'].port)
+    self.liveStreamData = messaging.pub_sock(context, 8600)
 
     self.setup_mpc(CP.steerRateCost)
     self.invalid_counter = 0
@@ -50,19 +52,18 @@ class PathPlanner(object):
     self.angle_steers_des_prev = 0.0
     self.angle_steers_des_time = 0.0
 
-  def update(self, CP, VM, CS, md, live100, live_parameters):
+  def update(self, CP, VM, CS, md, live100, live_parameters, live_map_data):
     v_ego = CS.carState.vEgo
     angle_steers = live100.live100.angleSteers
     angle_rate = live100.live100.angleRate
     v_curv = live100.live100.curvature
     active = live100.live100.active
     delaySteer = live100.live100.delaySteer
-    print(delaySteer)
 
     angle_offset_average = live_parameters.liveParameters.angleOffsetAverage
     angle_offset_bias = live100.live100.angleModelBias + angle_offset_average
 
-    self.MP.update(v_ego, md, v_curv)
+    self.MP.update(v_ego, md, live_map_data, v_curv)
 
     # Run MPC
     self.angle_steers_des_prev = live100.live100.dampAngleSteersDes
@@ -151,3 +152,8 @@ class PathPlanner(object):
     dat.liveMpc.delta = list(self.mpc_solution[0].delta)
     dat.liveMpc.cost = self.mpc_solution[0].cost
     self.livempc.send(dat.to_bytes())
+
+    if len(live_map_data.liveMapData.roadCurvature) > 0:
+      curv_data = "%d,%d,%d,%d,%d,%d,%d,%d,%d," % (self.MP.l_curv, self.MP.p_curv, self.MP.r_curv, self.MP.map_curv, self.MP.map_rcurv, self.MP.map_rcurvx, self.MP.v_curv2, self.MP.l_diverge, self.MP.r_diverge)
+      #print(live_map_data.liveMapData.roadCurvature)
+      self.liveStreamData.send_string(curv_data)

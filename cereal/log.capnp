@@ -473,6 +473,14 @@ struct Live100Data {
 
 }
 
+struct LiveStreamData(Key, Value) {
+  entries @0 :List(Entry);
+  struct Entry {
+    key @0 :Key;
+    value @1 :Value;
+  }
+}
+
 struct LiveEventData {
   name @0 :Text;
   value @1 :Int32;
@@ -1738,5 +1746,6 @@ struct Event {
     cameraOdometry @63 :CameraOdometry;
     pathPlan @64 :PathPlan;
     kalmanOdometry @65 :KalmanOdometry;
+    liveStreamData @66 :LiveStreamData;
   }
 }

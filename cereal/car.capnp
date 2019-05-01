@@ -345,6 +345,7 @@ struct CarParams {
   steerKiDEPRECATED @16 :Float32;
   steerKf @25 :Float32;
   rateFFGain @53 :Float32;
+  steerBacklash @58 :Float32;
 
   # Kp and Ki for the longitudinal control
   longitudinalKpBP @36 :List(Float32);
