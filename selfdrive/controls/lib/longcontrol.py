@@ -17,7 +17,7 @@ BRAKE_STOPPING_TARGET = 0.5  # apply at least this amount of brake to maintain t
 _MAX_SPEED_ERROR_BP = [0., 30.]  # speed breakpoints
 _MAX_SPEED_ERROR_V = [1.5, .8]  # max positive v_pid error VS actual speed; this avoids controls windup due to slow pedal resp
 
-RATE = 100.0
+RATE = 85.0
 
 
 def long_control_state_trans(active, long_control_state, v_ego, v_target, v_pid,

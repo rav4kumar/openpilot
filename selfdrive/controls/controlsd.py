@@ -405,7 +405,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
   return CC
 
 
-def controlsd_thread(gctx=None, rate=100):
+def controlsd_thread(gctx=None, rate=85):
   gc.disable()
 
   # start the loop
@@ -481,7 +481,7 @@ def controlsd_thread(gctx=None, rate=100):
   path_plan = messaging.new_message()
   path_plan.init('pathPlan')
 
-  rk = Ratekeeper(rate, print_delay_threshold=12. / 1000)
+  rk = Ratekeeper(rate, print_delay_threshold=15. / 1000)
   controls_params = params.get("ControlsParams")
 
   # Read angle offset from previous drive
@@ -543,7 +543,7 @@ def controlsd_thread(gctx=None, rate=100):
 
 
 def main(gctx=None):
-  controlsd_thread(gctx, 100)
+  controlsd_thread(gctx, 85)
 
 
 if __name__ == "__main__":

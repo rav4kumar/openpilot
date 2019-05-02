@@ -5,7 +5,7 @@ from common.numpy_fast import interp
 from selfdrive.kegman_conf import kegman_conf
 from cereal import car
 
-_DT = 0.01    # 100Hz
+_DT = 0.011765    # 100Hz
 
 def get_steer_max(CP, v_ego):
   return interp(v_ego, CP.steerMaxBP, CP.steerMaxV)

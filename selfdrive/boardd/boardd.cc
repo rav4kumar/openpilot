@@ -490,7 +490,7 @@ void *can_recv_thread(void *crap) {
     // drain the Panda twice at 4.5ms intervals, then once at 1.0ms interval (twice max if sync_id is set)
     if (recv_state++ < 2) {
       last_long_sleep = 1e-3 * nanos_since_boot();
-      wake_time += 4500;
+      wake_time += 5375;
       force_send = false;
       if (last_long_sleep < wake_time) {
         usleep(wake_time - last_long_sleep);
@@ -502,7 +502,7 @@ void *can_recv_thread(void *crap) {
         }
         else {
           if (recv_state < 2) {
-            wake_time += 4500;
+            wake_time += 5375;
             recv_state++;
             if (last_long_sleep < wake_time) {
               usleep(wake_time - last_long_sleep);
@@ -517,7 +517,7 @@ void *can_recv_thread(void *crap) {
     else {
       force_send = true;
       recv_state = 0;
-      wake_time += 1000;
+      wake_time += 1015;
       cur_time = 1e-3 * nanos_since_boot();
       if (wake_time > cur_time) {
         usleep(wake_time - cur_time);
