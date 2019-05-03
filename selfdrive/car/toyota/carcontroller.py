@@ -9,6 +9,7 @@ from selfdrive.car.toyota.toyotacan import make_can_msg, create_video_target,\
                                            create_fcw_command
 from selfdrive.car.toyota.values import ECU, STATIC_MSGS
 from selfdrive.can.packer import CANPacker
+import time
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 AudibleAlert = car.CarControl.HUDControl.AudibleAlert
@@ -22,7 +23,7 @@ ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
 # Steer torque limits
 class SteerLimitParams:
   STEER_MAX = 1500
-  STEER_DELTA_UP = 10       # 1.5s time to peak torque
+  STEER_DELTA_UP =  10      # 1.5s time to peak torque
   STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
   STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
 
@@ -248,10 +249,10 @@ class CarController(object):
     else:
       send_ui = False
 
-    if (frame % 100 == 0 or send_ui) and ECU.CAM in self.fake_ecus:
+    if (frame % 83 == 0 or send_ui) and ECU.CAM in self.fake_ecus:
       can_sends.append(create_ui_command(self.packer, steer, sound1, sound2, left_line, right_line))
 
-    if frame % 100 == 0 and ECU.DSU in self.fake_ecus:
+    if frame % 83 == 0 and ECU.DSU in self.fake_ecus:
       can_sends.append(create_fcw_command(self.packer, fcw))
 
     #*** static msgs ***
@@ -274,3 +275,14 @@ class CarController(object):
 
 
     sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())
+
+    if apply_steer != orig_apply_steer and ECU.CAM in self.fake_ecus and not self.angle_control:
+      orig_apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
+      apply_steer = apply_toyota_steer_torque_limits(orig_apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
+      CS.torque_clipped = (orig_apply_steer != apply_steer)
+      CS.apply_steer = apply_steer
+      self.last_steer = apply_steer
+      can_sends = []
+      can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, frame))
+      time.sleep(0.005)
+      sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())

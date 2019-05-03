@@ -42,7 +42,7 @@ class LatControl(object):
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
     self.pid = PIController(([0.], KpV),
                             ([0.], KiV),
-                            k_f=CP.steerKf, pos_limit=1.0)
+                            k_f=CP.steerKf, pos_limit=1.0, rate=83.0)
 
   def live_tune(self, CP):
     self.mpc_frame += 1

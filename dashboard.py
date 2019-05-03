@@ -35,11 +35,11 @@ def dashboard_thread(rate=100):
 
   context = zmq.Context()
   steerPush = context.socket(zmq.PUSH)
-  steerPush.connect(server_address + ":8601")
+  steerPush.connect(server_address + ":8594")
   tunePush = context.socket(zmq.PUSH)
-  tunePush.connect(server_address + ":8")
+  tunePush.connect(server_address + ":8595")
   tuneSub = context.socket(zmq.SUB)
-  tuneSub.connect(server_address + ":8696")
+  tuneSub.connect(server_address + ":8596")
   poller.register(tuneSub, zmq.POLLIN)
 
   try:
@@ -80,7 +80,7 @@ def dashboard_thread(rate=100):
     for socket, event in poller.poll(0):
       if socket is tuneSub:
         config = json.loads(tuneSub.recv_multipart()[1])
-        print(config)
+        #print(config)
         with open('/data/kegman.json', 'w') as f:
           json.dump(config, f, indent=2, sort_keys=True)
           os.chmod("/data/kegman.json", 0o764)
@@ -186,7 +186,7 @@ def dashboard_thread(rate=100):
 
       if liveStreamDataString != "":
         insertString = insertString + liveStreamFormatString + "~" + liveStreamDataString + "!"
-        print(insertString)
+        #print(insertString)
         liveStreamDataString =""
       insertString = insertString + influxFormatString + "~" + influxDataString + "!"
       insertString = insertString + mapFormatString + "~" + mapDataString
