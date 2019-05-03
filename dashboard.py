@@ -59,7 +59,7 @@ def dashboard_thread(rate=100):
     tunePush.send_json(config)
     tunePush = None
 
-  #tuneSub.setsockopt_string(zmq.SUBSCRIBE, user_id)
+  tuneSub.setsockopt(zmq.SUBSCRIBE, str(user_id))
   influxFormatString = user_id + ",sources=capnp apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=;cumLagMs=; "
   kegmanFormatString = user_id + ",sources=kegman dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
   mapFormatString = "location,user=" + user_id + " latitude=;longitude=;altitude=;speed=;bearing=;accuracy=;speedLimitValid=;speedLimit=;curvatureValid=;curvature=;wayId=;distToTurn=;mapValid=;speedAdvisoryValid=;speedAdvisory=;speedAdvisoryValid=;speedAdvisory=;speedLimitAheadValid=;speedLimitAhead=;speedLimitAheadDistance=; "
@@ -191,7 +191,7 @@ def dashboard_thread(rate=100):
       insertString = insertString + influxFormatString + "~" + influxDataString + "!"
       insertString = insertString + mapFormatString + "~" + mapDataString
       steerPush.send_string(insertString)
-      #print(len(insertString))
+      print(len(insertString))
       frame_count = 0
       influxDataString = ""
       kegmanDataString = ""
