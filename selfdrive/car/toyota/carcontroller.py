@@ -275,7 +275,7 @@ class CarController(object):
 
 
     sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())
-
+    '''
     if apply_steer != orig_apply_steer and ECU.CAM in self.fake_ecus and not self.angle_control:
       orig_apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
       apply_steer = apply_toyota_steer_torque_limits(orig_apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
@@ -286,3 +286,4 @@ class CarController(object):
       can_sends.append(create_steer_command(self.packer, apply_steer, apply_steer_req, frame))
       time.sleep(0.005)
       sendcan.send(can_list_to_can_capnp(can_sends, msgtype='sendcan').to_bytes())
+    '''
