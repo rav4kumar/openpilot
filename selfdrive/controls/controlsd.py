@@ -51,7 +51,7 @@ def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, hea
     if rk.frame % 5 > 0 or CS.steeringTorqueClipped == False:
       CS = CI.update(CC)
     else:
-      time.sleep(0.03)
+      #time.sleep(0.03)
       print("torque_clipped!")
   else:
     print("CAN lagging!", rk.remaining, rk.frame)
