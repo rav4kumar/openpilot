@@ -47,9 +47,11 @@ def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, hea
   rk.monitor_time()
   # Update carstate from CAN and create events
   if rk.remaining > 10. / 1000 or rk.frame < 1000:
-    CS = CI.update(CC)
+    if rk.frame % 4 > 0 or CS.steeringTorqueClipped == False:
+      CS = CI.update(CC)
+    else:
+      print("torque_clipped!")
   else:
-    CS = CS
     print("CAN lagging!", rk.remaining, rk.frame)
 
   events = list(CS.events)
