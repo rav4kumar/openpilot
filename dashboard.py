@@ -69,6 +69,7 @@ def dashboard_thread(rate=100):
   kegmanDataString = ""
   liveStreamDataString = ""
   mapDataString = ""
+  insertString = ""
 
   lastGPStime = 0
   lastMaptime = 0
