@@ -2,6 +2,7 @@
 import gc
 import zmq
 import json
+import time
 from cereal import car, log
 from common.numpy_fast import clip
 from common.realtime import sec_since_boot, set_realtime_priority, Ratekeeper
@@ -31,7 +32,7 @@ State = log.Live100Data.ControlState
 
 def isActive(state):
   """Check if the actuators are enabled"""
-  return state in [State.enabled, State.softDisabling] 
+  return state in [State.enabled, State.softDisabling]
 
 
 def isEnabled(state):
@@ -50,6 +51,7 @@ def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, hea
     if rk.frame % 5 > 0 or CS.steeringTorqueClipped == False:
       CS = CI.update(CC)
     else:
+      time.sleep(0.03)
       print("torque_clipped!")
   else:
     print("CAN lagging!", rk.remaining, rk.frame)

@@ -53,11 +53,11 @@ try:
     user_name = text_file.read()
     if (user_name == ""):
       sys.exit()
-    cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
+    '''cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
     process = subprocess.Popen(cmd, shell=True,
                                stdout=devnull,
                                stderr=None,
-                               close_fds=True)
+                               close_fds=True)'''
   text_file.close()
 except:
   try:
