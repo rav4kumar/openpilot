@@ -96,7 +96,7 @@ class CarState(object):
     self.car_fingerprint = CP.carFingerprint
 
     # vEgo kalman filter
-    dt = 0.011765
+    dt = 0.01
     # Q = np.matrix([[10.0, 0.0], [0.0, 100.0]])
     # R = 1e3
     self.v_ego_kf = KF1D(x0=np.matrix([[0.0], [0.0]]),

@@ -5,7 +5,7 @@ from common.numpy_fast import interp
 from selfdrive.kegman_conf import kegman_conf
 from cereal import car
 
-_DT = 0.011765    # 100Hz
+_DT = 0.01    # 100Hz
 
 def get_steer_max(CP, v_ego):
   return interp(v_ego, CP.steerMaxBP, CP.steerMaxV)
@@ -42,7 +42,7 @@ class LatControl(object):
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
     self.pid = PIController(([0.], KpV),
                             ([0.], KiV),
-                            k_f=CP.steerKf, pos_limit=1.0, rate=83.0)
+                            k_f=CP.steerKf, pos_limit=1.0)
 
   def live_tune(self, CP):
     self.mpc_frame += 1
@@ -120,13 +120,18 @@ class LatControl(object):
         self.pid.neg_limit = -steers_max
 
         angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
-        p_scale = interp(abs(angle_feedforward), [0.0, 1.0, 10.0], [1.0, 0.5, 0.25])
         if self.gernbySteer:
+          '''if abs(self.dampened_desired_angle) > abs(self.dampened_angle_steers):
+            p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.5, 0.25])
+          else:
+            p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.75, 0.5])'''
+          p_scale = interp(abs(angle_feedforward), [0.0, 1.0, 10.0], [1.0, 0.5, 0.25])
           self.angle_ff_ratio = interp(abs(angle_feedforward), self.angle_ff_bp[0], self.angle_ff_bp[1])
           angle_feedforward *= self.angle_ff_ratio * self.angle_ff_gain
           rate_feedforward = (1.0 - self.angle_ff_ratio) * self.rate_ff_gain * self.dampened_desired_rate
           steer_feedforward = v_ego**2 * (rate_feedforward + angle_feedforward)
         else:
+          p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
