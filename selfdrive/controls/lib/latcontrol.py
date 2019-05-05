@@ -119,17 +119,19 @@ class LatControl(object):
         self.pid.pos_limit = steers_max
         self.pid.neg_limit = -steers_max
 
+        angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
+        p_scale = interp(abs(angle_feedforward), [0.0, 1.0, 10.0], [1.0, 0.5, 0.25])
         if self.gernbySteer:
-          angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
           self.angle_ff_ratio = interp(abs(angle_feedforward), self.angle_ff_bp[0], self.angle_ff_bp[1])
           angle_feedforward *= self.angle_ff_ratio * self.angle_ff_gain
           rate_feedforward = (1.0 - self.angle_ff_ratio) * self.rate_ff_gain * self.dampened_desired_rate
           steer_feedforward = v_ego**2 * (rate_feedforward + angle_feedforward)
         else:
-          steer_feedforward = v_ego**2 * (self.dampened_desired_angle - path_plan.angleOffset)
+          steer_feedforward = v_ego**2 * angle_feedforward
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone)
+                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone,
+                                    p_scale=p_scale)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
