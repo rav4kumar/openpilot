@@ -69,6 +69,9 @@ def query_thread():
   global last_query_result, last_query_pos, cache_valid
   api = overpy.Overpass(url=OVERPASS_API_URL, headers=OVERPASS_HEADERS, timeout=10.)
 
+  context = zmq.Context()
+  query_sock = messaging.pub_sock(context, 8601)
+
   while True:
     time.sleep(1)
     if last_gps is not None:
@@ -89,6 +92,7 @@ def query_thread():
       q = build_way_query(last_gps.latitude, last_gps.longitude, radius=3000)
       try:
         new_result = api.query(q)
+        query_sock.send_string(q, new_result)
 
         # Build kd-tree
         nodes = []

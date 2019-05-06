@@ -23,6 +23,7 @@ def dashboard_thread(rate=100):
   live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
   liveMap = messaging.sub_sock(context, service_list['liveMapData'].port, addr=ipaddress, conflate=False, poller=poller)
   liveStreamData = messaging.sub_sock(context, 8600, addr=ipaddress, conflate=False, poller=poller)
+  osmData = messaging.sub_sock(context, 8601, addr=ipaddress, conflate=False, poller=poller)
   #gpsNMEA = messaging.sub_sock(context, service_list['gpsNMEA'].port, addr=ipaddress, conflate=True)
 
   #_live100 = None
@@ -79,6 +80,10 @@ def dashboard_thread(rate=100):
 
   while 1:
     for socket, event in poller.poll(0):
+      if socket is osmData:
+        _osmData = osmData.recv_multipart()
+        print(_osmData)
+
       if socket is tuneSub:
         config = json.loads(tuneSub.recv_multipart()[1])
         #print(config)
