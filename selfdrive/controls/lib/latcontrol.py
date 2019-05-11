@@ -121,10 +121,11 @@ class LatControl(object):
 
         angle_feedforward = self.dampened_desired_angle - path_plan.angleOffset
         if self.gernbySteer:
-          if abs(self.dampened_desired_angle) > abs(self.dampened_angle_steers):
-            p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.5, 0.25])
-          else:
-            p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.75, 0.5])
+          #if abs(self.dampened_desired_angle) > abs(self.dampened_angle_steers):
+          #  p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.5, 0.25])
+          #else:
+          #  p_scale = interp(abs(angle_feedforward), [1.0, 2.0, 10.0], [1.0, 0.75, 0.5])
+          p_scale = 1.0
           #p_scale = interp(abs(angle_feedforward), [0.0, 1.0, 10.0], [1.0, 0.5, 0.25])
           self.angle_ff_ratio = interp(abs(angle_feedforward), self.angle_ff_bp[0], self.angle_ff_bp[1])
           angle_feedforward *= self.angle_ff_ratio * self.angle_ff_gain
