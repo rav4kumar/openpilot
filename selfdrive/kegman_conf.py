@@ -23,17 +23,27 @@ class kegman_conf():
     if self.conf['delaySteer'] == "-1":
       self.conf['delaySteer'] = str(round(CP.steerActuatorDelay,3))
       write_conf = True
+    if self.conf['longOffset'] == "-1":
+      self.conf['longOffset'] = str(round(CP.longOffset,3))
+      write_conf = True
     if self.conf['Kp'] == "-1":
       self.conf['Kp'] = str(round(CP.steerKpV[0],3))
       write_conf = True
     if self.conf['Ki'] == "-1":
       self.conf['Ki'] = str(round(CP.steerKiV[0],3))
       write_conf = True
+    if self.conf['dampRate'] == "-1":
+      self.conf['dampRate'] = str(round(CP.rateDampTime, 3))
+      self.conf['reactRate'] = str(round(CP.rateReactTime, 3))
+      write_conf = True
     if self.conf['backlash'] == "-1":
       self.conf['backlash'] = str(round(CP.steerBacklash,3))
       write_conf = True
     if self.conf['rateFF'] == "-1":
       self.conf['rateFF'] = str(round(CP.rateFFGain,3))
+      write_conf = True
+    if self.conf['longOffset'] == "-1":
+      self.conf['longOffset'] = str(round(CP.longOffset,3))
       write_conf = True
     if self.conf['oscPeriod'] == "-1":
       self.conf['oscPeriod'] = str(round(CP.oscillationPeriod, 2))
@@ -76,6 +86,14 @@ class kegman_conf():
         self.config.update({"delaySteer":"-1"})
         self.element_updated = True
 
+      if "dampRate" not in self.config:
+        self.config.update({"dampSteer":"-1"})
+        self.config.update({"dampRate":"-1"})
+        self.config.update({"reactRate":"-1"})
+        self.config.update({"longOffset":"-1"})
+        self.config.update({"delaySteer":"-1"})
+        self.element_updated = True
+
       if "oscPeriod" not in self.config:
         self.config.update({"oscPeriod":"-1"})
         self.config.update({"oscFactor":"-1"})
@@ -100,9 +118,9 @@ class kegman_conf():
     else:
       self.config = {"cameraOffset":"0.06", "lastTrMode":"1", "battChargeMin":"60", "battChargeMax":"70", \
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
-                     "brakeStoppingTarget":"0.25", "tuneGernby":"1", "reactMPC":"-1", "reactSteer":"-1", \
-                     "dampMPC":"-1", "dampSteer":"-1", "Kp":"-1", "Ki":"-1", "rateFF":"-1", "delaySteer":"-1", \
-                     "oscPeriod":"-1", "oscFactor":"-1", "backlash":"-1"}
+                     "brakeStoppingTarget":"0.25", "tuneGernby":"1", "reactMPC":"-1", "reactSteer":"-1","reactRate":"-1", \
+                     "dampMPC":"-1", "dampSteer":"-1", "dampRate":"-1", "Kp":"-1", "Ki":"-1", "rateFF":"-1", "delaySteer":"-1", \
+                     "oscPeriod":"-1", "oscFactor":"-1", "backlash":"-1", "longOffset":"-1"}
 
       self.write_config(self.config)
     return self.config

@@ -86,15 +86,18 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerDampTime = 0.0
-    ret.steerReactTime = 0.001
-    ret.steerMPCReactTime = 0.001
-    ret.steerMPCDampTime = 0.0
+    ret.steerMPCReactTime = 0.01
+    ret.steerMPCDampTime = 0.01
     ret.rateFFGain = 0.01
-    ret.steerActuatorDelay = 0.001
-    ret.steerBacklash = 0.0
-
+    ret.steerActuatorDelay = 0.12
+    ret.steerBacklash = 0.005
+    ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 0.75, 0.5]]  # [abs angles, scale UP, scale DOWN]
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
+    ret.carCANRate = 82.87750704
+    ret.longOffset = 0.0
+    ret.steerDampTime = 0.01
+    ret.steerReactTime = 0.001
+    ret.rateDampTime = 0.15
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -106,13 +109,13 @@ class CarInterface(object):
       ret.steerKpV, ret.steerKiV = [[0.4], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
-      #ret.steerActuatorDelay = 0.01
       ret.steerActuatorDelay = 0.0
-      ret.steerDampTime = 0.007
+      ret.steerDampTime = 0.0
       ret.steerReactTime = 0.0
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.4
+      ret.longOffset = 0.4
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -123,12 +126,14 @@ class CarInterface(object):
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
       ret.steerKpV, ret.steerKiV = [[0.3], [0.03]] # [[0.6], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
-      ret.steerActuatorDelay = 0.001
       ret.steerDampTime = 0.007
       ret.steerReactTime = 0.0
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.25       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.4
+      ret.steerActuatorDelay = 0.0
+      ret.longOffset = 0.4
+
     elif candidate == CAR.COROLLA:
       stop_and_go = False
       ret.safetyParam = 100 # see conversion factor for STEER_TORQUE_EPS in dbc file
@@ -297,14 +302,13 @@ class CarInterface(object):
 
     if self.CS.angle_steers != self.prev_angle_steers:
       self.steer_counter_prev = self.steer_counter
-      self.rough_steers_rate = (self.rough_steers_rate + 100.0 * (self.CS.angle_steers - self.prev_angle_steers) / self.steer_counter_prev) / 2.0
+      self.rough_steers_rate = self.CP.carCANRate * (self.CS.angle_steers - self.prev_angle_steers) / self.steer_counter_prev
+      self.prev_angle_steers = self.CS.angle_steers
       self.steer_counter = 0.0
     elif self.steer_counter >= self.steer_counter_prev:
       self.rough_steers_rate = (self.steer_counter * self.rough_steers_rate) / (self.steer_counter + 1.0)
     self.steer_counter += 1.0
-    angle_rate = self.rough_steers_rate
-    self.prev_angle_steers = self.CS.angle_steers
-    ret.steeringRate = angle_rate
+    ret.steeringRate = self.rough_steers_rate
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override

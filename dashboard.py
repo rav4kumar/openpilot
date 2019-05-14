@@ -61,8 +61,8 @@ def dashboard_thread(rate=100):
     tunePush = None
 
   tuneSub.setsockopt(zmq.SUBSCRIBE, str(user_id))
-  influxFormatString = user_id + ",sources=capnp apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=;cumLagMs=; "
-  kegmanFormatString = user_id + ",sources=kegman dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
+  influxFormatString = user_id + ",sources=capnp angle_accel=;damp_angle_rate=;angle_rate=;damp_angle=;apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=; "
+  kegmanFormatString = user_id + ",sources=kegman reactRate=;dampRate=;longOffset=;backlash=;dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
   mapFormatString = "location,user=" + user_id + " latitude=;longitude=;altitude=;speed=;bearing=;accuracy=;speedLimitValid=;speedLimit=;curvatureValid=;curvature=;wayId=;distToTurn=;mapValid=;speedAdvisoryValid=;speedAdvisory=;speedAdvisoryValid=;speedAdvisory=;speedLimitAheadValid=;speedLimitAhead=;speedLimitAheadDistance=; "
   gpsFormatString="gps,user=" + user_id + " "
   liveStreamFormatString = "curvature,user=" + user_id + " l_curv=;p_curv=;r_curv=;map_curv=;map_rcurv=;map_rcurvx=;v_curv=;l_diverge=;r_diverge=; "
@@ -121,8 +121,10 @@ def dashboard_thread(rate=100):
             receiveTime = int((monoTimeOffset + l100.logMonoTime) * 0.0000002) * 5
           if vEgo > 0:
 
-            influxDataString += ("%d,%0.2f,%0.2f,%0.3f,%0.3f,%0.2f,%0.2f,%0.2f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%0.2f,%d|" %
-                (l100.live100.steeringRequested, l100.live100.noiseFeedback, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio,
+  influxFormatString = user_id + ",sources=capnp angle_accel=;damp_angle_rate=;angle_rate=;damp_angle=;apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=; "
+
+            influxDataString += ("%0.3f,%0.3f,%0.2f,%0.2f%d,%0.2f,%0.2f,%0.3f,%0.3f,%0.2f,%0.2f,%0.2f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%0.2f,%d|" %
+                (l100.live100.angleAccel ,l100.live100.dampAngleRate, l100.live100.angleRate,l100.live100.dampAngleSteers , l100.live100.steeringRequested, l100.live100.noiseFeedback, l100.live100.standardFFRatio, 1.0 - l100.live100.angleFFRatio,
                 l100.live100.angleFFRatio, l100.live100.angleSteersDes, l100.live100.angleSteers, l100.live100.dampAngleSteersDes,
                 l100.live100.steerOverride, vEgo, l100.live100.upSteer, l100.live100.uiSteer, l100.live100.ufSteer, l100.live100.cumLagMs, receiveTime))
 
@@ -184,8 +186,12 @@ def dashboard_thread(rate=100):
               oscFactor = config['oscFactor']
               oscPeriod = config['oscPeriod']
               backlash = config['backlash']
-              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
-                    (backlash, dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, l100.live100.angleFFGain, delaySteer,
+              longOffset = config['longOffset']
+              dampRate = config['dampRate']
+              reactRate = config['reactRate']
+
+              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
+                    (reactRate, dampRate, longOffset, backlash, dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, l100.live100.angleFFGain, delaySteer,
                     oscFactor, oscPeriod, receiveTime))
               insertString = kegmanFormatString + "~" + kegmanDataString + "!"
         except:
@@ -193,7 +199,7 @@ def dashboard_thread(rate=100):
 
       if liveStreamDataString != "":
         insertString = insertString + liveStreamFormatString + "~" + liveStreamDataString + "!"
-        #print(insertString)
+        print(insertString)
         liveStreamDataString =""
       insertString = insertString + influxFormatString + "~" + influxDataString + "!"
       insertString = insertString + mapFormatString + "~" + mapDataString

@@ -68,6 +68,15 @@ class ModelParser(object):
         #print("v_curv:  %d  map_curv:  %d  l_curv:  %d  r_curv:  %d  p_curv:  %d  l_diverge:  %d  r_diverge:  %d" %
         #                       (v_curv2, map_curv, l_curv, r_curv, p_curv, l_diverge, r_diverge))
 
+        if self.l_curv > self.map_rcurv:
+          l_prob *= lane_prob
+          l_prob -= r_prob
+          print("discount left!")
+        elif self.r_curv < self.map_rcurv:
+          r_prob *= lane_prob
+          r_prob -= l_prob
+          print("               discount right!")
+
       #r_prob *= lane_prob
 
       '''if (abs(v_curv) < 0.0005 and l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:

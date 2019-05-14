@@ -44,7 +44,7 @@ button_delay = 0.2
 kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
-param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "rateFF", "Kp", "Ki", "delaySteer", "oscPeriod", "oscFactor", "backlash"]
+param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "dampRate", "rateFF", "Kp", "Ki", "delaySteer", "longOffset", "oscPeriod", "oscFactor", "backlash"]
 
 try:
   devnull = open(os.devnull, 'w')
@@ -184,6 +184,12 @@ while True:
 
   if float(kegman.conf['reactMPC']) > 0.1:
     kegman.conf['reactMPC'] = "0.1"
+
+  if float(kegman.conf['dampRate']) < 0.0:
+    kegman.conf['dampRate'] = "0.01"
+
+  if float(kegman.conf['longOffset']) < 0.0:
+    kegman.conf['longOffset'] = "0.0"
 
   if float(kegman.conf['rateFF']) <= 0.0:
     kegman.conf['rateFF'] = "0.001"

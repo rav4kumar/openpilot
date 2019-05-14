@@ -67,6 +67,7 @@ bool pigeon_needs_init;
 
 int big_recv;
 uint32_t big_data[RECV_SIZE*2];
+int long_sleep_us;
 
 void pigeon_init();
 void *pigeon_thread(void *crap);
@@ -94,6 +95,8 @@ void *safety_setter_thread(void *s) {
 
   auto safety_model = car_params.getSafetyModel();
   auto safety_param = car_params.getSafetyParam();
+
+  long_sleep_us = int(((1e6/car_params.getCarCANRate()) -1000) / 2.0);
   LOGW("setting safety model: %d with param %d", safety_model, safety_param);
 
   int safety_setting = 0;
@@ -490,7 +493,7 @@ void *can_recv_thread(void *crap) {
     // drain the Panda twice at 4.5ms intervals, then once at 1.0ms interval (twice max if sync_id is set)
     if (recv_state++ < 2) {
       last_long_sleep = 1e-3 * nanos_since_boot();
-      wake_time += 4500;
+      wake_time += long_sleep_us;
       force_send = false;
       if (last_long_sleep < wake_time) {
         usleep(wake_time - last_long_sleep);
@@ -502,7 +505,7 @@ void *can_recv_thread(void *crap) {
         }
         else {
           if (recv_state < 2) {
-            wake_time += 4500;
+            wake_time += long_sleep_us;
             recv_state++;
             if (last_long_sleep < wake_time) {
               usleep(wake_time - last_long_sleep);

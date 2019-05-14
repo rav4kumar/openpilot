@@ -402,6 +402,7 @@ struct Live100Data {
   angleSteers @13 :Float32;     # Steering angle in degrees.
   angleRate @61 :Float32;
   delaySteer @64 :Float32;
+  longOffset @67 :Float32;
   angleSteersDes @29 :Float32;
   dampAngleSteersDes @55 :Float32;
   dampRateSteersDes @56 :Float32;
@@ -409,6 +410,8 @@ struct Live100Data {
   angleSteersDesNoise @58 :Float32;
   noiseFeedback @59 :Float32;
   dampAngleSteers @62 :Float32;
+  dampAngleRate @68: Float32;
+  angleAccel @69: Float32;
   steeringRequested @63 :Float32;
   oscillationPeriod @65 :Float32;
   oscillationFactor @66 :Float32;
@@ -471,14 +474,6 @@ struct Live100Data {
     full @3;    # full screen
   }
 
-}
-
-struct LiveStreamData(Key, Value) {
-  entries @0 :List(Entry);
-  struct Entry {
-    key @0 :Key;
-    value @1 :Value;
-  }
 }
 
 struct LiveEventData {
@@ -1746,6 +1741,5 @@ struct Event {
     cameraOdometry @63 :CameraOdometry;
     pathPlan @64 :PathPlan;
     kalmanOdometry @65 :KalmanOdometry;
-    liveStreamData @66 :LiveStreamData;
   }
 }

@@ -9,7 +9,6 @@ from selfdrive.car.toyota.toyotacan import make_can_msg, create_video_target,\
                                            create_fcw_command
 from selfdrive.car.toyota.values import ECU, STATIC_MSGS
 from selfdrive.can.packer import CANPacker
-import time
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 AudibleAlert = car.CarControl.HUDControl.AudibleAlert
@@ -23,7 +22,7 @@ ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
 # Steer torque limits
 class SteerLimitParams:
   STEER_MAX = 1500
-  STEER_DELTA_UP =  10      # 1.5s time to peak torque
+  STEER_DELTA_UP = 10       # 1.5s time to peak torque
   STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
   STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
 
@@ -161,7 +160,7 @@ class CarController(object):
       apply_steer_req = 1
 
     CS.torque_clipped = (orig_apply_steer != apply_steer)
-    CS.apply_steer = apply_steer
+    CS.apply_steer = (100 * apply_steer) / SteerLimitParams.STEER_MAX
 
     self.steer_angle_enabled, self.ipas_reset_counter = \
       ipas_state_transition(self.steer_angle_enabled, enabled, CS.ipas_active, self.ipas_reset_counter)

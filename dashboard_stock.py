@@ -76,7 +76,7 @@ def dashboard_thread():
 
             frame_count += 1
 
-    if frame_count >= 20:
+    if frame_count >= 100:
       sendString = influxFormatString + "~" + influxDataString
       if mapDataString != "":
         sendString += "!" + mapFormatString + "~" + mapDataString

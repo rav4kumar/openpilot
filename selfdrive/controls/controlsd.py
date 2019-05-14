@@ -2,7 +2,6 @@
 import gc
 import zmq
 import json
-import time
 from cereal import car, log
 from common.numpy_fast import clip
 from common.realtime import sec_since_boot, set_realtime_priority, Ratekeeper
@@ -40,17 +39,16 @@ def isEnabled(state):
   return (isActive(state) or state == State.preEnabled)
 
 
-def data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
+def data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
                 poller, cal_status, cal_perc, overtemp, free_space, low_battery,
-                driver_status, state, mismatch_counter, rk, params, plan, path_plan):
+                driver_status, state, mismatch_counter, params, plan, path_plan):
   """Receive data from sockets and create events for battery, temperature and disk space"""
 
-  rk.monitor_time()
   # Update carstate from CAN and create events
-  if rk.remaining > 10. / 1000 or rk.frame < 1000:
+  if CP.carCANRate == 100.0 or CS.steeringTorqueClipped == False or  CI.frame % 5 > 0:
     CS = CI.update(CC)
   else:
-    print("CAN lagging!", rk.remaining, rk.frame)
+    print("torque_clipped!")
 
   events = list(CS.events)
   enabled = isEnabled(state)
@@ -207,7 +205,7 @@ def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM
   return state, soft_disable_timer, v_cruise_kph, v_cruise_kph_last
 
 
-def state_control(plan, path_plan, CS, CP, state, events, v_cruise_kph, v_cruise_kph_last, AM, rk,
+def state_control(plan, path_plan, CS, CP, CI, state, events, v_cruise_kph, v_cruise_kph_last, AM,
                   driver_status, LaC, LoC, VM, angle_model_bias, passive, is_metric, cal_perc):
   """Given the state, this function returns an actuators packet"""
 
@@ -246,14 +244,14 @@ def state_control(plan, path_plan, CS, CP, state, events, v_cruise_kph, v_cruise
       AM.add(e, enabled, extra_text_2=extra_text)
 
   # Run angle offset learner at 20 Hz
-  if rk.frame % 5 == 2:
+  if CI.frame % 5 == 2:
     angle_model_bias = learn_angle_model_bias(active, CS.vEgo, angle_model_bias,
                                       path_plan.cPoly, path_plan.cProb, CS.steeringAngle,
                                       CS.steeringPressed)
 
   cur_time = sec_since_boot()  # TODO: This won't work in replay
   mpc_time = plan.l20MonoTime / 1e9
-  _DT = 0.01 # 100Hz
+  _DT = 1.0 / CP.carCANRate # 100H
 
   dt = min(cur_time - mpc_time, _DT_MPC + _DT) + _DT  # no greater than dt mpc + dt, to prevent too high extraps
   a_acc_sol = plan.aStart + (dt / _DT_MPC) * (plan.aTarget - plan.aStart)
@@ -286,7 +284,7 @@ def state_control(plan, path_plan, CS, CP, state, events, v_cruise_kph, v_cruise
   return actuators, v_cruise_kph, driver_status, angle_model_bias, v_acc_sol, a_acc_sol
 
 
-def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk, carstate,
+def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, carstate,
               carcontrol, live100, AM, driver_status,
               LaC, LoC, angle_model_bias, passive, start_time, v_acc, a_acc):
   """Send actuators and hud commands to the car, send live100 and MPC logging"""
@@ -348,6 +346,8 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "angleSteers": CS.steeringAngle,
     "angleRate": CS.steeringRate,
     "dampAngleSteers": float(LaC.dampened_angle_steers),
+    "angleAccel": float(LaC.angle_accel),
+    "dampAngleRate": float(LaC.dampened_angle_rate),
     "curvature": VM.calc_curvature((LaC.dampened_angle_steers - path_plan.pathPlan.angleOffset) * CV.DEG_TO_RAD, CS.vEgo),
     "steerOverride": CS.steeringPressed,
     "state": state,
@@ -362,6 +362,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "dampAngleSteersDes": float(LaC.dampened_desired_angle),
     "steeringRequested": float(CS.steeringRequested),
     "delaySteer": float(LaC.delaySteer),
+    "longOffset": float(LaC.longOffset),
     "oscillationPeriod": float(LaC.oscillation_period),
     "oscillationFactor": float(LaC.oscillation_factor),
     "noiseFeedback": float(CI.noise_feedback),
@@ -379,7 +380,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "gpsPlannerActive": plan.gpsPlannerActive,
     "vCurvature": plan.vCurvature,
     "decelForTurn": plan.decelForTurn,
-    "cumLagMs": -rk.remaining * 1000.,
+    #"cumLagMs": -rk.remaining * 1000.,
     "startMonoTime": start_time,
     "mapValid": plan.mapValid,
     "forceDecel": bool(force_decel),
@@ -481,7 +482,7 @@ def controlsd_thread(gctx=None, rate=100):
   path_plan = messaging.new_message()
   path_plan.init('pathPlan')
 
-  rk = Ratekeeper(rate, print_delay_threshold=15. / 1000)
+  #rk = Ratekeeper(CP.CANRate, print_delay_threshold=15. / 1000)
   controls_params = params.get("ControlsParams")
 
   # Read angle offset from previous drive
@@ -503,9 +504,9 @@ def controlsd_thread(gctx=None, rate=100):
 
     # Sample data and compute car events
     CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan =\
-      data_sample(CI, CC, CS, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
+      data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
                   poller, cal_status, cal_perc, overtemp, free_space, low_battery, driver_status,
-                  state, mismatch_counter, rk, params, plan, path_plan)
+                  state, mismatch_counter, params, plan, path_plan)
     prof.checkpoint("Sample")
 
     path_plan_age = (start_time - path_plan.logMonoTime) / 1e9
@@ -528,14 +529,14 @@ def controlsd_thread(gctx=None, rate=100):
 
     # Compute actuators (runs PID loops and lateral MPC)
     actuators, v_cruise_kph, driver_status, angle_model_bias, v_acc, a_acc = \
-      state_control(plan.plan, path_plan.pathPlan, CS, CP, state, events, v_cruise_kph,
-                    v_cruise_kph_last, AM, rk, driver_status,
+      state_control(plan.plan, path_plan.pathPlan, CS, CP, CI, state, events, v_cruise_kph,
+                    v_cruise_kph_last, AM, driver_status,
                     LaC, LoC, VM, angle_model_bias, passive, is_metric, cal_perc)
 
     prof.checkpoint("State Control")
 
     # Publish data
-    CC = data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk, carstate, carcontrol,
+    CC = data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, carstate, carcontrol,
                    live100, AM, driver_status, LaC, LoC, angle_model_bias, passive, start_time, v_acc, a_acc)
     prof.checkpoint("Sent")
 
