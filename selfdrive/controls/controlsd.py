@@ -45,7 +45,7 @@ def data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, calibration,
   """Receive data from sockets and create events for battery, temperature and disk space"""
 
   # Update carstate from CAN and create events
-  if CP.carCANRate == 100.0 or CS.steeringTorqueClipped == False or  CI.frame % 5 > 0:
+  if CP.carCANRate == 100.0 or CS is None or CS.steeringTorqueClipped == False or  CI.frame % 5 > 0:
     CS = CI.update(CC)
   else:
     print("torque_clipped!")

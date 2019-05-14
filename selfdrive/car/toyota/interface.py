@@ -86,8 +86,8 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.steerMPCReactTime = 0.01
-    ret.steerMPCDampTime = 0.01
+    ret.steerMPCReactTime = 0.001
+    ret.steerMPCDampTime = 0.001
     ret.rateFFGain = 0.01
     ret.steerActuatorDelay = 0.12
     ret.steerBacklash = 0.005
@@ -95,9 +95,10 @@ class CarInterface(object):
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
     ret.carCANRate = 82.87750704
     ret.longOffset = 0.0
-    ret.steerDampTime = 0.01
-    ret.steerReactTime = 0.001
+    ret.steerDampTime = 0.0
+    ret.steerReactTime = 0.05
     ret.rateDampTime = 0.15
+    ret.rateReactTime = -0.14
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -111,7 +112,9 @@ class CarInterface(object):
       # TODO: Prius seem to have very laggy actuators. Understand if it is lag or hysteresis
       ret.steerActuatorDelay = 0.0
       ret.steerDampTime = 0.0
-      ret.steerReactTime = 0.0
+      ret.steerReactTime = 0.01
+      ret.rateDampTime = 0.15
+      ret.rateReactTime = -0.14
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.4
@@ -126,8 +129,10 @@ class CarInterface(object):
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
       ret.steerKpV, ret.steerKiV = [[0.3], [0.03]] # [[0.6], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
-      ret.steerDampTime = 0.007
-      ret.steerReactTime = 0.0
+      ret.steerDampTime = 0.0
+      ret.steerReactTime = 0.01
+      ret.rateDampTime = 0.15
+      ret.rateReactTime = -0.14
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.25       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.4

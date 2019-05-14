@@ -182,18 +182,18 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
+    ret.carCANRate = 100.0
     ret.rateFFGain = 0.4
     ret.oscillationPeriod = 2.0  #seconds
     ret.oscillationFactor = 0.15
     ret.steerBacklash = 0.005
-    ret.carCANRate = 100.0
-    ret.steerMPCReactTime = 0.01
-    ret.steerMPCDampTime = 0.175
-    ret.steerReactTime = 0.025
-    ret.steerDampTime = 0.01
-    ret.rateDampTime = 0.15
-    ret.rateReactTime = 0.0
     ret.longOffset = 0.0
+    ret.steerMPCDampTime = 0.175
+    ret.steerMPCReactTime = 0.01
+    ret.rateDampTime = 0.10
+    ret.rateReactTime = -0.05
+    ret.steerDampTime = 0.01
+    ret.steerReactTime = 0.05
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom
@@ -223,15 +223,6 @@ class CarInterface(object):
       ret.longitudinalKpV = [3.6, 2.4, 1.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.54, 0.36]
-      ret.steerMPCReactTime = 0.01
-      ret.steerMPCDampTime = 0.175
-      ret.steerReactTime = 0.025
-      ret.rateDampTime = 0.15
-      ret.steerDampTime = 0.01
-      ret.rateFFGain = 0.4
-      ret.oscillationPeriod = 2.0  #seconds
-      ret.oscillationFactor = 0.15
-      ret.steerBacklash = 0.005
 
     elif candidate in (CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH):
       stop_and_go = True
@@ -247,16 +238,6 @@ class CarInterface(object):
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
-      ret.steerMPCReactTime = 0.025
-      ret.steerMPCDampTime = 0.175
-      ret.steerReactTime = 0.0
-      ret.steerDampTime = 0.1
-      ret.rateReactTime = 0.0
-      ret.rateDampTime = 0.1
-      ret.steerBacklash = 0.005
-      ret.oscillationPeriod = 2.0  #seconds
-      ret.oscillationFactor = 0.15
-      ret.rateFFGain = 0.4
 
     elif candidate == CAR.ACURA_ILX:
       stop_and_go = False
@@ -363,9 +344,6 @@ class CarInterface(object):
       ret.longitudinalKpV = [1.2, 0.8, 0.5]
       ret.longitudinalKiBP = [0., 35.]
       ret.longitudinalKiV = [0.18, 0.12]
-      ret.steerDampTime = 0.02
-      ret.steerReactTime = 0.001
-      ret.rateDampTime = 0.05
 
     elif candidate == CAR.RIDGELINE:
       stop_and_go = False
