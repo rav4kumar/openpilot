@@ -56,7 +56,7 @@ def get_can_parser(CP):
     ("STEER_ANGLE_SENSOR", 80),
     ("PCM_CRUISE", 33),
     ("PCM_CRUISE_2", 33),
-    ("STEER_TORQUE_SENSOR", 50),
+    ("STEER_TORQUE_SENSOR", 40),
     ("EPS_STATUS", 25),
   ]
 
