@@ -93,7 +93,7 @@ class CarInterface(object):
     ret.steerBacklash = 0.005
     ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 0.75, 0.5]]  # [abs angles, scale UP, scale DOWN]
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
-    ret.carCANRate = 100.0   # 82.87750704
+    ret.carCANRate = 82.87750704
     ret.longOffset = 0.0
     ret.steerDampTime = 0.0
     ret.steerReactTime = 0.05

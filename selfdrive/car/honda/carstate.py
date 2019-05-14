@@ -193,7 +193,7 @@ class CarState(object):
     self.stopped = 0
 
     # vEgo kalman filter
-    dt = 0.01
+    dt = 1.0 / CP.carCANRate
     # Q = np.matrix([[10.0, 0.0], [0.0, 100.0]])
     # R = 1e3
     self.v_ego_kf = KF1D(x0=[[0.0], [0.0]],

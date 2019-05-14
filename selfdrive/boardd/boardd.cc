@@ -97,6 +97,7 @@ void *safety_setter_thread(void *s) {
   auto safety_param = car_params.getSafetyParam();
 
   long_sleep_us = int(((1e6/car_params.getCarCANRate()) -1000) / 2.0);
+  if (long_sleep_us == 0) long_sleep_us = 4500;
   LOGW("setting safety model: %d with param %d", safety_model, safety_param);
 
   int safety_setting = 0;

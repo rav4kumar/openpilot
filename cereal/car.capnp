@@ -347,7 +347,7 @@ struct CarParams {
   steerKf @25 :Float32;
   rateFFGain @53 :Float32;
   steerBacklash @58 :Float32;
-  steerPscale @59 :List(Float32);
+  steerPscale @59 :List(List(Float32));
   carCANRate @62 :Float32;
 
   # Kp and Ki for the longitudinal control
@@ -381,4 +381,3 @@ struct CarParams {
     angle @1;
   }
 }
-
