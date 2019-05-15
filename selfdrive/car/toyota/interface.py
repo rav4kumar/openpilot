@@ -99,7 +99,7 @@ class CarInterface(object):
     ret.steerReactTime = 0.04
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
-    ret.oscillationPeriod = 1.2
+    ret.oscillationPeriod = 2
     ret.oscillationFactor = 0.5
 
     if candidate == CAR.PRIUS:
@@ -140,7 +140,7 @@ class CarInterface(object):
       ret.rateFFGain = 0.4
       ret.steerActuatorDelay = 0.02
       ret.longOffset = 0.4
-      ret.oscillationPeriod = 1.2
+      ret.oscillationPeriod = 2
       ret.oscillationFactor = 0.5
 
     elif candidate == CAR.COROLLA:
