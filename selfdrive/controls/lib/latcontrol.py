@@ -99,7 +99,7 @@ class LatControl(object):
   def calc_angle_accel(self, CP, angle_rate):
     if angle_rate != self.prev_angle_rate:
       self.steer_counter_prev = self.steer_counter
-      self.angle_accel = CP.carCANRate * (self.prev_angle_rate - angle_rate) / self.steer_counter_prev
+      self.angle_accel = (self.prev_angle_rate - angle_rate) / self.steer_counter_prev
       self.prev_angle_rate = angle_rate
       self.steer_counter = 0.0
     elif self.steer_counter >= self.steer_counter_prev:

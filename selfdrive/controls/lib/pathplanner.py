@@ -77,9 +77,9 @@ class PathPlanner(object):
     p_poly = libmpc_py.ffi.new("double[4]", list(self.MP.p_poly))
 
     # account for actuation delay
-    projected_angle_steers = angle_steers + (delaySteer * angle_rate) - angle_offset_average
+    #projected_angle_steers = angle_steers + (delaySteer * angle_rate) - angle_offset_average
     self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
-    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, projected_angle_steers, curvature_factor, VM.sR, delaySteer, longOffset)
+    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, live100.live100.dampAngleSteers - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
 
     v_ego_mpc = max(v_ego, 5.0)  # avoid mpc roughness due to low speed
     self.libmpc.run_mpc(self.cur_state, self.mpc_solution,

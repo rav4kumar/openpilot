@@ -88,17 +88,17 @@ class CarInterface(object):
     tireStiffnessRear_civic = 202500
     ret.steerMPCReactTime = -0.05
     ret.steerMPCDampTime = 0.175
-    ret.rateFFGain = 0.01
+    ret.rateFFGain = 0.2
     ret.steerActuatorDelay = 0.12
     ret.steerBacklash = 0.005
     ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 0.75, 0.5]]  # [abs angles, scale UP, scale DOWN]
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
-    ret.carCANRate = 100.0   #82.87750704
+    ret.carCANRate = 82.87750704
     ret.longOffset = 0.0
-    ret.steerDampTime = 0.0
-    ret.steerReactTime = 0.05
-    ret.rateDampTime = 0.05
-    ret.rateReactTime = -0.04
+    ret.steerDampTime = 0.03
+    ret.steerReactTime = 0.04
+    ret.rateDampTime = 0.1
+    ret.rateReactTime = -0.07
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -129,7 +129,7 @@ class CarInterface(object):
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
       ret.steerKpV, ret.steerKiV = [[0.3], [0.03]] # [[0.6], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
-      ret.steerDampTime = 0.0
+      ret.steerDampTime = 0.03
       ret.steerReactTime = 0.05
       ret.rateDampTime = 0.05
       ret.rateReactTime = -0.04
