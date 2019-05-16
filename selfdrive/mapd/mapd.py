@@ -17,7 +17,7 @@ except ImportError as e:
   os.execv(sys.executable, args)
 
 DEFAULT_SPEEDS_BY_REGION_JSON_FILE = BASEDIR + "/selfdrive/mapd/default_speeds_by_region.json"
-import default_speeds_generator
+from selfdrive.mapd import default_speeds_generator
 default_speeds_generator.main(DEFAULT_SPEEDS_BY_REGION_JSON_FILE)
 
 import os
@@ -33,7 +33,7 @@ from common.params import Params
 from common.transformations.coordinates import geodetic2ecef
 from selfdrive.services import service_list
 import selfdrive.messaging as messaging
-from mapd_helpers import MAPS_LOOKAHEAD_DISTANCE, Way, circle_through_points
+from selfdrive.mapd.mapd_helpers import MAPS_LOOKAHEAD_DISTANCE, Way, circle_through_points
 import selfdrive.crash as crash
 from selfdrive.version import version, dirty
 
@@ -69,9 +69,6 @@ def query_thread():
   global last_query_result, last_query_pos, cache_valid
   api = overpy.Overpass(url=OVERPASS_API_URL, headers=OVERPASS_HEADERS, timeout=10.)
 
-  context = zmq.Context()
-  query_sock = messaging.pub_sock(context, 8601)
-
   while True:
     time.sleep(1)
     if last_gps is not None:
@@ -92,7 +89,6 @@ def query_thread():
       q = build_way_query(last_gps.latitude, last_gps.longitude, radius=3000)
       try:
         new_result = api.query(q)
-        query_sock.send_string(q, new_result)
 
         # Build kd-tree
         nodes = []
@@ -180,7 +176,7 @@ def mapsd_thread():
 
         xs = pnts[:, 0]
         ys = pnts[:, 1]
-        road_points = map(float, xs), map(float, ys)
+        road_points = [float(x) for x in xs], [float(y) for y in ys]
 
         if speed < 10:
           curvature_valid = False
@@ -270,8 +266,8 @@ def mapsd_thread():
       if road_points is not None:
         dat.liveMapData.roadX, dat.liveMapData.roadY = road_points
       if curvature is not None:
-        dat.liveMapData.roadCurvatureX = map(float, dists)
-        dat.liveMapData.roadCurvature = map(float, curvature)
+        dat.liveMapData.roadCurvatureX = [float(x) for x in dists]
+        dat.liveMapData.roadCurvature = [float(x) for x in curvature]
 
     dat.liveMapData.mapValid = map_valid
 
@@ -279,6 +275,7 @@ def mapsd_thread():
 
 
 def main(gctx=None):
+  print("started")
   params = Params()
   dongle_id = params.get("DongleId")
   crash.bind_user(id=dongle_id)
