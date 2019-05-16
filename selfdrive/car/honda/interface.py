@@ -182,7 +182,7 @@ class CarInterface(object):
     rotationalInertia_civic = 2500
     tireStiffnessFront_civic = 192150
     tireStiffnessRear_civic = 202500
-    ret.carCANRate = 100.0
+    ret.carCANRate = 100.0 
     ret.rateFFGain = 0.4
     ret.oscillationPeriod = 2.0  #seconds
     ret.oscillationFactor = 0.15

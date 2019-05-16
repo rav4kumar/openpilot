@@ -41,14 +41,22 @@ def isEnabled(state):
 
 def data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, calibration, health, driver_monitor,
                 poller, cal_status, cal_perc, overtemp, free_space, low_battery,
-                driver_status, state, mismatch_counter, params, plan, path_plan):
+                driver_status, state, mismatch_counter, rk, params, plan, path_plan):
   """Receive data from sockets and create events for battery, temperature and disk space"""
 
   # Update carstate from CAN and create events
-  if CP.carCANRate == 100.0 or CS is None or CS.steeringTorqueClipped == False or  CI.frame % 5 > 0:
-    CS = CI.update(CC)
+  if CP.carCANRate == 100.0:
+    rk.monitor_time()
+    if rk.remaining > 10. / 1000 or rk.frame < 1000:
+      CS = CI.update(CC)
+    else:
+      print("CAN lagging!", rk.remaining, rk.frame)
   else:
-    print("torque_clipped!")
+    if CS is None or CS.steeringTorqueClipped == False or CI.frame % 5 > 0:
+      rk.monitor_time()
+      CS = CI.update(CC)
+    else:
+      print("torque_clipped!")
 
   events = list(CS.events)
   enabled = isEnabled(state)
@@ -118,7 +126,7 @@ def data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, calibration,
   return CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan
 
 
-def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM):
+def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM, rk):
   """Compute conditional state transitions and execute actions on state transitions"""
   enabled = isEnabled(state)
 
@@ -205,7 +213,7 @@ def state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM
   return state, soft_disable_timer, v_cruise_kph, v_cruise_kph_last
 
 
-def state_control(plan, path_plan, CS, CP, CI, state, events, v_cruise_kph, v_cruise_kph_last, AM,
+def state_control(plan, path_plan, CS, CP, CI, state, events, v_cruise_kph, v_cruise_kph_last, AM, rk,
                   driver_status, LaC, LoC, VM, angle_model_bias, passive, is_metric, cal_perc):
   """Given the state, this function returns an actuators packet"""
 
@@ -284,7 +292,7 @@ def state_control(plan, path_plan, CS, CP, CI, state, events, v_cruise_kph, v_cr
   return actuators, v_cruise_kph, driver_status, angle_model_bias, v_acc_sol, a_acc_sol
 
 
-def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, carstate,
+def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk, carstate,
               carcontrol, live100, AM, driver_status,
               LaC, LoC, angle_model_bias, passive, start_time, v_acc, a_acc):
   """Send actuators and hud commands to the car, send live100 and MPC logging"""
@@ -380,7 +388,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "gpsPlannerActive": plan.gpsPlannerActive,
     "vCurvature": plan.vCurvature,
     "decelForTurn": plan.decelForTurn,
-    #"cumLagMs": -rk.remaining * 1000.,
+    "cumLagMs": -rk.remaining * 1000.,
     "startMonoTime": start_time,
     "mapValid": plan.mapValid,
     "forceDecel": bool(force_decel),
@@ -482,7 +490,7 @@ def controlsd_thread(gctx=None, rate=100):
   path_plan = messaging.new_message()
   path_plan.init('pathPlan')
 
-  #rk = Ratekeeper(CP.CANRate, print_delay_threshold=15. / 1000)
+  rk = Ratekeeper(1. / CP.carCANRate, print_delay_threshold=15. / 1000)
   controls_params = params.get("ControlsParams")
 
   # Read angle offset from previous drive
@@ -506,7 +514,7 @@ def controlsd_thread(gctx=None, rate=100):
     CS, events, cal_status, cal_perc, overtemp, free_space, low_battery, mismatch_counter, plan, path_plan =\
       data_sample(CI, CC, CS, CP, plan_sock, path_plan_sock, thermal, cal, health, driver_monitor,
                   poller, cal_status, cal_perc, overtemp, free_space, low_battery, driver_status,
-                  state, mismatch_counter, params, plan, path_plan)
+                  state, mismatch_counter, rk, params, plan, path_plan)
     prof.checkpoint("Sample")
 
     path_plan_age = (start_time - path_plan.logMonoTime) / 1e9
@@ -524,19 +532,19 @@ def controlsd_thread(gctx=None, rate=100):
     if not passive:
       # update control state
       state, soft_disable_timer, v_cruise_kph, v_cruise_kph_last = \
-        state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM)
+        state_transition(CS, CP, state, events, soft_disable_timer, v_cruise_kph, AM, rk)
       prof.checkpoint("State transition")
 
     # Compute actuators (runs PID loops and lateral MPC)
     actuators, v_cruise_kph, driver_status, angle_model_bias, v_acc, a_acc = \
       state_control(plan.plan, path_plan.pathPlan, CS, CP, CI, state, events, v_cruise_kph,
-                    v_cruise_kph_last, AM, driver_status,
+                    v_cruise_kph_last, AM, rk, driver_status,
                     LaC, LoC, VM, angle_model_bias, passive, is_metric, cal_perc)
 
     prof.checkpoint("State Control")
 
     # Publish data
-    CC = data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, carstate, carcontrol,
+    CC = data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk, carstate, carcontrol,
                    live100, AM, driver_status, LaC, LoC, angle_model_bias, passive, start_time, v_acc, a_acc)
     prof.checkpoint("Sent")
 
