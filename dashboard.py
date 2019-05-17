@@ -62,7 +62,7 @@ def dashboard_thread(rate=100):
 
   tuneSub.setsockopt(zmq.SUBSCRIBE, str(user_id))
   influxFormatString = user_id + ",sources=capnp angle_accel=;damp_angle_rate=;angle_rate=;damp_angle=;apply_steer=;noise_feedback=;ff_standard=;ff_rate=;ff_angle=;angle_steers_des=;angle_steers=;dampened_angle_steers_des=;steer_override=;v_ego=;p=;i=;f=; "
-  kegmanFormatString = user_id + ",sources=kegman reactRate=;dampRate=;longOffset=;backlash=;dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=;oscPeriod=; "
+  kegmanFormatString = user_id + ",sources=kegman reactRate=;dampRate=;longOffset=;backlash=;dampMPC=;reactMPC=;dampSteer=;reactSteer=;KpV=;KiV=;rateFF=;angleFF=;delaySteer=;oscFactor=; "
   mapFormatString = "location,user=" + user_id + " latitude=;longitude=;altitude=;speed=;bearing=;accuracy=;speedLimitValid=;speedLimit=;curvatureValid=;curvature=;wayId=;distToTurn=;mapValid=;speedAdvisoryValid=;speedAdvisory=;speedAdvisoryValid=;speedAdvisory=;speedLimitAheadValid=;speedLimitAhead=;speedLimitAheadDistance=; "
   gpsFormatString="gps,user=" + user_id + " "
   liveStreamFormatString = "curvature,user=" + user_id + " l_curv=;p_curv=;r_curv=;map_curv=;map_rcurv=;map_rcurvx=;v_curv=;l_diverge=;r_diverge=; "
@@ -82,7 +82,7 @@ def dashboard_thread(rate=100):
     for socket, event in poller.poll(0):
       if socket is osmData:
         _osmData = osmData.recv_multipart()
-        print(_osmData)
+        #print(_osmData)
 
       if socket is tuneSub:
         config = json.loads(tuneSub.recv_multipart()[1])
@@ -110,7 +110,7 @@ def dashboard_thread(rate=100):
                   (lg.latitude ,lg.longitude ,lg.altitude ,lg.speed ,lg.bearing ,lg.accuracy ,lm.speedLimitValid ,lm.speedLimit ,lm.curvatureValid
                   ,lm.curvature ,lm.wayId ,lm.distToTurn ,lm.mapValid ,lm.speedAdvisoryValid ,lm.speedAdvisory ,lm.speedAdvisoryValid ,lm.speedAdvisory
                   ,lm.speedLimitAheadValid ,lm.speedLimitAhead , lm.speedLimitAheadDistance , receiveTime))
-
+ 
       if socket is live100:
         _live100 = messaging.drain_sock(socket)
         for l100 in _live100:
@@ -182,22 +182,21 @@ def dashboard_thread(rate=100):
               steerKiV = config['Ki']
               rateFF = config['rateFF']
               oscFactor = config['oscFactor']
-              oscPeriod = config['oscPeriod']
               backlash = config['backlash']
               longOffset = config['longOffset']
               dampRate = config['dampRate']
               reactRate = config['reactRate']
 
-              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
+              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
                     (reactRate, dampRate, longOffset, backlash, dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, dat.angleFFGain, delaySteer,
-                    oscFactor, oscPeriod, receiveTime))
+                    oscFactor, receiveTime))
               insertString = kegmanFormatString + "~" + kegmanDataString + "!"
         except:
           kegman_valid = False
 
       if liveStreamDataString != "":
         insertString = insertString + liveStreamFormatString + "~" + liveStreamDataString + "!"
-        print(insertString)
+        #print(insertString)
         liveStreamDataString =""
       insertString = insertString + influxFormatString + "~" + influxDataString + "!"
       insertString = insertString + mapFormatString + "~" + mapDataString

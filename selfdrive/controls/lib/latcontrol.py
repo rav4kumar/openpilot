@@ -13,7 +13,7 @@ class LatControl(object):
 
     kegman = kegman_conf(CP)
     self.gernbySteer = True
-    self.mpc_frame = 0
+    self.frame = 0
     self.total_rate_projection = max(0.0, CP.rateReactTime + CP.rateDampTime)
     self.actual_rate_smoothing = max(1.0, CP.rateDampTime * CP.carCANRate)
     self.total_angle_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
@@ -35,7 +35,6 @@ class LatControl(object):
     self.rate_ff_gain = CP.rateFFGain
     self.average_angle_steers = 0.
     self.angle_ff_bp = [[0.5, 5.0],[0.0, 1.0]]
-    self.oscillation_period = CP.oscillationPeriod
     self.oscillation_factor = CP.oscillationFactor
     self.deadzone = -CP.steerBacklash
     self.doScale = True if len(CP.steerPscale) > 0 else False
@@ -44,6 +43,11 @@ class LatControl(object):
     self.steer_counter = 1
     self.steer_counter_prev = 0
     self.angle_accel = 0.0
+    self.recorded_error = np.zeros((100))
+    self.short_smoothed_error = 0.0
+    self.avg_error = 0.0
+    self.error_feedback = 0.0
+
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -52,8 +56,7 @@ class LatControl(object):
                             k_f=CP.steerKf, pos_limit=1.0, rate=int(CP.carCANRate))
 
   def live_tune(self, CP):
-    self.mpc_frame += 1
-    if self.mpc_frame % 300 == 0:
+    if self.frame % 300 == 0:
       # live tuning through /data/openpilot/tune.py overrides interface.py settings
       kegman = kegman_conf()
       if kegman.conf['tuneGernby'] == "1":
@@ -69,7 +72,6 @@ class LatControl(object):
         self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1)
         self.delaySteer = float(kegman.conf['delaySteer'])
         self.oscillation_factor = float(kegman.conf['oscFactor'])
-        self.oscillation_period = float(kegman.conf['oscPeriod'])
         self.deadzone = -float(kegman.conf['backlash'])
         self.longOffset = float(kegman.conf['longOffset'])
 
@@ -84,9 +86,9 @@ class LatControl(object):
         self.gernbySteer = False
         self.standard_ff_ratio = 1.0
         self.angle_ff_ratio = 0.0
-      self.mpc_frame = 0
 
   def reset(self):
+    self.frame = 0
     self.pid.reset()
 
   def adjust_angle_gain(self):
@@ -107,10 +109,21 @@ class LatControl(object):
     self.steer_counter += 1.0
     return self.angle_accel
 
+  def get_error_feedback(self, angle_offset):
+    oldest_error = self.recorded_error[self.frame % 100]
+    prev_error = self.recorded_error[(self.frame - 1) % 100]
+    new_error = self.dampened_desired_angle - self.dampened_actual_angle
+    self.avg_error += 0.01 * (new_error - self.avg_error)
+    self.recorded_error[self.frame % 100] = prev_error + 0.04 * (new_error - prev_error)
+    error_factor = np.interp(max(abs(self.dampened_desired_angle - angle_offset), abs(self.avg_error)), [1.0, 2.0], [self.oscillation_factor, 0.0])
+    self.error_feedback = float((oldest_error - self.avg_error) * error_factor)
+    return self.error_feedback
+
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
+    self.frame += 1
     self.live_tune(CP)
-
+    angle_steers += self.get_error_feedback(path_plan.angleOffset)
     if v_ego < 0.3 or not active:
       output_steer = 0.0
       self.pid.reset()
@@ -161,9 +174,9 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
-        output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers, check_saturation=(v_ego > 10),
-                                    override=steer_override, feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone,
-                                    p_scale=p_scale)
+        output_steer = self.pid.update(self.dampened_desired_angle,
+                                self.dampened_angle_steers, check_saturation=(v_ego > 10), override=steer_override,
+                                feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):

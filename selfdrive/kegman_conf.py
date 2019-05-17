@@ -45,8 +45,7 @@ class kegman_conf():
     if self.conf['longOffset'] == "-1":
       self.conf['longOffset'] = str(round(CP.longOffset,3))
       write_conf = True
-    if self.conf['oscPeriod'] == "-1":
-      self.conf['oscPeriod'] = str(round(CP.oscillationPeriod, 2))
+    if self.conf['oscFactor'] == "-1":
       self.conf['oscFactor'] = str(round(CP.oscillationFactor, 2))
       write_conf = True
 
@@ -94,8 +93,7 @@ class kegman_conf():
         self.config.update({"delaySteer":"-1"})
         self.element_updated = True
 
-      if "oscPeriod" not in self.config:
-        self.config.update({"oscPeriod":"-1"})
+      if "oscFactor" not in self.config:
         self.config.update({"oscFactor":"-1"})
         self.element_updated = True
 
@@ -120,7 +118,7 @@ class kegman_conf():
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
                      "brakeStoppingTarget":"0.25", "tuneGernby":"1", "reactMPC":"-1", "reactSteer":"-1","reactRate":"-1", \
                      "dampMPC":"-1", "dampSteer":"-1", "dampRate":"-1", "Kp":"-1", "Ki":"-1", "rateFF":"-1", "delaySteer":"-1", \
-                     "oscPeriod":"-1", "oscFactor":"-1", "backlash":"-1", "longOffset":"-1"}
+                     "oscFactor":"-1", "backlash":"-1", "longOffset":"-1"}
 
       self.write_config(self.config)
     return self.config

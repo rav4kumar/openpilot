@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from cereal import car
+import numpy as np
 from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
@@ -16,11 +17,16 @@ except ImportError:
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
     self.CP = CP
-
+ 
     self.frame = 0
     self.can_invalid_count = 0
     self.acc_active_prev = 0
     self.gas_pressed_prev = False
+    self.angle_offset_bias = 0.0
+    self.angles_error = np.zeros((500))
+    self.avg_error1 = 0.0
+    self.avg_error2 = 0.0
+    self.steer_error = 0.0
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -162,6 +168,8 @@ class CarInterface(object):
     ret.rightBlinker = self.CS.right_blinker_on
     ret.seatbeltUnlatched = self.CS.seatbelt_unlatched
     ret.doorOpen = self.CS.door_open
+    ret.steeringTorqueClipped = self.CS.torque_clipped
+    ret.steeringRequested = self.CS.apply_steer
 
     buttonEvents = []
 

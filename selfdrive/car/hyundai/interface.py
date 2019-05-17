@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from cereal import car
+import numpy as np
 from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event
@@ -20,12 +21,17 @@ class CarInterface(object):
     self.idx = 0
     self.lanes = 0
     self.lkas_request = 0
-
+ 
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.can_invalid_count = 0
     self.cruise_enabled_prev = False
     self.low_speed_alert = False
+    self.angle_offset_bias = 0.0
+    self.angles_error = np.zeros((500))
+    self.avg_error1 = 0.0
+    self.avg_error2 = 0.0
+    self.steer_error = 0.0
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -197,6 +203,8 @@ class CarInterface(object):
     ret.wheelSpeeds.fr = self.CS.v_wheel_fr
     ret.wheelSpeeds.rl = self.CS.v_wheel_rl
     ret.wheelSpeeds.rr = self.CS.v_wheel_rr
+    ret.steeringTorqueClipped = self.CS.torque_clipped
+    ret.steeringRequested = self.CS.apply_steer
 
     # gear shifter
     if self.CP.carFingerprint in FEATURES["use_cluster_gears"]:

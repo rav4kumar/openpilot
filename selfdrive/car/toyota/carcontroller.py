@@ -139,7 +139,7 @@ class CarController(object):
       apply_accel = 0.06 - actuators.brake
     else:
       apply_accel = actuators.gas - actuators.brake
-
+ 
     apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled)
     apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
 

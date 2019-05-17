@@ -49,12 +49,12 @@ class CarController(object):
     if (frame % P.STEER_STEP) == 0:
 
       final_steer = actuators.steer if enabled else 0.
-      apply_steer = int(round(final_steer * P.STEER_MAX))
-
+      orig_apply_steer = int(round(final_steer * P.STEER_MAX))
+ 
       # limits due to driver torque
 
-      apply_steer = int(round(apply_steer))
-      apply_steer = apply_std_steer_torque_limits(apply_steer, self.apply_steer_last, CS.steer_torque_driver, P)
+      orig_apply_steer = int(round(orig_apply_steer))
+      apply_steer = apply_std_steer_torque_limits(orig_apply_steer, self.apply_steer_last, CS.steer_torque_driver, P)
 
       lkas_enabled = enabled and not CS.steer_not_allowed
 
@@ -64,6 +64,8 @@ class CarController(object):
       can_sends.append(subarucan.create_steering_control(self.packer, CS.CP.carFingerprint, apply_steer, frame, P.STEER_STEP))
 
       self.apply_steer_last = apply_steer
+      CS.apply_steer = apply_steer
+      CS.torque_clipped = (orig_apply_steer != apply_steer)
 
     if self.es_distance_cnt != CS.es_distance_msg["Counter"]:
       can_sends.append(subarucan.create_es_distance(self.packer, CS.es_distance_msg, pcm_cancel_cmd))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from common.realtime import sec_since_boot
 from cereal import car
+import numpy as np
 from selfdrive.swaglog import cloudlog
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event
@@ -24,7 +25,12 @@ class CarInterface(object):
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.cruise_enabled_prev = False
-
+    self.angle_offset_bias = 0.0
+    self.angles_error = np.zeros((500))
+    self.avg_error1 = 0.0
+    self.avg_error2 = 0.0
+    self.steer_error = 0.0
+ 
     # *** init the major players ***
     self.CS = CarState(CP)
 
@@ -160,6 +166,8 @@ class CarInterface(object):
     # steering wheel
     ret.steeringAngle = self.CS.angle_steers
     ret.steeringPressed = self.CS.steer_override
+    ret.steeringTorqueClipped = False  # self.CS.torque_clipped
+    ret.steeringRequested = 0   #self.CS.apply_steer
 
     # gas pedal
     ret.gas = self.CS.user_gas / 100.

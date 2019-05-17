@@ -54,11 +54,13 @@ class ModelParser(object):
 
       lane_width_diff = abs(self.lane_width - current_lane_width)
       lane_prob = interp(lane_width_diff, [0.3, interp(v_ego, [20.0, 25.0], [1.0, 0.4])], [1.0, 0.0])
+      #lane_prob = interp(lane_width_diff, [0.0, interp(v_ego, [20.0, 25.0], [1.0, 0.4])], [0.0, 1.0])
+
+      self.l_curv = int(1000000 * calc_curvature(l_poly))
+      self.p_curv = int(1000000 * calc_curvature(p_poly))
+      self.r_curv = int(1000000 * calc_curvature(r_poly))
 
       if not lm is None and len(lm.liveMapData.roadCurvature) > 0:
-        self.l_curv = int(1000000 * calc_curvature(l_poly))
-        self.p_curv = int(1000000 * calc_curvature(p_poly))
-        self.r_curv = int(1000000 * calc_curvature(r_poly))
         self.v_curv2 = int(1000000 * v_curv)
         self.map_curv = int(1000000 * lm.liveMapData.curvature)
         self.map_rcurv = int(1000000 * lm.liveMapData.roadCurvature[0])
@@ -68,7 +70,16 @@ class ModelParser(object):
         #print("v_curv:  %d  map_curv:  %d  l_curv:  %d  r_curv:  %d  p_curv:  %d  l_diverge:  %d  r_diverge:  %d" %
         #                       (v_curv2, map_curv, l_curv, r_curv, p_curv, l_diverge, r_diverge))
 
-        '''if self.l_curv > self.map_rcurv:
+      '''
+      if self.l_curv > 10:
+        print("%0.2f  discount left!" % lane_prob)
+        l_prob -= r_prob * lane_prob
+      if self.r_curv < -10:
+        print("%0.2f        discount right!" % lane_prob)
+        r_prob -= l_prob * lane_prob
+      '''
+      '''
+        if self.l_curv > self.map_rcurv:
           l_prob *= lane_prob
           l_prob -= r_prob
           print("discount left!")
@@ -77,9 +88,9 @@ class ModelParser(object):
           r_prob -= l_prob
           print("               discount right!")
         '''
-        
-      r_prob *= lane_prob
 
+      r_prob *= lane_prob
+ 
       '''if (abs(v_curv) < 0.0005 and l_prob > 0.5 and r_prob > 0.5 and v_ego > 22.0) or self.lane_prob == 0.0:
         steer_compensation = 1.2 * v_curv * v_ego
         total_left_divergence = (md.model.leftLane.points[5] - md.model.leftLane.points[0]) * r_prob + steer_compensation

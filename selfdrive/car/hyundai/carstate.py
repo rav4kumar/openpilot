@@ -142,7 +142,9 @@ class CarState(object):
     self.left_blinker_flash = 0
     self.right_blinker_on = 0
     self.right_blinker_flash = 0
-
+    self.torque_clipped = False
+    self.apply_steer = 0
+ 
   def update(self, cp, cp_cam):
     # copy can_valid
     self.can_valid = cp.can_valid

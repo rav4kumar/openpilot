@@ -27,18 +27,10 @@ class CarInterface(object):
     self.can_invalid_count = 0
     self.cam_can_valid_count = 0
     self.cruise_enabled_prev = False
-    self.angle_steers_des = 0.0
     self.prev_angle_steers = 0.0
     self.steer_counter = 1
     self.steer_counter_prev = 0
     self.rough_steers_rate = 0.0
-    self.angle_offset_bias = 0.0
-    self.angles_error = np.zeros((500))
-    self.avg_error1 = 0.0
-    self.avg_error2 = 0.0
-    self.steer_error = 0.0
-    self.oscillation_frames = int(CP.oscillationPeriod * 50)
-    self.oscillation_factor = CP.oscillationFactor
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -99,7 +91,6 @@ class CarInterface(object):
     ret.steerReactTime = 0.04
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
-    ret.oscillationPeriod = 1.2
     ret.oscillationFactor = 0.5
 
     if candidate == CAR.PRIUS:
@@ -140,7 +131,6 @@ class CarInterface(object):
       ret.rateFFGain = 0.4
       ret.steerActuatorDelay = 0.02
       ret.longOffset = 0.4
-      ret.oscillationPeriod = 1.2
       ret.oscillationFactor = 0.5
 
     elif candidate == CAR.COROLLA:
@@ -303,13 +293,6 @@ class CarInterface(object):
     ret.brakeLights = self.CS.brake_lights
 
     # steering wheel
-    cancellation = np.interp(abs(self.avg_error1), [1.0, 2.0], [self.oscillation_factor, 0.0])
-    #projected_error = float(np.clip(float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1), -0.5, 0.5))
-    projected_error = float(self.angles_error[(self.frame - self.oscillation_frames) % 500] - self.avg_error1)
-    self.noise_feedback = projected_error * cancellation
-    ret.steeringAngle = self.CS.angle_steers + self.noise_feedback
-    #print("%1.1f   %1.1f  %1.1f   %1.2f   %1.1f" % (self.oscillation_frames, self.oscillation_factor, projected_error, cancellation, ret.steeringAngle))
-
     if self.CS.angle_steers != self.prev_angle_steers:
       self.steer_counter_prev = self.steer_counter
       self.rough_steers_rate = self.CP.carCANRate * (self.CS.angle_steers - self.prev_angle_steers) / self.steer_counter_prev
@@ -318,7 +301,9 @@ class CarInterface(object):
     elif self.steer_counter >= self.steer_counter_prev:
       self.rough_steers_rate = (self.steer_counter * self.rough_steers_rate) / (self.steer_counter + 1.0)
     self.steer_counter += 1.0
+
     ret.steeringRate = self.rough_steers_rate
+    ret.steeringAngle = self.CS.angle_steers
 
     ret.steeringTorque = self.CS.steer_torque_driver
     ret.steeringPressed = self.CS.steer_override
@@ -432,11 +417,6 @@ class CarInterface(object):
                    c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert,
                    c.hudControl.audibleAlert, self.forwarding_camera,
                    c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible)
-
-    #steer_error = (c.actuators.steerAngle - self.CS.angle_steers)
-    self.avg_error1 += ((self.steer_error - self.avg_error1) / 500)
-    self.avg_error2 += ((self.steer_error - self.avg_error2) / 25)
-    self.angles_error[self.frame % 500] = self.avg_error2
 
     self.frame += 1
     return False

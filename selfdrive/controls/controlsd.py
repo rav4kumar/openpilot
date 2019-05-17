@@ -322,8 +322,8 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     CC.hudControl.visualAlert = AM.visual_alert
     CC.hudControl.audibleAlert = AM.audible_alert
     CI.angle_offset_bias = path_plan.pathPlan.angleOffset + angle_model_bias
-    CI.oscillation_frames = int(LaC.oscillation_period * 50)
-    CI.oscillation_factor = float(LaC.oscillation_factor)
+    #CI.oscillation_frames = int(LaC.oscillation_period * 50)
+    #CI.oscillation_factor = float(LaC.oscillation_factor)
     CI.steer_error = LaC.dampened_desired_angle - LaC.dampened_actual_angle
 
     # send car controls over can
@@ -371,9 +371,8 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "steeringRequested": float(CS.steeringRequested),
     "delaySteer": float(LaC.delaySteer),
     "longOffset": float(LaC.longOffset),
-    "oscillationPeriod": float(LaC.oscillation_period),
     "oscillationFactor": float(LaC.oscillation_factor),
-    "noiseFeedback": float(CI.noise_feedback),
+    "noiseFeedback": float(LaC.error_feedback),
     "upSteer": float(LaC.pid.p),
     "uiSteer": float(LaC.pid.i),
     "ufSteer": float(LaC.pid.f),
@@ -490,7 +489,7 @@ def controlsd_thread(gctx=None, rate=100):
   path_plan = messaging.new_message()
   path_plan.init('pathPlan')
 
-  rk = Ratekeeper(1. / CP.carCANRate, print_delay_threshold=15. / 1000)
+  rk = Ratekeeper(CP.carCANRate, print_delay_threshold=15. / 1000)
   controls_params = params.get("ControlsParams")
 
   # Read angle offset from previous drive

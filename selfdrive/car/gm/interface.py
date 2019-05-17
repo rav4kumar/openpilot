@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from cereal import car
+import numpy as np
 from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
@@ -22,12 +23,18 @@ class CanBus(object):
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
     self.CP = CP
-
+ 
     self.frame = 0
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.can_invalid_count = 0
     self.acc_active_prev = 0
+    self.angle_offset_bias = 0.0
+    self.angles_error = [0.,] #np.zeros((500))
+    self.avg_error1 = 0.0
+    self.avg_error2 = 0.0
+    self.steer_error = 0.0
+    self.noise_feedback = 0.0
 
     # *** init the major players ***
     canbus = CanBus()
@@ -56,10 +63,17 @@ class CarInterface(object):
     ret.carName = "gm"
     ret.carFingerprint = candidate
 
+    # same tuning for Volt and CT6 for now
     ret.enableCruise = False
-    ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
-    ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
-
+    ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
+    ret.steerKpV, ret.steerKiV = [[0.2], [0.025]]
+    ret.steerKf = 0.00004   # full torque for 20 deg at 80mph means 0.00007818594
+    ret.steerMPCReactTime = 0.025
+    ret.steerMPCDampTime = 0.175
+    ret.steerReactTime = 0.001
+    ret.steerDampTime = 0.001
+    ret.rateFFGain = 0.2
+    ret.eonToFront = 0.1
     # Presence of a camera on the object bus is ok.
     # Have to go passive if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
@@ -72,7 +86,7 @@ class CarInterface(object):
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
       # kg of standard extra cargo to count for driver, gas, etc...
-      ret.mass = 1607 + std_cargo
+      ret.mass = 1607. + std_cargo
       ret.safetyModel = car.CarParams.SafetyModels.gm
       ret.wheelbase = 2.69
       ret.steerRatio = 15.7
@@ -82,7 +96,7 @@ class CarInterface(object):
     elif candidate == CAR.MALIBU:
       # supports stop and go, but initial engage must be above 18mph (which include conservatism)
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
-      ret.mass = 1496 + std_cargo
+      ret.mass = 1496. + std_cargo
       ret.safetyModel = car.CarParams.SafetyModels.gm
       ret.wheelbase = 2.83
       ret.steerRatio = 15.8
@@ -91,7 +105,7 @@ class CarInterface(object):
 
     elif candidate == CAR.HOLDEN_ASTRA:
       # kg of standard extra cargo to count for driver, gas, etc...
-      ret.mass = 1363 + std_cargo
+      ret.mass = 1363. + std_cargo
       ret.wheelbase = 2.662
       # Remaining parameters copied from Volt for now
       ret.centerToFront = ret.wheelbase * 0.4
@@ -101,7 +115,7 @@ class CarInterface(object):
       ret.steerRatioRear = 0.
 
     elif candidate == CAR.ACADIA:
-      ret.minEnableSpeed = -1 # engage speed is decided by pcm
+      ret.minEnableSpeed = -1. # engage speed is decided by pcm
       ret.mass = 4353. * CV.LB_TO_KG + std_cargo
       ret.safetyModel = car.CarParams.SafetyModels.gm
       ret.wheelbase = 2.86
@@ -120,7 +134,7 @@ class CarInterface(object):
 
     elif candidate == CAR.CADILLAC_ATS:
       ret.minEnableSpeed = 18 * CV.MPH_TO_MS
-      ret.mass = 1601 + std_cargo
+      ret.mass = 1601. + std_cargo
       ret.safetyModel = car.CarParams.SafetyModels.gm
       ret.wheelbase = 2.78
       ret.steerRatio = 15.3
@@ -129,7 +143,7 @@ class CarInterface(object):
 
     elif candidate == CAR.CADILLAC_CT6:
       # engage speed is decided by pcm
-      ret.minEnableSpeed = -1
+      ret.minEnableSpeed = -1.
       # kg of standard extra cargo to count for driver, gas, etc...
       ret.mass = 4016. * CV.LB_TO_KG + std_cargo
       ret.safetyModel = car.CarParams.SafetyModels.cadillac
@@ -165,15 +179,10 @@ class CarInterface(object):
                             (ret.centerToFront / ret.wheelbase) / (centerToFront_civic / wheelbase_civic)
 
 
-    # same tuning for Volt and CT6 for now
-    ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
-    ret.steerKpV, ret.steerKiV = [[0.2], [0.00]]
-    ret.steerKf = 0.00004   # full torque for 20 deg at 80mph means 0.00007818594
-
     ret.steerMaxBP = [0.] # m/s
     ret.steerMaxV = [1.]
     ret.gasMaxBP = [0.]
-    ret.gasMaxV = [.5]
+    ret.gasMaxV = [0.5]
     ret.brakeMaxBP = [0.]
     ret.brakeMaxV = [1.]
     ret.longPidDeadzoneBP = [0.]
@@ -192,7 +201,6 @@ class CarInterface(object):
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
     ret.steerControlType = car.CarParams.SteerControlType.torque
-    ret.rateFFGain = 0.01
 
     return ret
 
@@ -215,6 +223,8 @@ class CarInterface(object):
     ret.wheelSpeeds.fr = self.CS.v_wheel_fr
     ret.wheelSpeeds.rl = self.CS.v_wheel_rl
     ret.wheelSpeeds.rr = self.CS.v_wheel_rr
+    ret.steeringTorqueClipped = self.CS.torque_clipped
+    ret.steeringRequested = self.CS.apply_steer
 
     # gas pedal information.
     ret.gas = self.CS.pedal_gas / 254.0
@@ -226,6 +236,7 @@ class CarInterface(object):
 
     # steering wheel
     ret.steeringAngle = self.CS.angle_steers
+    ret.steeringRate = self.CS.angle_steers_rate
 
     # torque and user override. Driver awareness
     # timer resets when the user uses the steering wheel.
