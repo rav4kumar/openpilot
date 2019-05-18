@@ -23,7 +23,7 @@ class CanBus(object):
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
     self.CP = CP
- 
+
     self.frame = 0
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
@@ -79,6 +79,7 @@ class CarInterface(object):
     # or camera is on powertrain bus (LKA cars without ACC).
     ret.enableCamera = not any(x for x in STOCK_CONTROL_MSGS[candidate] if x in fingerprint)
     ret.openpilotLongitudinalControl = ret.enableCamera
+    ret.carCANRate = 100.0
 
     std_cargo = 136
 

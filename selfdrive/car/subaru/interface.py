@@ -17,7 +17,7 @@ except ImportError:
 class CarInterface(object):
   def __init__(self, CP, sendcan=None):
     self.CP = CP
- 
+
     self.frame = 0
     self.can_invalid_count = 0
     self.acc_active_prev = 0
@@ -67,6 +67,7 @@ class CarInterface(object):
 
     std_cargo = 136
     ret.steerRateCost = 0.7
+    ret.carCANRate = 100.0
 
     if candidate in [CAR.IMPREZA]:
       ret.mass = 1568 + std_cargo

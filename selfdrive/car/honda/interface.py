@@ -250,7 +250,7 @@ class CarInterface(object):
       ret.rateReactTime = 0.02
       ret.steerDampTime = 0.1
       ret.steerReactTime = 0.0
- 
+
     elif candidate == CAR.ACURA_ILX:
       stop_and_go = False
       ret.mass = 3095 * CV.LB_TO_KG + std_cargo

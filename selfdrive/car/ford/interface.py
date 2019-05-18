@@ -30,7 +30,7 @@ class CarInterface(object):
     self.avg_error1 = 0.0
     self.avg_error2 = 0.0
     self.steer_error = 0.0
- 
+
     # *** init the major players ***
     self.CS = CarState(CP)
 
@@ -86,6 +86,7 @@ class CarInterface(object):
     ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
     ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
     ret.rateFFGain = 0.01
+    ret.carCANRate = 100.0
 
     f = 1.2
     tireStiffnessFront_civic *= f

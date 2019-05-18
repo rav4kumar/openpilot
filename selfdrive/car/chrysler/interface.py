@@ -87,7 +87,7 @@ class CarInterface(object):
     ret.steerMPCReactTime = 0.025     # increase total MPC projected time by 25 ms
     ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
     ret.rateFFGain = 0.01
- 
+
     if candidate in (CAR.JEEP_CHEROKEE, CAR.JEEP_CHEROKEE_2019):
       ret.wheelbase = 2.91  # in meters
       ret.steerRatio = 12.7
@@ -129,6 +129,7 @@ class CarInterface(object):
     ret.gasMaxV = [0.5]
     ret.brakeMaxBP = [5., 20.]
     ret.brakeMaxV = [1., 0.8]
+    ret.carCANRate = 100.0
 
     ret.enableCamera = not check_ecu_msgs(fingerprint, ECU.CAM)
     print("ECU Camera Simulated: {0}".format(ret.enableCamera))

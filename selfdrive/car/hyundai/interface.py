@@ -21,7 +21,7 @@ class CarInterface(object):
     self.idx = 0
     self.lanes = 0
     self.lkas_request = 0
- 
+
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.can_invalid_count = 0
@@ -78,6 +78,7 @@ class CarInterface(object):
     ret.steerMPCDampTime = 0.15       # dampen desired angle over 250ms (5 mpc cycles)
     ret.rateFFGain = 0.01
     tire_stiffness_factor = 1.
+    ret.carCANRate = 100.0
 
     ret.steerActuatorDelay = 0.1  # Default delay
     ret.steerRateCost = 0.5
