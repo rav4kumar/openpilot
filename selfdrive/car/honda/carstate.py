@@ -202,7 +202,7 @@ class CarState(object):
     # ALCA PARAMS
     # max REAL delta angle for correction vs actuator
     self.CL_MAX_ANGLE_DELTA_BP = [10., 32., 55.]
-    self.CL_MAX_ANGLE_DELTA = [2.0 * 15.4 / steerRatio, 1. * 15.4 / steerRatio, 0.5 * 15.4 / steerRatio]
+    self.CL_MAX_ANGLE_DELTA = [2.2 * 15.4 / steerRatio, 1.1 * 15.4 / steerRatio, 0.5 * 15.4 / steerRatio]
     # adjustment factor for merging steer angle to actuator; should be over 4; the higher the smoother
     self.CL_ADJUST_FACTOR_BP = [10., 44.]
     self.CL_ADJUST_FACTOR = [16. , 8.]

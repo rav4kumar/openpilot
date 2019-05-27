@@ -18,26 +18,17 @@ int main( )
   DifferentialEquation f;
 
   DifferentialState x_ego, v_ego, a_ego;
-  DifferentialState x_l, v_l, t;
-
-  OnlineData lambda, a_l_0;
+  OnlineData x_l, v_l;
 
   Control j_ego;
 
   auto desired = 4.0 + RW(v_ego, v_l);
   auto d_l = x_l - x_ego;
 
-  // Directly calculate a_l to prevent instabilites due to discretization
-  auto a_l = a_l_0 * exp(-lambda * t * t / 2);
-
   // Equations of motion
   f << dot(x_ego) == v_ego;
   f << dot(v_ego) == a_ego;
   f << dot(a_ego) == j_ego;
-
-  f << dot(x_l) == v_l;
-  f << dot(v_l) == a_l;
-  f << dot(t) == 1;
 
   // Running cost
   Function h;

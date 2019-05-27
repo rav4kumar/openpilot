@@ -111,18 +111,18 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.03]] #0.6 0.05 default
       ret.wheelbase = 2.65
       tire_stiffness_factor = 0.5533
-      ret.steerKf = 0.00001 # full torque for 10 deg at 80mph means 0.00007818594
+      ret.lateralTuning.pid.kf = 0.00001 # full torque for 10 deg at 80mph means 0.00007818594
       if ret.enableGasInterceptor:
         new_braking_tuned = True
         stop_and_go = True
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [0.028, 0.364, 0.24]  # tuned braking for higher brake limit
-        ret.longitudinalKiV = [0.02, 0.05]
+        ret.longitudinalTuning.kpV = [0.028, 0.364, 0.24]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.02, 0.05]
       else:
         stop_and_go = False
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
     elif candidate in [CAR.RAV4H]:
       stop_and_go = True
       ret.safetyParam = 73  # see conversion factor for STEER_TORQUE_EPS in dbc file
@@ -132,16 +132,16 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.03]] #0.6 0.05 default
       ret.wheelbase = 2.65
       tire_stiffness_factor = 0.5533
-      ret.steerKf = 0.0001 # full torque for 10 deg at 80mph means 0.00007818594
+      ret.lateralTuning.pid.kf = 0.0001 # full torque for 10 deg at 80mph means 0.00007818594
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         new_braking_tuned = True
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.0, 0.5, 0.3]  # tuned braking for higher brake limit
-        ret.longitudinalKiV = [0.20, 0.10]
+        ret.longitudinalTuning.kpV = [1.0, 0.5, 0.3]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.20, 0.10]
     elif candidate == CAR.RAV4_2019:
       stop_and_go = True
       ret.safetyParam = 100
@@ -149,10 +149,10 @@ class CarInterface(object):
       ret.steerRatio = 17.0
       tire_stiffness_factor = 0.7933
       ret.mass = 3370. * CV.LB_TO_KG + std_cargo
-      ret.steerKpV, ret.steerKiV = [[0.3], [0.05]]
-      ret.steerKf = 0.0001
-      ret.longitudinalKpV = [2.0, 1.0, 0.8]
-      ret.longitudinalKiV = [0.25, 0.14]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.05]]
+      ret.lateralTuning.pid.kf = 0.0001
+      ret.longitudinalTuning.kpV = [2.0, 1.0, 0.8]
+      ret.longitudinalTuning.kiV = [0.25, 0.14]
       ret.gasMaxV = [0.2, 0.5, 0.7]
     elif candidate == CAR.COROLLA_HATCH:
       stop_and_go = True
@@ -163,8 +163,8 @@ class CarInterface(object):
       ret.mass = 3060. * CV.LB_TO_KG + std_cargo
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.17], [0.03]]
       ret.lateralTuning.pid.kf = 0.00007818594
-      ret.longitudinalKpV = [2.0, 1.0, 0.8]
-      ret.longitudinalKiV = [0.25, 0.14]
+      ret.longitudinalTuning.kpV = [2.0, 1.0, 0.8]
+      ret.longitudinalTuning.kiV = [0.25, 0.14]
       ret.gasMaxV = [0.2, 0.5, 0.7]
 
     elif candidate == CAR.COROLLA:
@@ -179,12 +179,12 @@ class CarInterface(object):
       if ret.enableGasInterceptor:
         new_braking_tuned = True
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [0.333, 0.364, 0.15]  # tuned braking for higher brake limit
-        ret.longitudinalKiV = [0.07, 0.05]
+        ret.longitudinalTuning.kpV = [0.333, 0.364, 0.15]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.07, 0.05]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
 
     elif candidate == CAR.LEXUS_RXH:
       stop_and_go = True
@@ -198,12 +198,12 @@ class CarInterface(object):
       new_braking_tuned = True
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [0.333, 0.364, 0.15]  # tuned braking for higher brake limit
-        ret.longitudinalKiV = [0.07, 0.05]
+        ret.longitudinalTuning.kpV = [0.333, 0.364, 0.15]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.07, 0.05]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.0, 0.5, 0.3]  # tuned braking for higher brake limit
-        ret.longitudinalKiV = [0.2, 0.1]
+        ret.longitudinalTuning.kpV = [1.0, 0.5, 0.3]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.2, 0.1]
 
 
     elif candidate in [CAR.CHR, CAR.CHRH]:
@@ -217,12 +217,12 @@ class CarInterface(object):
       ret.lateralTuning.pid.kf = 0.00006
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
 
     elif candidate in [CAR.CAMRY, CAR.CAMRYH]:
       stop_and_go = True
@@ -232,15 +232,15 @@ class CarInterface(object):
       tire_stiffness_factor = 0.7933
       ret.mass = 3400 * CV.LB_TO_KG + std_cargo #mean between normal and hybrid
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.03]]
-      ret.steerKf = 0.0001
+      ret.lateralTuning.pid.kf = 0.0001
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
 
 
     elif candidate in [CAR.HIGHLANDER, CAR.HIGHLANDERH]:
@@ -254,12 +254,12 @@ class CarInterface(object):
       ret.lateralTuning.pid.kf = 0.00015
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
     
     elif candidate == CAR.AVALON:
       stop_and_go = False
@@ -272,12 +272,12 @@ class CarInterface(object):
       ret.mass = 3505 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
       
     elif candidate == CAR.OLD_CAR:
       stop_and_go = True
@@ -286,16 +286,16 @@ class CarInterface(object):
       ret.steerRatio = 20.
       tire_stiffness_factor = 0.444
       ret.mass = 4690 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
-      ret.steerKpV, ret.steerKiV = [[0.15], [0.04]]
-      ret.steerKf = 0.00006   # full torque for 20 deg at 80mph means 0.00007818594
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.04]]
+      ret.lateralTuning.pid.kf = 0.00006   # full torque for 20 deg at 80mph means 0.00007818594
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [1.2, 0.8, 0.5]
-        ret.longitudinalKiV = [0.18, 0.12]
+        ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+        ret.longitudinalTuning.kiV = [0.18, 0.12]
       else:
         ret.gasMaxV = [0.2, 0.5, 0.7]
-        ret.longitudinalKpV = [3.6, 1.1, 1.0]
-        ret.longitudinalKiV = [0.5, 0.24]
+        ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
+        ret.longitudinalTuning.kiV = [0.5, 0.24]
 
     if candidate == CAR.OLD_CAR:
       ret.centerToFront = ret.wheelbase * 0.5
@@ -305,8 +305,8 @@ class CarInterface(object):
     if not new_braking_tuned:
       conversion_KpV = [0.278, 0.455, 0.3]  # conversion factors for new higher braking limit
       conversion_KiV = [0.4, 0.417]
-      ret.longitudinalKpV = [round(float(i[1]) * conversion_KpV[i[0]], 3) for i in enumerate(ret.longitudinalKpV)]
-      ret.longitudinalKiV = [round(float(i[1]) * conversion_KiV[i[0]], 3) for i in enumerate(ret.longitudinalKiV)]
+      ret.lateralTuning.pid.kpV = [round(float(i[1]) * conversion_KpV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kpV)]
+      ret.lateralTuning.pid.kiV = [round(float(i[1]) * conversion_KiV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kiV)]
 
 
     ret.steerRateCost = 1.
@@ -364,16 +364,16 @@ class CarInterface(object):
     ret.stoppingControl = False
     ret.startAccel = 0.0
 
-    if ret.enableGasInterceptor:
-      ret.gasMaxBP = [0., 9., 35]
-      ret.gasMaxV = [0.2, 0.5, 0.7]
-      ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
-      ret.longitudinalTuning.kiV = [0.18, 0.12]
-    else:
-      ret.gasMaxBP = [0.]
-      ret.gasMaxV = [0.5]
-      ret.longitudinalTuning.kpV = [3.6, 2.4, 1.5]
-      ret.longitudinalTuning.kiV = [0.54, 0.36]
+    #if ret.enableGasInterceptor:
+    #  ret.gasMaxBP = [0., 9., 35]
+    #  ret.gasMaxV = [0.2, 0.5, 0.7]
+    #  ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+    #  ret.longitudinalTuning.kiV = [0.18, 0.12]
+    #else:
+    #  ret.gasMaxBP = [0.]
+    #  ret.gasMaxV = [0.5]
+    #  ret.longitudinalTuning.kpV = [3.6, 2.4, 1.5]
+    #  ret.longitudinalTuning.kiV = [0.54, 0.36]
 
     return ret
 

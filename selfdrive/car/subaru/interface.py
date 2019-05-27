@@ -79,9 +79,9 @@ class CarInterface(object):
       ret.steerRatio = 20            # learned, 14 stock
       tire_stiffness_factor = 0.78
       ret.steerActuatorDelay = 0.4
-      ret.steerKf = 0.00003
-      ret.steerKiBP, ret.steerKpBP = [[0.,10.], [0.,10.]]
-      ret.steerKpV, ret.steerKiV = [[0.07,0.15], [0.02,0.02]]
+      ret.lateralTuning.pid.kf = 0.00003
+      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.,10.], [0.,10.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.07,0.15], [0.02,0.02]]
       ret.steerMaxBP = [0.] # m/s
       ret.steerMaxV = [1.]
 
@@ -92,9 +92,9 @@ class CarInterface(object):
       ret.steerRatio = 14.5
       tire_stiffness_factor = 1.0
       ret.steerActuatorDelay = 0.4
-      ret.steerKf = 0.00005
-      ret.steerKiBP, ret.steerKpBP = [[0., 20.], [0., 20.]]
-      ret.steerKpV, ret.steerKiV = [[0.1, 0.2], [0.01, 0.02]]
+      ret.lateralTuning.pid.kf = 0.00005
+      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0., 20.], [0., 20.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.1, 0.2], [0.01, 0.02]]
       ret.steerMaxBP = [0.] # m/s
       ret.steerMaxV = [1.]
 

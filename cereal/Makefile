@@ -19,6 +19,7 @@ ifneq ($(OPTEST),1)
 		endif
 	endif
 
+endif
 
 GENS += gen/c/car.capnp.c gen/c/log.capnp.c gen/c/include/c++.capnp.h gen/c/include/java.capnp.h
 

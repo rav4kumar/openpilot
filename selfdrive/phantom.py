@@ -20,19 +20,24 @@ class Phantom():
 
   def update(self, rate=40.43):  # in the future, pass in the current rate of long_mpc to accurate calculate disconnect time
     phantomData = messaging.recv_one_or_none(self.phantom_Data_sock)
-    if phantomData is not None:
-      self.data = {"status": phantomData.phantomData.status, "speed": phantomData.phantomData.speed, "angle": phantomData.phantomData.angle, "time": phantomData.phantomData.time}
-      self.last_phantom_data = self.data
-      self.last_receive_counter = 0
-      self.to_disable = not self.data["status"]
-    if phantomData is None:
-      if self.to_disable:  # if last message is status: False, disable phantom mode, also disable by default
-        self.data = {"status": False, "speed": 0.0}
-      elif self.last_receive_counter > int(rate * 3.0) and not self.to_disable and self.timeout:  # lost connection (no commands in 3 secs), don't disable. keep phantom on but set speed to 0
-        self.data = {"status": True, "speed": 0.0, "angle": 0.0, "time": 0.0}
-      else:  # if waiting between messages from app, message becomes none, this uses the data from last message
-        self.data = self.last_phantom_data
-      self.last_receive_counter = min(self.last_receive_counter + 1, 900)  # don't infinitely increment
+    phantomDataNone = False
+    try:
+      if phantomData is not None:
+        self.data = {"status": phantomData.phantomData.status, "speed": phantomData.phantomData.speed, "angle": phantomData.phantomData.angle, "time": phantomData.phantomData.time}
+        self.last_phantom_data = self.data
+        self.last_receive_counter = 0
+        self.to_disable = not self.data["status"]
+      else:
+        phantomDataNone = True
+    except:
+      if phantomDataNone:
+        if self.to_disable:  # if last message is status: False, disable phantom mode, also disable by default
+          self.data = {"status": False, "speed": 0.0}
+        elif self.last_receive_counter > int(rate * 3.0) and not self.to_disable and self.timeout:  # lost connection (no commands in 3 secs), don't disable. keep phantom on but set speed to 0
+          self.data = {"status": True, "speed": 0.0, "angle": 0.0, "time": 0.0}
+        else:  # if waiting between messages from app, message becomes none, this uses the data from last message
+          self.data = self.last_phantom_data
+        self.last_receive_counter = min(self.last_receive_counter + 1, 900)  # don't infinitely increment
 
   def mod_sshd_config(self):  # this disables dns lookup when connecting to EON to speed up commands from phantom app, reboot required
     sshd_config_file = "/system/comma/usr/etc/ssh/sshd_config"

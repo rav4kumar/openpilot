@@ -78,6 +78,7 @@ cameraOdometry: [8066, true]
 pathPlan: [8067, true]
 kalmanOdometry: [8068, true]
 phantomData: [8069, false]
+managerData: [8069, false]
 
 testModel: [8040, false]
 testLiveLocation: [8045, false]

@@ -11,7 +11,7 @@ def read_config():
                     "wheelTouchSeconds": 1800, "battPercOff": 25, "carVoltageMinEonShutdown": 11200,
                     "brakeStoppingTarget": 0.25, "angle_steers_offset": 0, "brake_distance_extra": 1,
                     "lastALCAMode": 1, "brakefactor": 1.2, "lastGasMode": 0, "lastSloMode": 1,
-                    "leadDistance": 5, "useCarCaching": True}
+                    "leadDistance": 5, "useCarCaching": True, "autoUpdate": True}
 
   if os.path.isfile(kegman_file):
     try:
@@ -42,6 +42,8 @@ def read_config():
       config.update({"leadDistance": 5.0})
     if "useCarCaching" not in config:
       config.update({"useCarCaching": True})  # disable if you want to grab your car's fingerprint on every boot
+    if "autoUpdate" not in config:
+      config.update({"autoUpdate": True})  # this lets updated.py check and pull updates every hour and reboot
 
     # force update
     if config["carVoltageMinEonShutdown"] == "11800":
