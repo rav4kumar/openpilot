@@ -463,7 +463,7 @@ class CarState(object):
       if self.read_distance_lines == 1:
         self.UE.custom_alert_message(2,"Following distance set to 0.9s",200,3)
       if self.read_distance_lines == 2:
-        self.UE.custom_alert_message(2,"Dynamic Following distance",200,3)
+        self.UE.custom_alert_message(2,"Follwoing distance set to 1.8",200,3)
       if self.read_distance_lines == 3:
         self.UE.custom_alert_message(2,"Following distance set to 2.7s",200,3)
       self.read_distance_lines_prev = self.read_distance_lines
