@@ -43,7 +43,7 @@ class LatControlPID(object):
       self.previous_integral = 0.0
     else:
       self.angle_steers_des = interp(sec_since_boot(), path_plan.mpcTimes, path_plan.mpcAngles)
-
+      
       steers_max = get_steer_max(CP, v_ego)
       self.pid.pos_limit = steers_max
       self.pid.neg_limit = -steers_max
@@ -72,4 +72,7 @@ class LatControlPID(object):
       pid_log.saturated = bool(self.pid.saturated)
 
     self.sat_flag = self.pid.saturated
-    return output_steer, float(self.angle_steers_des), pid_log
+    if CP.steerControlType == car.CarParams.SteerControlType.torque:
+      return output_steer, path_plan.angleSteers, pid_log
+    else:
+      return self.angle_steers_des, path_plan.angleSteers

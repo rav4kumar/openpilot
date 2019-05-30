@@ -6,7 +6,8 @@ from common.realtime import sec_since_boot
 from selfdrive.controls.lib.radar_helpers import _LEAD_ACCEL_TAU
 from selfdrive.controls.lib.longitudinal_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LONG
-
+from selfdrive.phantom import Phantom
+import time
 
 class LongitudinalMpc(object):
   def __init__(self, mpc_id, live_longitudinal_mpc):
@@ -24,6 +25,9 @@ class LongitudinalMpc(object):
     self.v_ego = 0.0
     self.car_state = None
     self.last_cost = 0
+    self.last_rate = None
+    self.phantom = Phantom(timeout=True, do_sshd_mod=True)
+
 
     self.last_cloudlog_t = 0.0
 
@@ -58,6 +62,9 @@ class LongitudinalMpc(object):
     self.cur_state[0].v_ego = v
     self.cur_state[0].a_ego = a
 
+  def dynamic_follow(self):
+    return 1.8
+
   def get_TR(self):
     read_distance_lines = self.car_state.readdistancelines
 
@@ -84,22 +91,36 @@ class LongitudinalMpc(object):
         self.last_cost = 0.05
       return 2.7  # 30m at 40km/hr
 
+  def calc_rate(self, seconds=1.0):  # return current rate of long_mpc in fps/hertz
+    current_time = time.time()
+    if self.last_rate is None or (current_time - self.last_rate) == 0:
+      rate = int(round(40.42 * seconds))
+    else:
+      rate = (1.0 / (current_time - self.last_rate)) * seconds
+
+    min_return = 10
+    max_return = seconds * 100
+    self.last_rate = current_time
+    return int(round(max(min(rate, max_return), min_return)))  # ensure we return a value between range, in hertz
+
   def update(self, CS, lead, v_cruise_setpoint):
     self.car_state = CS.carState
     self.v_ego = CS.carState.vEgo
 
     # Setup current mpc state
     self.cur_state[0].x_ego = 0.0
+    self.phantom.update(self.calc_rate())
 
-    if lead is not None and lead.status:
-      x_lead = lead.dRel
-      v_lead = max(0.0, lead.vLead)
-      a_lead = lead.aLeadK
+    if self.phantom.data["status"]:
+      self.relative_velocity = self.phantom.data["speed"] - self.v_ego
+      if self.phantom.data["speed"] != 0.0:
+        x_lead = 9.144
+        v_lead = self.phantom.data["speed"]
+      else:
+        x_lead = 3.75
+        v_lead = max(self.v_ego - (.7 / max(max(self.v_ego, 0)**.4, .01)), 0.0)  # smoothly decelerate to 0
 
-      if (v_lead < 0.1 or -a_lead / 2.0 > v_lead):
-        v_lead = 0.0
-        a_lead = 0.0
-
+      a_lead = 0.0
       self.a_lead_tau = lead.aLeadTau
       self.new_lead = False
       if not self.prev_lead_status or abs(x_lead - self.prev_lead_x) > 2.5:
@@ -111,12 +132,32 @@ class LongitudinalMpc(object):
       self.cur_state[0].x_l = x_lead
       self.cur_state[0].v_l = v_lead
     else:
-      self.prev_lead_status = False
-      # Fake a fast lead car, so mpc keeps running
-      self.cur_state[0].x_l = 50.0
-      self.cur_state[0].v_l = self.v_ego + 10.0
-      a_lead = 0.0
-      self.a_lead_tau = _LEAD_ACCEL_TAU
+      if lead is not None and lead.status:
+        x_lead = lead.dRel
+        v_lead = max(0.0, lead.vLead)
+        a_lead = lead.aLeadK
+
+        if (v_lead < 0.1 or -a_lead / 2.0 > v_lead):
+          v_lead = 0.0
+          a_lead = 0.0
+
+        self.a_lead_tau = lead.aLeadTau
+        self.new_lead = False
+        if not self.prev_lead_status or abs(x_lead - self.prev_lead_x) > 2.5:
+          self.libmpc.init_with_simulation(self.v_mpc, x_lead, v_lead, a_lead, self.a_lead_tau)
+          self.new_lead = True
+
+        self.prev_lead_status = True
+        self.prev_lead_x = x_lead
+        self.cur_state[0].x_l = x_lead
+        self.cur_state[0].v_l = v_lead
+      else:
+        self.prev_lead_status = False
+        # Fake a fast lead car, so mpc keeps running
+        self.cur_state[0].x_l = 50.0
+        self.cur_state[0].v_l = self.v_ego + 10.0
+        a_lead = 0.0
+        self.a_lead_tau = _LEAD_ACCEL_TAU
 
     # Calculate mpc
     t = sec_since_boot()

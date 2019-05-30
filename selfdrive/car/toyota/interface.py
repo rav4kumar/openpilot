@@ -92,7 +92,10 @@ class CarInterface(object):
       ret.steerRatio = 15.00   # unknown end-to-end spec
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3045 * CV.LB_TO_KG + std_cargo
-
+      
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.4], [0.05]]
+      ret.lateralTuning.pid.kf = 0.0001 # full torque for 10 deg at 80mph means 0.00007818594
+      
       ret.lateralTuning.init('indi')
       ret.lateralTuning.indi.innerLoopGain = 4.0
       ret.lateralTuning.indi.outerLoopGain = 3.0
@@ -186,7 +189,7 @@ class CarInterface(object):
         ret.longitudinalTuning.kpV = [3.6, 1.1, 1.0]
         ret.longitudinalTuning.kiV = [0.5, 0.24]
 
-    elif candidate == CAR.LEXUS_RXH:
+    elif candidate in [CAR.LEXUS_RXH, CAR.LEXUS_RX]:
       stop_and_go = True
       ret.safetyParam = 100 # see conversion factor for STEER_TORQUE_EPS in dbc file
       ret.wheelbase = 2.79
@@ -195,6 +198,26 @@ class CarInterface(object):
       ret.mass = 4481 * CV.LB_TO_KG + std_cargo  # mean between min and max
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.2], [0.02]]
       ret.lateralTuning.pid.kf = 0.00007   # full torque for 10 deg at 80mph means 0.00007818594
+      new_braking_tuned = True
+      if ret.enableGasInterceptor:
+        ret.gasMaxV = [0.2, 0.5, 0.7]
+        ret.longitudinalTuning.kpV = [0.333, 0.364, 0.15]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.07, 0.05]
+      else:
+        ret.gasMaxV = [0.2, 0.5, 0.7]
+        ret.longitudinalTuning.kpV = [1.0, 0.5, 0.3]  # tuned braking for higher brake limit
+        ret.longitudinalTuning.kiV = [0.2, 0.1]
+      
+    elif candidate == CAR.LEXUS_IS:
+      stop_and_go = False
+      ret.safetyParam = 100
+      ret.wheelbase = 2.79908
+      ret.steerRatio = 13.3 #from Q
+      tire_stiffness_factor = 0.444 #from Q
+      ret.mass = 3737 * CV.LB_TO_KG + std_cargo  # mean between min and max
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.19], [0.04]] #from Q
+      ret.lateralTuning.pid.kf = 0.00006 #from Q
+      ##Below copied from RXH - unsure if necessary as IS does not have long control
       new_braking_tuned = True
       if ret.enableGasInterceptor:
         ret.gasMaxV = [0.2, 0.5, 0.7]
@@ -305,8 +328,8 @@ class CarInterface(object):
     if not new_braking_tuned:
       conversion_KpV = [0.278, 0.455, 0.3]  # conversion factors for new higher braking limit
       conversion_KiV = [0.4, 0.417]
-      ret.lateralTuning.pid.kpV = [round(float(i[1]) * conversion_KpV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kpV)]
-      ret.lateralTuning.pid.kiV = [round(float(i[1]) * conversion_KiV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kiV)]
+      ret.longitudinalTuning.kpV = [round(float(i[1]) * conversion_KpV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kpV)]
+      ret.longitudinalTuning.kiV = [round(float(i[1]) * conversion_KiV[i[0]], 3) for i in enumerate(ret.longitudinalTuning.kiV)]
 
 
     ret.steerRateCost = 1.

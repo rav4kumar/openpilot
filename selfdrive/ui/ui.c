@@ -72,7 +72,7 @@ const int header_h = 420;
 const int footer_h = 280;
 const int footer_y = vwp_h-bdr_s-footer_h;
 
-const int UI_FREQ = 30;   // Hz
+const int UI_FREQ = 60;   // Hz
 
 const int MODEL_PATH_MAX_VERTICES_CNT = 98;
 const int MODEL_LANE_PATH_CNT = 3;
@@ -2391,7 +2391,7 @@ int main() {
       }
     } else {
       // Car started, fetch a new rgb image from ipc and peek for zmq events.
-      touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 5 : 500);
+      touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 20 : 500);
       //touched = touch_read(&touch, &touch_x, &touch_y);
       ui_update(s);
       if(!s->vision_connected) {
