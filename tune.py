@@ -70,11 +70,11 @@ except:
     params = Params()
     user_name = params.get("DongleId")
 
-'''cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
+cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
 process = subprocess.Popen(cmd, shell=True,
                            stdout=subprocess.PIPE,
                            stderr=None,
-                           close_fds=True)'''
+                           close_fds=True)
 
 j = 0
 
