@@ -21,6 +21,7 @@ class LatControl(object):
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
     self.desired_smoothing = max(1.0, CP.steerMPCDampTime * CP.carCANRate)
     self.delaySteer = CP.steerActuatorDelay
+    self.center_factor = CP.centerFactor
     self.dampened_angle_steers = 0.0
     self.dampened_actual_angle = 0.0
     self.dampened_angle_rate = 0.0
@@ -47,7 +48,10 @@ class LatControl(object):
     self.short_smoothed_error = 0.0
     self.avg_error = 0.0
     self.error_feedback = 0.0
-
+    self.prev_plan_ts = 0.0
+    self.smooth_c_poly = [0., 0., 0., 0.]
+    self.smooth_d_poly = [0., 0., 0., 0.]
+    self.centering_error = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -74,6 +78,7 @@ class LatControl(object):
         self.oscillation_factor = float(kegman.conf['oscFactor'])
         self.deadzone = -float(kegman.conf['backlash'])
         self.longOffset = float(kegman.conf['longOffset'])
+        self.center_factor = float(kegman.conf['centerFactor'])
 
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
@@ -119,10 +124,17 @@ class LatControl(object):
     self.error_feedback = float((oldest_error - self.avg_error) * error_factor)
     return self.error_feedback
 
+  def get_projected_path_error(self, v_ego, CP, path_plan):
+    x = v_ego * (0.5 + sec_since_boot() - path_plan.mpcTimes[0])
+    projected_desired_offset = path_plan.dPoly[0]*(x**3) + path_plan.dPoly[1]*(x**2) + path_plan.dPoly[2]*x + path_plan.dPoly[3]
+    projected_actual_offset = path_plan.cPoly[0]*(x**3) + path_plan.cPoly[1]*(x**2) + path_plan.cPoly[2]*x + path_plan.cPoly[3]
+    return projected_actual_offset - projected_desired_offset
+
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
     self.frame += 1
     self.live_tune(CP)
+
     angle_steers += self.get_error_feedback(path_plan.angleOffset)
     if v_ego < 0.3 or not active:
       output_steer = 0.0
@@ -174,8 +186,10 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
-        output_steer = self.pid.update(self.dampened_desired_angle,
-                                self.dampened_angle_steers, check_saturation=(v_ego > 10), override=steer_override,
+        self.centering_error += 0.2 * path_plan.cProb * (self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.centering_error)
+        print(self.centering_error, self.center_factor)
+        output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
+                        add_error=self.centering_error, check_saturation=(v_ego > 10), override=steer_override,
                                 feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:

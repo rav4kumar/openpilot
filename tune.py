@@ -44,7 +44,7 @@ button_delay = 0.2
 kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
-param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "dampRate", "rateFF", "Kp", "Ki", "delaySteer", "longOffset", "oscFactor", "backlash"]
+param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "dampRate", "rateFF", "Kp", "Ki", "centerFactor", "delaySteer", "longOffset", "oscFactor", "backlash"]
 
 try:
   devnull = open(os.devnull, 'w')
@@ -70,11 +70,11 @@ except:
     params = Params()
     user_name = params.get("DongleId")
 
-cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
+'''cmd = '/usr/local/bin/python /data/openpilot/dashboard.py'
 process = subprocess.Popen(cmd, shell=True,
                            stdout=subprocess.PIPE,
                            stderr=None,
-                           close_fds=True)
+                           close_fds=True)'''
 
 j = 0
 

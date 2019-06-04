@@ -48,6 +48,9 @@ class kegman_conf():
     if self.conf['oscFactor'] == "-1":
       self.conf['oscFactor'] = str(round(CP.oscillationFactor, 2))
       write_conf = True
+    if self.conf['centerFactor'] == "-1":
+      self.conf['centerFactor'] = str(round(CP.centerFactor, 3))
+      write_conf = True
 
     if write_conf:
       self.write_config(self.config)
@@ -97,6 +100,10 @@ class kegman_conf():
         self.config.update({"oscFactor":"-1"})
         self.element_updated = True
 
+      if "centerFactor" not in self.config:
+        self.config.update({"centerFactor":"-1"})
+        self.element_updated = True
+
       if "dampSteer" not in self.config:
         self.config.update({"dampSteer":"-1"})
         self.config.update({"reactSteer":"-1"})
@@ -117,7 +124,7 @@ class kegman_conf():
       self.config = {"cameraOffset":"0.06", "lastTrMode":"1", "battChargeMin":"60", "battChargeMax":"70", \
                      "wheelTouchSeconds":"180", "battPercOff":"25", "carVoltageMinEonShutdown":"11800", \
                      "brakeStoppingTarget":"0.25", "tuneGernby":"1", "reactMPC":"-1", "reactSteer":"-1","reactRate":"-1", \
-                     "dampMPC":"-1", "dampSteer":"-1", "dampRate":"-1", "Kp":"-1", "Ki":"-1", "rateFF":"-1", "delaySteer":"-1", \
+                     "dampMPC":"-1", "dampSteer":"-1", "dampRate":"-1", "Kp":"-1", "Ki":"-1", "centerFactor":"-1", "rateFF":"-1", "delaySteer":"-1", \
                      "oscFactor":"-1", "backlash":"-1", "longOffset":"-1"}
 
       self.write_config(self.config)
