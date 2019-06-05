@@ -61,7 +61,7 @@ class PIController(object):
 
     error = float(apply_deadzone(setpoint - measurement, deadzone))
     self.p = error * self.k_p * p_scale
-    self.p2 = add_error * self.k_p * p_scale
+    self.p2 = add_error * self.k_p
     self.f = feedforward * self.k_f
 
     if override:
