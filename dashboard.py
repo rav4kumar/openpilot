@@ -66,7 +66,7 @@ def dashboard_thread(rate=100):
     tunePush = None
 
   tuneSub.setsockopt(zmq.SUBSCRIBE, str(user_id))
-  influxFormatString = user_id + ",sources=capnp angle_accel=%s,damp_angle_rate=%s,angle_rate=%s,damp_angle=%s,apply_steer=%s,noise_feedback=%s,ff_standard=%s,ff_rate=%s,ff_angle=%s,angle_steers_des=%s,angle_steers=%s,dampened_angle_steers_des=%s,steer_override=%s,v_ego=%s,p=%s,i=%s,f=%s %s\n"
+  influxFormatString = user_id + ",sources=capnp angle_accel=%s,damp_angle_rate=%s,angle_rate=%s,damp_angle=%s,apply_steer=%s,noise_feedback=%s,ff_standard=%s,ff_rate=%s,ff_angle=%s,angle_steers_des=%s,angle_steers=%s,dampened_angle_steers_des=%s,steer_override=%s,v_ego=%s,p2=%s,p=%s,i=%s,f=%s %s\n"
   kegmanFormatString = user_id + ",sources=kegman reactRate=%s,dampRate=%s,longOffset=%s,backlash=%s,dampMPC=%s,reactMPC=%s,dampSteer=%s,reactSteer=%s,KpV=%s,KiV=%s,rateFF=%s,angleFF=%s,delaySteer=%s,oscFactor=%s,centerFactor=%s %s\n"
   mapFormatString = "location,user=" + user_id + " latitude=%s,longitude=%s,altitude=%s,speed=%s,bearing=%s,accuracy=%s,speedLimitValid=%s,speedLimit=%s,curvatureValid=%s,curvature=%s,wayId=%s,distToTurn=%s,mapValid=%s,speedAdvisoryValid=%s,speedAdvisory=%s,speedAdvisoryValid=%s,speedAdvisory=%s,speedLimitAheadValid=%s,speedLimitAhead=%s,speedLimitAheadDistance=%s %s\n"
   canFormatString="CANData,user=" + user_id + ",src=%s,pid=%s d1=%si,d2=%si "
@@ -157,10 +157,10 @@ def dashboard_thread(rate=100):
           if vEgo > 0 and active:
             dat = l100.live100
             #print(dat)
-            influxDataString += ("%0.3f,%0.3f,%0.2f,%0.2f,%d,%0.2f,%0.2f,%0.3f,%0.3f,%0.2f,%0.2f,%0.2f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%d|" %
+            influxDataString += ("%0.3f,%0.3f,%0.2f,%0.2f,%d,%0.2f,%0.2f,%0.3f,%0.3f,%0.2f,%0.2f,%0.2f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%0.4f,%d|" %
                 (dat.angleAccel ,dat.dampAngleRate, dat.angleRate,dat.dampAngleSteers , dat.steeringRequested, dat.noiseFeedback, dat.standardFFRatio,
                 1.0 - dat.angleFFRatio, dat.angleFFRatio, dat.angleSteersDes, dat.angleSteers, dat.dampAngleSteersDes, dat.steerOverride, vEgo,
-                dat.upSteer, dat.uiSteer, dat.ufSteer, receiveTime))
+                dat.upSteer2, dat.upSteer, dat.uiSteer, dat.ufSteer, receiveTime))
             #print(dat.upFine, dat.uiFine)
             frame_count += 1
 

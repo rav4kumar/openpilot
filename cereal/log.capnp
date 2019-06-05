@@ -395,6 +395,7 @@ struct Live100Data {
   standardFFRatio @60 :Float32;
   rateFFGain @53 :Float32;
   angleFFGain @54 :Float32;
+  upSteer2 @70 :Float32;
   aTargetMinDEPRECATED @10 :Float32;
   aTargetMaxDEPRECATED @11 :Float32;
   aTarget @35 :Float32;

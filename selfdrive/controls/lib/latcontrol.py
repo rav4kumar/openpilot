@@ -45,12 +45,8 @@ class LatControl(object):
     self.steer_counter_prev = 0
     self.angle_accel = 0.0
     self.recorded_error = np.zeros((100))
-    self.short_smoothed_error = 0.0
     self.avg_error = 0.0
     self.error_feedback = 0.0
-    self.prev_plan_ts = 0.0
-    self.smooth_c_poly = [0., 0., 0., 0.]
-    self.smooth_d_poly = [0., 0., 0., 0.]
     self.centering_error = 0.0
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
@@ -125,10 +121,10 @@ class LatControl(object):
     return self.error_feedback
 
   def get_projected_path_error(self, v_ego, CP, path_plan):
-    x = v_ego * (0.5 + sec_since_boot() - path_plan.mpcTimes[0])
+    x = v_ego * 0.125  # project 0.5 seconds
     projected_desired_offset = path_plan.dPoly[0]*(x**3) + path_plan.dPoly[1]*(x**2) + path_plan.dPoly[2]*x + path_plan.dPoly[3]
     projected_actual_offset = path_plan.cPoly[0]*(x**3) + path_plan.cPoly[1]*(x**2) + path_plan.cPoly[2]*x + path_plan.cPoly[3]
-    return projected_actual_offset - projected_desired_offset
+    return projected_desired_offset - projected_actual_offset
 
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
@@ -186,8 +182,9 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
+        #smooth centering error over 5 control cycles
         self.centering_error += 0.2 * path_plan.cProb * (self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.centering_error)
-        print(self.centering_error, self.center_factor)
+
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
                         add_error=self.centering_error, check_saturation=(v_ego > 10), override=steer_override,
                                 feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)

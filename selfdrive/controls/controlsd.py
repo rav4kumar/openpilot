@@ -374,6 +374,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "oscillationFactor": float(LaC.oscillation_factor),
     "noiseFeedback": float(LaC.error_feedback),
     "upSteer": float(LaC.pid.p),
+    "upSteer2": float(LaC.pid.p2),
     "uiSteer": float(LaC.pid.i),
     "ufSteer": float(LaC.pid.f),
     "angleFFRatio": float(LaC.angle_ff_ratio),
