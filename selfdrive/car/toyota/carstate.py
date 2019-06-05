@@ -15,7 +15,7 @@ def parse_gear_shifter(gear, vals):
 
 
 def get_can_parser(CP):
- 
+
   signals = [
     # sig_name, sig_address, default
     ("GEAR", "GEAR_PACKET", 0),
@@ -56,7 +56,7 @@ def get_can_parser(CP):
     ("STEER_ANGLE_SENSOR", 80),
     ("PCM_CRUISE", 33),
     ("PCM_CRUISE_2", 33),
-    ("STEER_TORQUE_SENSOR", 50),
+    ("STEER_TORQUE_SENSOR", 40),
     ("EPS_STATUS", 25),
   ]
 
@@ -89,12 +89,14 @@ class CarState(object):
     self.shifter_values = self.can_define.dv["GEAR_PACKET"]['GEAR']
     self.left_blinker_on = 0
     self.right_blinker_on = 0
+    self.torque_clipped = False
+    self.apply_steer = 0
 
     # initialize can parser
     self.car_fingerprint = CP.carFingerprint
 
     # vEgo kalman filter
-    dt = 0.01
+    dt = 1.0 / CP.carCANRate
     # Q = np.matrix([[10.0, 0.0], [0.0, 100.0]])
     # R = 1e3
     self.v_ego_kf = KF1D(x0=np.matrix([[0.0], [0.0]]),
