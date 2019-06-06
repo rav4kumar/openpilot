@@ -80,9 +80,9 @@ class CarInterface(object):
     tireStiffnessRear_civic = 202500
     ret.steerMPCReactTime = -0.05
     ret.steerMPCDampTime = 0.175
-    ret.rateFFGain = 0.2
+    ret.rateFFGain = 0.1
     ret.steerActuatorDelay = 0.12
-    ret.steerBacklash = -0.75
+    ret.steerBacklash = 0.0
     ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 0.75, 0.5]]  # [abs angles, scale UP, scale DOWN]
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
     ret.carCANRate = 82.87750704
@@ -91,8 +91,8 @@ class CarInterface(object):
     ret.steerReactTime = 0.04
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
-    ret.oscillationFactor = 0.1
-    ret.centerFactor = 4.0
+    ret.oscillationFactor = 0.0
+    ret.centerFactor = 2.0
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -111,15 +111,15 @@ class CarInterface(object):
       ret.rateReactTime = -0.14
       ret.steerMPCReactTime = -0.12     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
-      ret.rateFFGain = 0.4
+      ret.rateFFGain = 0.2
       ret.longOffset = 0.4
-      ret.centerFactor = 4.0
+      ret.centerFactor = 2.0
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
       ret.safetyParam = 73  # see conversion factor for STEER_TORQUE_EPS in dbc file
       ret.wheelbase = 2.65
-      ret.steerRatio = 15.00   # 14.5 is spec end-to-end
+      ret.steerRatio = 16.3   # 14.5 is spec end-to-end
       tire_stiffness_factor = 0.5533
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
       ret.steerKpV, ret.steerKiV = [[0.5], [0.01]] # [[0.6], [0.05]]
