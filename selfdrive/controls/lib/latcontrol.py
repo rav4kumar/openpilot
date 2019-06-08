@@ -121,9 +121,9 @@ class LatControl(object):
     return self.error_feedback
 
   def get_projected_path_error(self, v_ego, CP, path_plan):
-    x = v_ego * 0.125  # project 0.5 seconds
-    projected_desired_offset = path_plan.dPoly[2]*x + path_plan.dPoly[3]
-    projected_actual_offset = path_plan.cPoly[2]*x + path_plan.cPoly[3]
+    x = v_ego * 0.5  # project 0.5 seconds
+    projected_desired_offset = path_plan.cPoly[2]*x + path_plan.cPoly[3]
+    projected_actual_offset = path_plan.dPoly[2]*x + path_plan.dPoly[3]
     return projected_desired_offset - projected_actual_offset
 
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):

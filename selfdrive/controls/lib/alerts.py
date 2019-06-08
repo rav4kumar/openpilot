@@ -630,5 +630,5 @@ ALERTS = [
       "Vehicle Parameter Identification Failed",
       "",
       AlertStatus.normal, AlertSize.small,
-      Priority.LOWEST, VisualAlert.steerRequired, AudibleAlert.none, .0, .0, .1),
+      Priority.LOWEST, VisualAlert.none, AudibleAlert.none, .0, .0, .1),
 ]
