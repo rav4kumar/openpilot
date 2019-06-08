@@ -16,6 +16,8 @@ class LatControl(object):
     self.frame = 0
     self.total_rate_projection = max(0.0, CP.rateReactTime + CP.rateDampTime)
     self.actual_rate_smoothing = max(1.0, CP.rateDampTime * CP.carCANRate)
+    self.total_poly_projection = max(0.0, CP.polyReactTime + CP.polyDampTime)
+    self.poly_smoothing = max(1.0, CP.polyDampTime * CP.carCANRate)
     self.total_angle_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_angle_smoothing = max(1.0, CP.steerDampTime * CP.carCANRate)
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
@@ -68,6 +70,8 @@ class LatControl(object):
         self.actual_rate_smoothing = max(1.0, float(kegman.conf['dampRate']) * CP.carCANRate)
         self.actual_angle_smoothing = max(1.0, float(kegman.conf['dampSteer']) * CP.carCANRate)
         self.desired_smoothing = max(1.0, float(kegman.conf['dampMPC']) * CP.carCANRate)
+        self.total_poly_projection = max(0.0, float(kegman.conf['reactPoly']) + float(kegman.conf['dampPoly']))
+        self.poly_smoothing = max(1.0, float(kegman.conf['dampPoly']) * CP.carCANRate)
         self.rate_ff_gain = float(kegman.conf['rateFF'])
         self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1)
         self.delaySteer = float(kegman.conf['delaySteer'])
@@ -121,7 +125,7 @@ class LatControl(object):
     return self.error_feedback
 
   def get_projected_path_error(self, v_ego, CP, path_plan):
-    x = v_ego * 0.5  # project 0.5 seconds
+    x = v_ego * self.total_poly_projection
     projected_desired_offset = path_plan.cPoly[2]*x + path_plan.cPoly[3]
     projected_actual_offset = path_plan.dPoly[2]*x + path_plan.dPoly[3]
     return projected_desired_offset - projected_actual_offset
@@ -140,6 +144,7 @@ class LatControl(object):
       self.dampened_desired_angle = float(angle_steers)
       self.dampened_angle_rate = float(angle_rate)
       self.dampened_desired_rate = 0.0
+      self.dampened_center_offset = 0.0
     else:
       if self.gernbySteer == False:
         self.dampened_angle_steers = float(angle_steers)
@@ -182,11 +187,10 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
-        #smooth centering error over 5 control cycles
-        self.centering_error += 0.2 * path_plan.cProb * (self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.centering_error)
+        self.dampened_center_offset += (path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.dampened_center_offset) / self.poly_smoothing
 
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
-                        add_error=self.centering_error, check_saturation=(v_ego > 10), override=steer_override,
+                        add_error=self.dampened_center_offset, check_saturation=(v_ego > 10), override=steer_override,
                                 feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)
 
         if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:

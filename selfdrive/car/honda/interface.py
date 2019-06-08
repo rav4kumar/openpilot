@@ -187,6 +187,8 @@ class CarInterface(object):
     ret.steerDampTime = 0.1
     ret.steerReactTime = 0.0
     ret.centerFactor = 1.5
+    ret.polyDampTime = 0.1
+    ret.polyReactTime = 0.1
 
     # Optimized car params: tire_stiffness_factor and steerRatio are a result of a vehicle
     # model optimization process. Certain Hondas have an extra steering sensor at the bottom

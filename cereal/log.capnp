@@ -411,8 +411,9 @@ struct Live100Data {
   angleSteersDesNoise @58 :Float32;
   noiseFeedback @59 :Float32;
   dampAngleSteers @62 :Float32;
-  dampAngleRate @68: Float32;
-  angleAccel @69: Float32;
+  dampAngleRate @68 :Float32;
+  angleAccel @69 :Float32;
+  dampCenterOffset @71 :Float32;
   steeringRequested @63 :Float32;
   oscillationPeriod @65 :Float32;
   oscillationFactor @66 :Float32;

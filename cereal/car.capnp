@@ -365,7 +365,9 @@ struct CarParams {
   oscillationPeriod @56 :Float32;
   oscillationFactor @57 :Float32;
   centerFactor @64 :Float32;
-  
+  polyDampTime @65 :Float32;
+  polyReactTime @66 :Float32;
+
   vEgoStopping @30 :Float32; # Speed at which the car goes into stopping state
   directAccelControl @31 :Bool; # Does the car have direct accel control or just gas/brake
   stoppingControl @34 :Bool; # Does the car allows full control even at lows speeds when stopping

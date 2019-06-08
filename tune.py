@@ -44,7 +44,7 @@ button_delay = 0.2
 kegman = kegman_conf()
 #kegman.conf['tuneGernby'] = "1"
 #kegman.write_config(kegman.conf)
-param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "dampRate", "rateFF", "Kp", "Ki", "centerFactor", "delaySteer", "longOffset", "oscFactor", "backlash"]
+param = ["tuneGernby", "reactMPC", "dampMPC", "reactSteer", "dampSteer", "dampRate", "rateFF", "Kp", "Ki", "centerFactor", "reactPoly", "dampPoly", "delaySteer", "longOffset", "oscFactor", "backlash"]
 
 try:
   devnull = open(os.devnull, 'w')
