@@ -83,7 +83,7 @@ class CarInterface(object):
     ret.rateFFGain = 0.1
     ret.steerActuatorDelay = 0.12
     ret.steerBacklash = 0.0
-    ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 0.75, 0.5]]  # [abs angles, scale UP, scale DOWN]
+    ret.steerPscale = [[1.0, 2.0, 10.0], [1.0, 0.5, 0.25], [1.0, 1.0, 1.0]]  # [abs angles, scale UP, scale DOWN]
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
     ret.carCANRate = 82.87750704
     ret.longOffset = 0.0
@@ -133,11 +133,12 @@ class CarInterface(object):
       ret.rateReactTime = 0.02
       ret.steerMPCReactTime = -0.075     # increase total MPC projected time by 25 ms
       ret.steerMPCDampTime = 0.175       # dampen desired angle over 250ms (5 mpc cycles)
-      ret.rateFFGain = 0.1
+      ret.rateFFGain = 0.4
       ret.steerActuatorDelay = 0.02
       ret.longOffset = 0.4
       ret.oscillationFactor = 0.0
-      ret.centerFactor = 4.0
+      ret.centerFactor = 2.0
+      ret.steerBacklash = -0.2
 
     elif candidate == CAR.COROLLA:
       stop_and_go = False

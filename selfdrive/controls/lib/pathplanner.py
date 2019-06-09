@@ -18,6 +18,13 @@ def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_
   states[0].psi = states[0].x * curvature_factor * math.radians(steer_angle) / steer_ratio
   return states
 
+def apply_deadzone(angle_steers, angle_steers_des, deadzone):
+  if abs(angle_steers_des - angle_steers) <= deadzone:
+    return angle_steers_des
+  elif angle_steers > angle_steers_des:
+    return angle_steers - deadzone
+  else:
+    return angle_steers + deadzone
 
 class PathPlanner(object):
   def __init__(self, CP):
@@ -79,7 +86,10 @@ class PathPlanner(object):
     # account for actuation delay
     #projected_angle_steers = angle_steers + (delaySteer * angle_rate) - angle_offset_average
     self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
-    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, live100.live100.dampAngleSteers - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
+
+    cur_steer_angle = apply_deadzone(live100.live100.dampAngleSteers, live100.live100.dampAngleSteers, live100.live100.deadzone)
+
+    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, cur_steer_angle - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
 
     v_ego_mpc = max(v_ego, 5.0)  # avoid mpc roughness due to low speed
     self.libmpc.run_mpc(self.cur_state, self.mpc_solution,
