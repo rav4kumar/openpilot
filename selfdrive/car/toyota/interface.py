@@ -91,7 +91,7 @@ class CarInterface(object):
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
     ret.oscillationFactor = 0.0
-    ret.centerFactor = 1.0
+    ret.centerFactor = 0.3
     ret.polyDampTime = 0.0
     ret.polyReactTime = 0.0
 
@@ -115,7 +115,7 @@ class CarInterface(object):
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.2
       ret.longOffset = 0.4
-      ret.centerFactor = 2.0
+      ret.centerFactor = 0.3
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -136,7 +136,7 @@ class CarInterface(object):
       ret.steerActuatorDelay = 0.02
       ret.longOffset = 0.4
       ret.oscillationFactor = 0.0
-      ret.centerFactor = 1.3
+      ret.centerFactor = 0.4
       ret.steerBacklash = 0.0
 
     elif candidate == CAR.COROLLA:

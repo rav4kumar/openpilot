@@ -188,7 +188,7 @@ class LatControl(object):
           steer_feedforward = v_ego**2 * angle_feedforward
 
         #self.dampened_center_offset += (path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.dampened_center_offset) / self.poly_smoothing
-        self.dampened_center_offset = (path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan))
+        self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan))
         #print(self.dampened_center_offset)
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
                         add_error=self.dampened_center_offset, check_saturation=(v_ego > 10), override=steer_override,
