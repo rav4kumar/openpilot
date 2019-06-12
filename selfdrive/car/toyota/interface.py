@@ -91,9 +91,9 @@ class CarInterface(object):
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
     ret.oscillationFactor = 0.0
-    ret.centerFactor = 0.035
+    ret.centerFactor = 0.007
     ret.polyDampTime = 0.0
-    ret.polyReactTime = 0.05
+    ret.polyReactTime = 1.0
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
@@ -115,7 +115,7 @@ class CarInterface(object):
       ret.steerMPCDampTime = 0.18       # dampen desired angle over 250ms (5 mpc cycles)
       ret.rateFFGain = 0.2
       ret.longOffset = 0.4
-      ret.centerFactor = 0.04
+      ret.centerFactor = 0.007
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -124,7 +124,7 @@ class CarInterface(object):
       ret.steerRatio = 16.3   # 14.5 is spec end-to-end
       tire_stiffness_factor = 0.5533
       ret.mass = 3650 * CV.LB_TO_KG + std_cargo  # mean between normal and hybrid
-      ret.steerKpV, ret.steerKiV = [[0.5], [0.01]] # [[0.6], [0.05]]
+      ret.steerKpV, ret.steerKiV = [[0.4], [0.02]] # [[0.6], [0.05]]
       ret.steerKf = 0.0001   # full torque for 10 deg at 80mph means 0.00007818594
       ret.steerDampTime = 0.1
       ret.steerReactTime = 0.0
@@ -137,7 +137,7 @@ class CarInterface(object):
       ret.steerActuatorDelay = 0.02
       ret.longOffset = 0.4
       ret.oscillationFactor = 0.0
-      ret.centerFactor = 0.035
+      ret.centerFactor = 0.007
       ret.steerBacklash = 0.0
 
     elif candidate == CAR.COROLLA:
