@@ -50,6 +50,9 @@ class LatControl(object):
     self.avg_error = 0.0
     self.error_feedback = 0.0
     self.centering_error = 0.0
+    self.center_rate_adjust = 0.0
+    self.d_poly= [0., 0., 0., 0.]
+    self.c_poly= [0., 0., 0., 0.]
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -96,9 +99,9 @@ class LatControl(object):
     self.frame = 0
     self.pid.reset()
 
-  def adjust_angle_gain(self):
+  def adjust_angle_gain(self, torque_clipped):
     if (self.pid.f > 0) == (self.pid.i > 0) and abs(self.pid.i) >= abs(self.previous_integral):
-      self.angle_ff_gain *= 1.0001
+      if not torque_clipped: self.angle_ff_gain *= 1.0001
     elif self.angle_ff_gain > 1.0:
       self.angle_ff_gain *= 0.9999
     self.previous_integral = self.pid.i
@@ -124,11 +127,23 @@ class LatControl(object):
     self.error_feedback = float((oldest_error - self.avg_error) * error_factor)
     return self.error_feedback
 
-  def get_projected_path_error(self, v_ego, CP, path_plan):
+  def get_projected_path_error(self, v_ego, path_plan):
     x = v_ego * self.total_poly_projection
-    projected_desired_offset = path_plan.cPoly[2]*x + path_plan.cPoly[3]
-    projected_actual_offset = path_plan.dPoly[2]*x + path_plan.dPoly[3]
-    return projected_desired_offset - projected_actual_offset
+    self.d_poly[3] = path_plan.dPoly[3]
+    self.d_poly[2] += 0.6 * (path_plan.dPoly[2] - self.d_poly[2])
+    self.d_poly[1] += 0.4 * (path_plan.dPoly[1] - self.d_poly[1])
+    self.d_poly[0] += 0.2 * (path_plan.dPoly[0] - self.d_poly[0])
+    self.c_poly[3] = path_plan.cPoly[3]
+    self.c_poly[2] += 0.6 * (path_plan.cPoly[2] - self.c_poly[2])
+    self.c_poly[1] += 0.4 * (path_plan.cPoly[1] - self.c_poly[1])
+    self.c_poly[0] += 0.2 * (path_plan.cPoly[0] - self.c_poly[0])
+    #projected_desired_offset = path_plan.cPoly[0]*x**3 + path_plan.cPoly[1]*x**2 + path_plan.cPoly[2]*x + path_plan.cPoly[3]
+    #projected_actual_offset = path_plan.dPoly[0]*x**3 + path_plan.dPoly[1]*x**2 + path_plan.dPoly[2]*x + path_plan.dPoly[3]
+    #return projected_desired_offset - projected_actual_offset
+    d_pts = np.polyval(self.d_poly, np.arange(0, x))
+    c_pts = np.polyval(self.c_poly, np.arange(0, x))
+    return np.sum(c_pts) - np.sum(d_pts)
+
 
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
@@ -187,16 +202,19 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
-        #self.dampened_center_offset += (path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan) - self.dampened_center_offset) / self.poly_smoothing
-        self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan))
+        #self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan))
+        center_ff_factor = interp(abs(steer_feedforward), [0.1, 0.2], [1.0, 0.1])
+        self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * center_ff_factor * self.get_projected_path_error(v_ego, path_plan))
         #print(self.dampened_center_offset)
+        if self.frame % 100 == 0:
+          print('%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.d_poly) + '%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.c_poly))
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
                         add_error=self.dampened_center_offset, check_saturation=(v_ego > 10), override=steer_override,
                                 feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)
 
-        if self.gernbySteer and not torque_clipped and not steer_override and v_ego > 10.0:
+        if self.gernbySteer and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
-            self.adjust_angle_gain()
+            self.adjust_angle_gain(torque_clipped)
           else:
             self.previous_integral = self.pid.i
 
