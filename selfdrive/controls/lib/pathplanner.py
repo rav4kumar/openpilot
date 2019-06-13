@@ -85,10 +85,10 @@ class PathPlanner(object):
 
     # account for actuation delay
     #projected_angle_steers = angle_steers + (delaySteer * angle_rate) - angle_offset_average
-    self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
+    #self.cur_state[0].delta = math.radians(live100.live100.dampAngleSteersDes - angle_offset_bias) / VM.sR
 
-    cur_steer_angle = apply_deadzone(live100.live100.dampAngleSteers, live100.live100.dampAngleSteers, live100.live100.deadzone)
-
+    cur_steer_angle = apply_deadzone(live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone)
+    #print('reported angle = %0.2f  actual angle = %0.2f  desired angle = %0.2f  deadzone = %0.2f' % (cur_steer_angle, live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone))
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, cur_steer_angle - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
 
     v_ego_mpc = max(v_ego, 5.0)  # avoid mpc roughness due to low speed

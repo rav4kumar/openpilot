@@ -356,7 +356,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "dampAngleSteers": float(LaC.dampened_angle_steers),
     "angleAccel": float(LaC.angle_accel),
     "dampAngleRate": float(LaC.dampened_angle_rate),
-    "dampCenterOffset": float(LaC.dampened_center_offset),
+    "dampCenterOffset": float(LaC.path_error),
     "curvature": VM.calc_curvature((LaC.dampened_angle_steers - path_plan.pathPlan.angleOffset) * CV.DEG_TO_RAD, CS.vEgo),
     "steerOverride": CS.steeringPressed,
     "state": state,
@@ -396,7 +396,7 @@ def data_send(plan, path_plan, CS, CI, CP, VM, state, events, actuators, v_cruis
     "forceDecel": bool(force_decel),
   }
   live100.send(dat.to_bytes())
-
+  #print(LaC.deadzone)
   # carState
   cs_send = messaging.new_message()
   cs_send.init('carState')

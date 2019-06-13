@@ -40,7 +40,7 @@ class LatControl(object):
     self.average_angle_steers = 0.
     self.angle_ff_bp = [[0.5, 5.0],[0.0, 1.0]]
     self.oscillation_factor = CP.oscillationFactor
-    self.deadzone = -CP.steerBacklash
+    self.deadzone = CP.steerBacklash
     self.doScale = True if len(CP.steerPscale) > 0 else False
     self.prev_angle_rate= 0.0
     self.longOffset = 0.0
@@ -51,9 +51,12 @@ class LatControl(object):
     self.avg_error = 0.0
     self.error_feedback = 0.0
     self.centering_error = 0.0
+    self.path_error = 0.0
     self.center_rate_adjust = 0.0
-    self.d_poly= [0., 0., 0., 0.]
-    self.c_poly= [0., 0., 0., 0.]
+    self.d_poly = [0., 0., 0., 0.]
+    self.c_poly = [0., 0., 0., 0.]
+    self.c_prob = 0.0
+    self.high_feedforward = 0.05 / CP.steerKf
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -84,7 +87,7 @@ class LatControl(object):
         self.longOffset = float(kegman.conf['longOffset'])
         self.center_factor = float(kegman.conf['centerFactor'])
         self.poly_scale = float(kegman.conf['scalePoly'])
-
+        print(self.deadzone, kegman.conf['backlash'])
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
         KiV = [interp(25.0, CP.steerKiBP, self.steerKiV)]
@@ -130,9 +133,17 @@ class LatControl(object):
     return self.error_feedback
 
   def get_projected_path_error(self, v_ego, path_plan):
+    self.d_poly[3] += path_plan.cProb * ((path_plan.dPoly[3] - self.d_poly[3])) / self.poly_smoothing
+    self.d_poly[2] += path_plan.cProb * ((path_plan.dPoly[2] - self.d_poly[2])) / (self.poly_smoothing * 2)
+    self.d_poly[1] += path_plan.cProb * ((path_plan.dPoly[1] - self.d_poly[1])) / (self.poly_smoothing * 4)
+    self.d_poly[0] += path_plan.cProb * ((path_plan.dPoly[0] - self.d_poly[0])) / (self.poly_smoothing * 6)
+    self.c_poly[3] += path_plan.cProb * ((path_plan.cPoly[3] - self.c_poly[3])) / self.poly_smoothing
+    self.c_poly[2] += path_plan.cProb * ((path_plan.cPoly[2] - self.c_poly[2])) / (self.poly_smoothing * 2)
+    self.c_poly[1] += path_plan.cProb * ((path_plan.cPoly[1] - self.c_poly[1])) / (self.poly_smoothing * 4)
+    self.c_poly[0] += path_plan.cProb * ((path_plan.cPoly[0] - self.c_poly[0])) / (self.poly_smoothing * 6)
     x = v_ego * self.total_poly_projection
-    self.d_pts = np.polyval(path_plan.dPoly, np.arange(0, x))
-    self.c_pts = np.polyval(path_plan.cPoly, np.arange(0, x))
+    self.d_pts = np.polyval(self.d_poly, np.arange(0, x))
+    self.c_pts = np.polyval(self.c_poly, np.arange(0, x))
     return np.sum(self.c_pts) - np.sum(self.d_pts)
 
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
@@ -191,14 +202,14 @@ class LatControl(object):
         else:
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
-
-        center_ff_factor = interp(abs(steer_feedforward), [0.025, 0.25], [1.0, self.poly_scale])
-        self.dampened_center_offset += ((v_ego * path_plan.cProb * self.center_factor * center_ff_factor * self.get_projected_path_error(v_ego, path_plan)) - self.dampened_center_offset) / self.poly_smoothing
-        if self.frame % 100 == 0:
-          print('%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.d_poly) + '%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.c_poly))
+        print(steer_feedforward)
+        #self.dampened_center_offset += path_plan.cProb * (self.get_projected_path_error(v_ego, path_plan) - self.dampened_center_offset) / self.poly_smoothing
+        self.path_error = v_ego * self.get_projected_path_error(v_ego, path_plan) * self.center_factor * interp(abs(steer_feedforward), [0.0, self.high_feedforward], [1.0 , self.poly_scale])
+        #if self.frame % 100 == 0:
+        #  print('%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.d_poly) + '%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.c_poly))
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,
-                        add_error=self.dampened_center_offset, check_saturation=(v_ego > 10), override=steer_override,
-                                feedforward=steer_feedforward, speed=v_ego, deadzone=self.deadzone, p_scale=p_scale)
+                        add_error=self.path_error, check_saturation=(v_ego > 10), override=steer_override,
+                                feedforward=steer_feedforward, speed=v_ego, deadzone=0.0, p_scale=p_scale)
 
         if self.gernbySteer and not steer_override and v_ego > 10.0:
           if abs(angle_steers) > (self.angle_ff_bp[0][1] / 2.0):
