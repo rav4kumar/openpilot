@@ -18,6 +18,7 @@ class LatControl(object):
     self.actual_rate_smoothing = max(1.0, CP.rateDampTime * CP.carCANRate)
     self.total_poly_projection = max(0.0, CP.polyReactTime + CP.polyDampTime)
     self.poly_smoothing = max(1.0, CP.polyDampTime * CP.carCANRate)
+    self.poly_scale = CP.polyScale
     self.total_angle_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_angle_smoothing = max(1.0, CP.steerDampTime * CP.carCANRate)
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
@@ -82,6 +83,7 @@ class LatControl(object):
         self.deadzone = -float(kegman.conf['backlash'])
         self.longOffset = float(kegman.conf['longOffset'])
         self.center_factor = float(kegman.conf['centerFactor'])
+        self.poly_scale = float(kegman.conf['scalePoly'])
 
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
@@ -129,21 +131,9 @@ class LatControl(object):
 
   def get_projected_path_error(self, v_ego, path_plan):
     x = v_ego * self.total_poly_projection
-    self.d_poly[3] = path_plan.dPoly[3]
-    self.d_poly[2] += 0.6 * (path_plan.dPoly[2] - self.d_poly[2])
-    self.d_poly[1] += 0.4 * (path_plan.dPoly[1] - self.d_poly[1])
-    self.d_poly[0] += 0.2 * (path_plan.dPoly[0] - self.d_poly[0])
-    self.c_poly[3] = path_plan.cPoly[3]
-    self.c_poly[2] += 0.6 * (path_plan.cPoly[2] - self.c_poly[2])
-    self.c_poly[1] += 0.4 * (path_plan.cPoly[1] - self.c_poly[1])
-    self.c_poly[0] += 0.2 * (path_plan.cPoly[0] - self.c_poly[0])
-    #projected_desired_offset = path_plan.cPoly[0]*x**3 + path_plan.cPoly[1]*x**2 + path_plan.cPoly[2]*x + path_plan.cPoly[3]
-    #projected_actual_offset = path_plan.dPoly[0]*x**3 + path_plan.dPoly[1]*x**2 + path_plan.dPoly[2]*x + path_plan.dPoly[3]
-    #return projected_desired_offset - projected_actual_offset
-    d_pts = np.polyval(self.d_poly, np.arange(0, x))
-    c_pts = np.polyval(self.c_poly, np.arange(0, x))
-    return np.sum(c_pts) - np.sum(d_pts)
-
+    self.d_pts = np.polyval(path_plan.dPoly, np.arange(0, x))
+    self.c_pts = np.polyval(path_plan.cPoly, np.arange(0, x))
+    return np.sum(self.c_pts) - np.sum(self.d_pts)
 
   def update(self, active, v_ego, angle_steers, angle_rate, torque_clipped, steer_override, CP, VM, path_plan):
 
@@ -202,10 +192,8 @@ class LatControl(object):
           p_scale = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
 
-        #self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * self.get_projected_path_error(v_ego, CP, path_plan))
-        center_ff_factor = interp(abs(steer_feedforward), [0.1, 0.2], [1.0, 0.1])
-        self.dampened_center_offset = (v_ego * path_plan.cProb * self.center_factor * center_ff_factor * self.get_projected_path_error(v_ego, path_plan))
-        #print(self.dampened_center_offset)
+        center_ff_factor = interp(abs(steer_feedforward), [0.025, 0.25], [1.0, self.poly_scale])
+        self.dampened_center_offset += ((v_ego * path_plan.cProb * self.center_factor * center_ff_factor * self.get_projected_path_error(v_ego, path_plan)) - self.dampened_center_offset) / self.poly_smoothing
         if self.frame % 100 == 0:
           print('%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.d_poly) + '%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.c_poly))
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,

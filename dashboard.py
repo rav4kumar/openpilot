@@ -34,10 +34,29 @@ def dashboard_thread(rate=100):
 
   frame_count = 0
 
-  #server_address = "tcp://kevo.live"
-  server_address = "tcp://gernstation.synology.me"
-  #server_address = "tcp://192.168.137.1"
-  #server_address = "tcp://192.168.1.3"
+  try:
+    if os.path.isfile('/data/kegman.json'):
+      with open('/data/kegman.json', 'r') as f:
+        config = json.load(f)
+        user_id = config['userID']
+        #tunePush.send_json(config)
+        #tunePush = None
+    else:
+        params = Params()
+        user_id = params.get("DongleId")
+  except:
+    params = Params()
+    user_id = params.get("DongleId")
+    config['userID'] = user_id
+    #tunePush.send_json(config)
+    #tunePush = None
+
+  if user_id == 'ddd3e089e7bbe0fc':
+    server_address = "tcp://gernstation.synology.me"
+    #server_address = "tcp://192.168.137.1"
+  else:
+    #server_address = "tcp://kevo.live"
+    server_address = "tcp://gernstation.synology.me"
 
   context = zmq.Context()
   steerPush = context.socket(zmq.PUSH)
@@ -48,26 +67,11 @@ def dashboard_thread(rate=100):
   tuneSub.connect(server_address + ":8596")
   poller.register(tuneSub, zmq.POLLIN)
 
-  try:
-    if os.path.isfile('/data/kegman.json'):
-      with open('/data/kegman.json', 'r') as f:
-        config = json.load(f)
-        user_id = config['userID']
-        tunePush.send_json(config)
-        tunePush = None
-    else:
-        params = Params()
-        user_id = params.get("DongleId")
-  except:
-    params = Params()
-    user_id = params.get("DongleId")
-    config['userID'] = user_id
-    tunePush.send_json(config)
-    tunePush = None
-
+  tunePush.send_json(config)
+  tunePush = None
   tuneSub.setsockopt(zmq.SUBSCRIBE, str(user_id))
   influxFormatString = user_id + ",sources=capnp damp_center_offset=%s,angle_accel=%s,damp_angle_rate=%s,angle_rate=%s,damp_angle=%s,apply_steer=%s,noise_feedback=%s,ff_standard=%s,ff_rate=%s,ff_angle=%s,angle_steers_des=%s,angle_steers=%s,dampened_angle_steers_des=%s,steer_override=%s,v_ego=%s,p2=%s,p=%s,i=%s,f=%s %s\n"
-  kegmanFormatString = user_id + ",sources=kegman reactRate=%s,dampRate=%s,longOffset=%s,backlash=%s,dampMPC=%s,reactMPC=%s,dampSteer=%s,reactSteer=%s,KpV=%s,KiV=%s,rateFF=%s,angleFF=%s,delaySteer=%s,oscFactor=%s,centerFactor=%s %s\n"
+  kegmanFormatString = user_id + ",sources=kegman reactRate=%s,dampRate=%s,longOffset=%s,backlash=%s,dampMPC=%s,reactMPC=%s,dampSteer=%s,reactSteer=%s,KpV=%s,KiV=%s,rateFF=%s,angleFF=%s,delaySteer=%s,oscFactor=%s,centerFactor=%s,dampPoly=%s,reactPoly=%s %s\n"
   mapFormatString = "location,user=" + user_id + " latitude=%s,longitude=%s,altitude=%s,speed=%s,bearing=%s,accuracy=%s,speedLimitValid=%s,speedLimit=%s,curvatureValid=%s,curvature=%s,wayId=%s,distToTurn=%s,mapValid=%s,speedAdvisoryValid=%s,speedAdvisory=%s,speedAdvisoryValid=%s,speedAdvisory=%s,speedLimitAheadValid=%s,speedLimitAhead=%s,speedLimitAheadDistance=%s %s\n"
   canFormatString="CANData,user=" + user_id + ",src=%s,pid=%s d1=%si,d2=%si "
   liveStreamFormatString = "curvature,user=" + user_id + " l_curv=%s,p_curv=%s,r_curv=%s,map_curv=%s,map_rcurv=%s,map_rcurvx=%s,v_curv=%s,l_diverge=%s,r_diverge=%s %s\n"
@@ -218,16 +222,19 @@ def dashboard_thread(rate=100):
               steerKpV = config['Kp']
               steerKiV = config['Ki']
               rateFF = config['rateFF']
-              oscFactor = config['oscFactor']
+              oscFactor = config['oscFactor'] 
               backlash = config['backlash']
               longOffset = config['longOffset']
               dampRate = config['dampRate']
               reactRate = config['reactRate']
               centerFactor = config['centerFactor']
+              polyReact = config['reactPoly']
+              polyDamp = config['dampPoly']
+              polyScale = config['scalePoly']
 
-              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
+              kegmanDataString += ("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s|" % \
                     (reactRate, dampRate, longOffset, backlash, dampMPC, reactMPC, dampSteer, reactSteer, steerKpV, steerKiV, rateFF, dat.angleFFGain, delaySteer,
-                    oscFactor, centerFactor, receiveTime))
+                    oscFactor, centerFactor, polyReact, polyDamp, polyScale, receiveTime))
               insertString += kegmanFormatString + "~" + kegmanDataString + "!"
         except:
           kegman_valid = False

@@ -91,9 +91,10 @@ class CarInterface(object):
     ret.rateDampTime = 0.1
     ret.rateReactTime = -0.07
     ret.oscillationFactor = 0.0
-    ret.centerFactor = 0.007
-    ret.polyDampTime = 0.0
+    ret.centerFactor = 0.02
+    ret.polyDampTime = 0.05
     ret.polyReactTime = 1.0
+    ret.polyScale = 0.01
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
