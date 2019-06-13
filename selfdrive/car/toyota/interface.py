@@ -82,7 +82,7 @@ class CarInterface(object):
     ret.steerMPCDampTime = 0.175
     ret.rateFFGain = 0.4
     ret.steerActuatorDelay = 0.12
-    ret.steerBacklash = 3.0
+    ret.steerBacklash = 2.0
     ret.steerKiBP, ret.steerKpBP = [[0.], [0.]]
     ret.carCANRate = 82.87750704
     ret.longOffset = 0.0
@@ -92,9 +92,9 @@ class CarInterface(object):
     ret.rateReactTime = -0.07
     ret.oscillationFactor = 0.0
     ret.centerFactor = 0.002
-    ret.polyDampTime = 0.05
+    ret.polyDampTime = 0.2
     ret.polyReactTime = 1.0
-    ret.polyScale = 0.05
+    ret.polyScale = 0.1
 
     if candidate == CAR.PRIUS:
       stop_and_go = True
