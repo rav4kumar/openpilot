@@ -1,15 +1,33 @@
 from selfdrive.controls.lib.pid import PIController
 from selfdrive.controls.lib.drive_helpers import get_steer_max
+from selfdrive.kegman_conf import kegman_conf
+from common.numpy_fast import interp
 from cereal import car
 from cereal import log
 
 
 class LatControlPID(object):
   def __init__(self, CP):
+    kegman = kegman_conf(CP)
+    self.frame = 0
     self.pid = PIController((CP.lateralTuning.pid.kpBP, CP.lateralTuning.pid.kpV),
                             (CP.lateralTuning.pid.kiBP, CP.lateralTuning.pid.kiV),
                             k_f=CP.lateralTuning.pid.kf, pos_limit=1.0)
     self.angle_steers_des = 0.
+
+  def live_tune(self, CP):
+    self.frame += 1
+    if self.frame % 300 == 0:
+      # live tuning through /data/openpilot/tune.py overrides interface.py settings
+      kegman = kegman_conf()
+      self.steerKpV = np.array([float(kegman.conf['Kp'])])
+      self.steerKiV = np.array([float(kegman.conf['Ki'])])
+      self.steerKf = float(kegman.conf['Kf'])
+      KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
+      KiV = [interp(25.0, CP.steerKiBP, self.steerKiV)]
+      self.pid._k_i = ([0.], KiV)
+      self.pid._k_p = ([0.], KpV)
+      self.pid.k_f = self.steerKf
 
   def reset(self):
     self.pid.reset()
@@ -18,6 +36,8 @@ class LatControlPID(object):
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steerAngle = float(angle_steers)
     pid_log.steerRate = float(angle_steers_rate)
+
+    self.live_tune(CP)
 
     if v_ego < 0.3 or not active:
       output_steer = 0.0
