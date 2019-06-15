@@ -89,9 +89,11 @@ class PathPlanner(object):
 
     #cur_steer_angle = apply_deadzone(live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone)
     #print('reported angle = %0.2f  actual angle = %0.2f  desired angle = %0.2f  deadzone = %0.2f' % (cur_steer_angle, live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone))
+    self.cur_state[0].delta = math.radians(angle_steers - angle_offset_bias) / VM.sR
     delaySteer = 0.1
     longOffset = 0.0
-    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, self.angle_steers_des_mpc - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
+    self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
+    #self.cur_state = calc_states_after_delay(self.cur_state, v_ego, self.angle_steers_des_mpc - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
 
     v_ego_mpc = max(v_ego, 5.0)  # avoid mpc roughness due to low speed
     self.libmpc.run_mpc(self.cur_state, self.mpc_solution,
@@ -113,7 +115,7 @@ class PathPlanner(object):
     #delta_desired = math.radians(angle_steers - angle_offset_bias) / VM.sR
     #rate_desired = 0.0
 
-    self.cur_state[0].delta = delta_desired
+    #self.cur_state[0].delta = delta_desired
 
     self.angle_steers_des_mpc = float(math.degrees(delta_desired * VM.sR) + angle_offset_bias)
 
