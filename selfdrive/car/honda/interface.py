@@ -208,7 +208,7 @@ class CarInterface(object):
       ret.centerToFront = ret.wheelbase * 0.39
       ret.steerRatio = 15.96  # 11.82 is spec end-to-end
       tire_stiffness_factor = 0.8467
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.18]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.8], [0.24]]
       ret.longitudinalTuning.kpBP = [0., 5., 35.]
       ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
       ret.longitudinalTuning.kiBP = [0., 35.]
@@ -378,7 +378,7 @@ class CarInterface(object):
     ret.startAccel = 0.5
 
     ret.steerActuatorDelay = 0.1
-    ret.steerRateCost = 0.5
+    ret.steerRateCost = 0.1
 
     return ret
 
