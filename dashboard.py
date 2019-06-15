@@ -20,18 +20,18 @@ def dashboard_thread(rate=100):
   poller = zmq.Poller()
   ipaddress = "127.0.0.1"
   vEgo = 0.0
-  live100 = messaging.sub_sock(context, service_list['live100'].port, addr=ipaddress, conflate=False, poller=poller)
+  controlsState = messaging.sub_sock(context, service_list['controlsState'].port, addr=ipaddress, conflate=False, poller=poller)
   carState = None #messaging.sub_sock(context, service_list['carState'].port, addr=ipaddress, conflate=False, poller=poller)
   liveMap = None #messaging.sub_sock(context, service_list['liveMapData'].port, addr=ipaddress, conflate=False, poller=poller)
   liveStreamData = None #messaging.sub_sock(context, 8600, addr=ipaddress, conflate=False, poller=poller)
   osmData = None #messaging.sub_sock(context, 8601, addr=ipaddress, conflate=False, poller=poller)
   canData = None #messaging.sub_sock(context, 8602, addr=ipaddress, conflate=False, poller=poller)
   #pathPlan = messaging.sub_sock(context, service_list['pathPlan'].port, addr=ipaddress, conflate=False, poller=poller)
-  pathPlan = messaging.sub_sock(context, service_list['plan'].port, addr=ipaddress, conflate=False, poller=poller)
+  pathPlan = None #messaging.sub_sock(context, service_list['plan'].port, addr=ipaddress, conflate=False, poller=poller)
 
   #gpsNMEA = messaging.sub_sock(context, service_list['gpsNMEA'].port, addr=ipaddress, conflate=True)
 
-  #_live100 = None
+  #_controlsState = None
 
   frame_count = 0
 
@@ -143,12 +143,12 @@ def dashboard_thread(rate=100):
             #pathDataString += polyDataString % tuple(map(float, pp.pPoly))
             pathDataString +=  (pathDataFormatString % (int((monoTimeOffset + _pp.logMonoTime) * .0000002) * 5))
 
-      if socket is live100:
-        _live100 = messaging.drain_sock(socket)
-        #print("live100")
-        for l100 in _live100:
-          vEgo = l100.live100.vEgo
-          active = l100.live100.active
+      if socket is controlsState:
+        _controlsState = messaging.drain_sock(socket)
+        #print("controlsState")
+        for l100 in _controlsState:
+          vEgo = l100.controlsState.vEgo
+          active = l100.controlsState.active
           #active = True
           #vEgo = 1.
           #print(active)
@@ -157,11 +157,11 @@ def dashboard_thread(rate=100):
             monoTimeOffset = (time.time() * 1000000000) - l100.logMonoTime
             receiveTime = int((monoTimeOffset + l100.logMonoTime) * 0.0000002) * 5
           if vEgo > 0 and active:
-            dat = l100.live100
+            dat = l100.controlsState
             #print(dat)
             influxDataString += ("%0.3f,%0.2f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%d|" %
                 (dat.angleSteersDes, dat.angleSteers,  dat.steerOverride, vEgo,
-                dat.upSteer, dat.uiSteer, dat.ufSteer, receiveTime))
+                dat.lateralControlState.pidState.p, dat.lateralControlState.pidState.i, dat.lateralControlState.pidState.f, receiveTime))
             #print(dat.upFine, dat.uiFine)
             frame_count += 1
 

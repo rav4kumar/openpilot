@@ -2,6 +2,7 @@ from selfdrive.controls.lib.pid import PIController
 from selfdrive.controls.lib.drive_helpers import get_steer_max
 from selfdrive.kegman_conf import kegman_conf
 from common.numpy_fast import interp
+import numpy as np
 from cereal import car
 from cereal import log
 
@@ -20,14 +21,9 @@ class LatControlPID(object):
     if self.frame % 300 == 0:
       # live tuning through /data/openpilot/tune.py overrides interface.py settings
       kegman = kegman_conf()
-      self.steerKpV = np.array([float(kegman.conf['Kp'])])
-      self.steerKiV = np.array([float(kegman.conf['Ki'])])
-      self.steerKf = float(kegman.conf['Kf'])
-      KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
-      KiV = [interp(25.0, CP.steerKiBP, self.steerKiV)]
-      self.pid._k_i = ([0.], KiV)
-      self.pid._k_p = ([0.], KpV)
-      self.pid.k_f = self.steerKf
+      self.pid._k_i = ([0.], [float(kegman.conf['Ki'])])
+      self.pid._k_p = ([0.], [float(kegman.conf['Kp'])])
+      self.pid.k_f = (float(kegman.conf['Kf']))
 
   def reset(self):
     self.pid.reset()
@@ -62,10 +58,10 @@ class LatControlPID(object):
       output_steer = self.pid.update(self.angle_steers_des, angle_steers, check_saturation=(v_ego > 10), override=steer_override,
                                      feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)
       pid_log.active = True
-      pid_log.p = self.pid.p
-      pid_log.i = self.pid.i
-      pid_log.f = self.pid.f
-      pid_log.output = output_steer
+      pid_log.p = float(self.pid.p)
+      pid_log.i = float(self.pid.i)
+      pid_log.f = float(self.pid.f)
+      pid_log.output = float(output_steer)
       pid_log.saturated = bool(self.pid.saturated)
 
     self.sat_flag = self.pid.saturated

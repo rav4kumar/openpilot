@@ -10,13 +10,13 @@ class kegman_conf():
   def init_config(self, CP):
     write_conf = False
     if self.conf['Kp'] == "-1":
-      self.conf['Kp'] = str(round(CP.steerKpV[0],3))
+      self.conf['Kp'] = str(round(CP.lateralTuning.pid.kpV[0],3))
       write_conf = True
     if self.conf['Ki'] == "-1":
-      self.conf['Ki'] = str(round(CP.steerKiV[0],3))
+      self.conf['Ki'] = str(round(CP.lateralTuning.pid.kiV[0],3))
       write_conf = True
     if self.conf['Kf'] == "-1":
-      self.conf['Kf'] = str(round(CP.steerKf,5))
+      self.conf['Kf'] = str(round(CP.lateralTuning.pid.kf,5))
       write_conf = True
 
     if write_conf:
