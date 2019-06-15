@@ -215,7 +215,7 @@ def dashboard_thread(rate=100):
               steerKiV = config['Ki']
               steerKf = config['Kf']
 
-              kegmanDataString += ("%s,%s,%s|" % \
+              kegmanDataString += ("%s,%s,%s,%s|" % \
                     (steerKpV, steerKiV, steerKf, receiveTime))
               insertString += kegmanFormatString + "~" + kegmanDataString + "!"
         except:
