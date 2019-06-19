@@ -19,6 +19,7 @@ class LatControl(object):
     self.total_poly_projection = max(0.0, CP.polyReactTime + CP.polyDampTime)
     self.poly_smoothing = max(1.0, CP.polyDampTime * CP.carCANRate)
     self.poly_scale = CP.polyScale
+    self.cur_poly_scale = 0.0
     self.total_angle_projection = max(0.0, CP.steerReactTime + CP.steerDampTime)
     self.actual_angle_smoothing = max(1.0, CP.steerDampTime * CP.carCANRate)
     self.total_desired_projection = max(0.0, CP.steerMPCReactTime + CP.steerMPCDampTime)
@@ -56,7 +57,7 @@ class LatControl(object):
     self.d_poly = [0., 0., 0., 0.]
     self.c_poly = [0., 0., 0., 0.]
     self.c_prob = 0.0
-    self.high_feedforward = 0.05 / CP.steerKf
+    self.high_feedforward = 0.25 / CP.steerKf
 
     KpV = [interp(25.0, CP.steerKpBP, CP.steerKpV)]
     KiV = [interp(25.0, CP.steerKiBP, CP.steerKiV)]
@@ -80,13 +81,13 @@ class LatControl(object):
         self.total_poly_projection = max(0.0, float(kegman.conf['reactPoly']) + float(kegman.conf['dampPoly']))
         self.poly_smoothing = max(1.0, float(kegman.conf['dampPoly']) * CP.carCANRate)
         self.rate_ff_gain = float(kegman.conf['rateFF'])
-        self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1)
+        self.gernbySteer = (self.total_desired_projection > 0 or self.desired_smoothing > 1 or abs(float(kegman.conf['dampMPC'])) > 0)
         self.delaySteer = float(kegman.conf['delaySteer'])
         self.oscillation_factor = float(kegman.conf['oscFactor'])
         self.deadzone = -float(kegman.conf['backlash'])
         self.longOffset = float(kegman.conf['longOffset'])
         self.center_factor = float(kegman.conf['centerFactor'])
-        self.poly_scale = float(kegman.conf['scalePoly'])
+        #self.poly_scale = float(kegman.conf['scalePoly'])
         print(self.deadzone, kegman.conf['backlash'])
         # Eliminate break-points, since they aren't needed (and would cause problems for resonance)
         KpV = [interp(25.0, CP.steerKpBP, self.steerKpV)]
@@ -201,10 +202,19 @@ class LatControl(object):
           steer_feedforward = v_ego**2 * (rate_feedforward + angle_feedforward)
         else:
           p_scale = 1.0
+          self.angle_ff_ratio = 1.0
           steer_feedforward = v_ego**2 * angle_feedforward
-        print(steer_feedforward)
+        #print(steer_feedforward)
         #self.dampened_center_offset += path_plan.cProb * (self.get_projected_path_error(v_ego, path_plan) - self.dampened_center_offset) / self.poly_smoothing
-        self.path_error = v_ego * self.get_projected_path_error(v_ego, path_plan) * self.center_factor * interp(abs(steer_feedforward), [0.0, self.high_feedforward], [1.0 , self.poly_scale])
+        if len(CP.polyScale) > 0:
+          if abs(self.dampened_desired_angle) > abs(self.dampened_angle_steers):
+            self.cur_poly_scale += 0.05 * (interp(abs(self.dampened_desired_rate), CP.polyScale[0], CP.polyScale[1]) - self.cur_poly_scale)
+          else:
+            self.cur_poly_scale += 0.05 * (interp(abs(self.dampened_desired_rate), CP.polyScale[0], CP.polyScale[2]) - self.cur_poly_scale)
+        else:
+          self.cur_poly_scale = 1.0
+
+        self.path_error = v_ego * self.get_projected_path_error(v_ego, path_plan) * self.center_factor * self.cur_poly_scale  # interp(abs(steer_feedforward), [0.0, self.high_feedforward], [1.0 , self.poly_scale])
         #if self.frame % 100 == 0:
         #  print('%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.d_poly) + '%0.2f   %0.4f   %0.6f   %0.8f \n' % tuple(self.c_poly))
         output_steer = self.pid.update(self.dampened_desired_angle, self.dampened_angle_steers,

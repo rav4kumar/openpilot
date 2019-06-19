@@ -15,7 +15,9 @@ _DT_MPC = 0.05
 
 def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_ratio, delay, long_offset):
   states[0].x = v_ego * delay + long_offset
-  states[0].psi = states[0].x * curvature_factor * math.radians(steer_angle) / steer_ratio
+  states[0].delta = math.radians(steer_angle) / steer_ratio
+  states[0].psi = curvature_factor * states[0].x * states[0].delta
+
   return states
 
 def apply_deadzone(angle_steers, angle_steers_des, deadzone):
@@ -89,9 +91,6 @@ class PathPlanner(object):
 
     #cur_steer_angle = apply_deadzone(live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone)
     #print('reported angle = %0.2f  actual angle = %0.2f  desired angle = %0.2f  deadzone = %0.2f' % (cur_steer_angle, live100.live100.angleSteers, self.angle_steers_des_mpc, live100.live100.deadzone))
-    self.cur_state[0].delta = math.radians(angle_steers - angle_offset_bias) / VM.sR
-    delaySteer = 0.1
-    longOffset = 0.0
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
     #self.cur_state = calc_states_after_delay(self.cur_state, v_ego, self.angle_steers_des_mpc - angle_offset_bias, curvature_factor, VM.sR, delaySteer, longOffset)
 
