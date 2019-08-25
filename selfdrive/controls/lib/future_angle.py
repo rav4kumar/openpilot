@@ -6,9 +6,9 @@ class future_angle(object):
     self.torque_samples_outward = np.zeros(self.torque_count)
     self.torque_samples_inward = np.zeros(self.torque_count)
     self.angle_samples = np.zeros(self.torque_count)
-    self.torque_gain_outward = np.zeros(15) + 1.0
+    self.torque_gain_outward = np.zeros(15) + 10.0
     self.torque_gain_outward_count = np.zeros(15)
-    self.torque_gain_inward = np.zeros(15) + 1.0
+    self.torque_gain_inward = np.zeros(15) + 10.0
     self.torque_gain_inward_count = np.zeros(15)
 
     self.inverted = 0.

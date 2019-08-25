@@ -214,7 +214,7 @@ def dashboard_thread(rate=100):
           if lateral_type == "":
             if l100.controlsState.lateralControlState.which == "pidState":
               lateral_type = "pid"
-              influxFormatString = user_id + ",sources=capnp curvature=%s,v_curvature=%s,ff_angle=%s,damp_angle_steers_des=%s,angle_steers_des=%s,angle_steers=%s,damp_angle_steers=%s,angle_bias=%s,steer_override=%s,v_ego=%s,p2=%s,p=%s,i=%s,f=%s,lqr=%s,output=%s,eps_torque=%s,eps_rate=%s,eps_angle=%s,eps_driver=%s %s\n"
+              influxFormatString = user_id + ",sources=capnp curvature=%s,v_curvature=%s,ff_angle=%s,damp_angle_steers_des=%s,angle_steers_des=%s,angle_steers=%s,damp_angle_steers=%s,angle_bias=%s,angle_rate=%s,steer_override=%s,v_ego=%s,p2=%s,p=%s,i=%s,f=%s,lqr=%s,output=%s,eps_torque=%s,eps_rate=%s,eps_angle=%s,eps_driver=%s %s\n"
               kegmanFormatString = user_id + ",sources=kegman KpV=%s,KiV=%s,Kf=%s,dampMPC=%s,reactMPC=%s,rate_ff_gain=%s,dampTime=%s,polyFactor=%s,reactPoly=%s,dampPoly=%s %s\n"
             else:
               lateral_type = "indi"
@@ -234,8 +234,8 @@ def dashboard_thread(rate=100):
             #print(dat)
 
             if lateral_type == "pid":
-              influxDataString += ("%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.4f,%0.4f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d|" %
-                  (dat.curvature, dat.vCurvature, dat.lateralControlState.pidState.angleFFRatio, dat.dampAngleSteersDes, dat.angleSteersDes, dat.angleSteers, dat.dampAngleSteers, dat.lateralControlState.pidState.angleBias, dat.steerOverride, vEgo,
+              influxDataString += ("%0.4f,%0.4f,%0.3f,%0.3f,%0.3f,%0.3f,%0.4f,%0.4f,%0.4f,%d,%0.1f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%0.4f,%d|" %
+                  (dat.curvature, dat.vCurvature, dat.lateralControlState.pidState.angleFFRatio, dat.dampAngleSteersDes, dat.angleSteersDes, dat.angleSteers, dat.dampAngleSteers, dat.lateralControlState.pidState.angleBias, dat.lateralControlState.pidState.steerRate, dat.steerOverride, vEgo,
                   dat.lateralControlState.pidState.p2, dat.lateralControlState.pidState.p, dat.lateralControlState.pidState.i, dat.lateralControlState.pidState.f, dat.lateralControlState.pidState.lqr, dat.lateralControlState.pidState.output, eps_torque, eps_rate, eps_angle, eps_driver, receiveTime))
             else:
               s = dat.lateralControlState.indiState
