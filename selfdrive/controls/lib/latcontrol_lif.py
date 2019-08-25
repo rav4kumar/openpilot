@@ -71,7 +71,7 @@ class LatControlLIF(object):
       # live tuning through /data/openpilot/tune.py overrides interface.py settings
       kegman = kegman_conf()
       self.pid._k_i = ([0.], [float(kegman.conf['Ki'])])
-      self.pid._k_p = ([0.], [float(kegman.conf['Kp'])]) * 0.5
+      self.pid._k_p = ([0.], [float(kegman.conf['Kp']) * 0.5])
       self.pid.k_f = (float(kegman.conf['Kf']))
       self.damp_time = (float(kegman.conf['dampTime']))
       self.react_mpc = (float(kegman.conf['reactMPC']))
@@ -174,14 +174,14 @@ class LatControlLIF(object):
       #else:
       #  self.p_scale += (self.angle_ff_ratio - self.p_scale) / 10.0
 
-      output_steer = self.pid.update(self.damp_angle_steers_des, self.damp_angle_steers - self.angle_bias, check_saturation=(v_ego > 10), override=driver_opposing_i,
-                                     add_error=float(self.path_error), feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)  #, p_scale=self.p_scale)
+      output_steer = self.pid.update(self.damp_angle_steers_des + self.path_error, self.damp_angle_steers - self.angle_bias, check_saturation=(v_ego > 10), override=driver_opposing_i,
+                                     feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)  #, p_scale=self.p_scale)
 
       pid_log.active = True
       pid_log.p = float(self.pid.p)
       pid_log.i = float(self.pid.i)
       pid_log.f = float(self.pid.f)
-      pid_log.p2 = float(self.pid.p2)
+      pid_log.p2 = float(self.pid._k_p[1][0]) * self.path_error
       pid_log.output = float(output_steer)
       pid_log.saturated = bool(self.pid.saturated)
       pid_log.angleFFRatio = self.angle_ff_ratio
