@@ -100,8 +100,7 @@ class LatControlLIF(object):
 
   def adjust_angle_gain(self):
     if ((self.pid.f > 0) == (self.pid.i > 0) and (abs(self.pid.i) >= abs(self.previous_integral))):
-      #if not abs(self.pid.f + self.pid.i + self.pid.p) > 1: self.angle_ff_gain *= 1.0001
-      if (self.path_error >= 0) == (self.pid.f >= 0) and abs(self.pid.f) < 1.0: self.angle_ff_gain *= 1.0001
+      if not abs(self.pid.f + self.pid.i + self.pid.p) > 1: self.angle_ff_gain *= 1.0001
     elif self.angle_ff_gain > 1.0:
       self.angle_ff_gain *= 0.9999
     self.previous_integral = self.pid.i
@@ -132,7 +131,7 @@ class LatControlLIF(object):
     max_bias_change = max(0.0005, max_bias_change)
     self.angle_bias = float(np.clip(live_params.angleOffset - live_params.angleOffsetAverage, self.angle_bias - max_bias_change, self.angle_bias + max_bias_change))
     self.live_tune(CP)
-    advance_angle = self.future_angle.update(v_ego, angle_steers - path_plan.angleOffset, angle_steers_rate, steering_torque, steer_override or not active)
+    self.advance_angle = self.future_angle.update(v_ego, angle_steers - path_plan.angleOffset, angle_steers_rate, steering_torque, steer_override or not active)
 
     if v_ego < 0.3 or not active:
       output_steer = 0.0
@@ -187,7 +186,7 @@ class LatControlLIF(object):
       #else:
       #  self.p_scale += (self.angle_ff_ratio - self.p_scale) / 10.0
 
-      output_steer = self.pid.update(self.damp_angle_steers_des + self.path_error, self.damp_angle_steers + advance_angle - self.angle_bias, check_saturation=(v_ego > 10), override=driver_opposing_i,
+      output_steer = self.pid.update(self.damp_angle_steers_des + self.path_error, self.damp_angle_steers + self.advance_angle - self.angle_bias, check_saturation=(v_ego > 10), override=driver_opposing_i,
                                      feedforward=steer_feedforward, speed=v_ego, deadzone=deadzone)  #, p_scale=self.p_scale)
 
       pid_log.active = True

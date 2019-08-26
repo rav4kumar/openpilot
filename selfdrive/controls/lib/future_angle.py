@@ -13,6 +13,7 @@ class future_angle(object):
 
     self.inverted = 0.
     self.frame = 0
+    self.index_increment = 1
 
   def update(self, v_ego, angle_steers, rate_steers, eps_torque, steer_override):
 
@@ -23,10 +24,10 @@ class future_angle(object):
 
     if isConsistent and abs(self.inverted) >= 1.0 and (self.torque_samples_inward.sum != 0 or self.torque_samples_outward.sum != 0) and abs(angle_steers) > 1.0 and abs(rate_steers) > 1.0 and abs(eps_torque) > 1.0:
       if isOutward:
-        self.torque_gain_outward_count[v_index] += 1.0
+        self.torque_gain_outward_count[v_index] += self.index_increment
         self.torque_gain_outward[v_index] += ((abs(self.torque_samples_outward[self.frame % self.torque_count]) / abs(rate_steers)) - self.torque_gain_outward[v_index]) / min(1000,self.torque_gain_outward_count[v_index])
       else:
-        self.torque_gain_inward_count[v_index] += 1.0
+        self.torque_gain_inward_count[v_index] += self.index_increment
         self.torque_gain_inward[v_index] += ((abs(self.torque_samples_inward[self.frame % self.torque_count]) / abs(rate_steers)) - self.torque_gain_inward[v_index]) / min(1000,self.torque_gain_inward_count[v_index])
 
     elif abs(self.inverted) < 1.0 and abs(rate_steers * (self.torque_samples_inward[self.frame % self.torque_count] + self.torque_samples_outward[self.frame % self.torque_count])) > 0:
@@ -45,8 +46,10 @@ class future_angle(object):
     self.frame += 1
 
     if self.torque_gain_inward_count[v_index] >= 1000 and self.torque_gain_outward_count[v_index] >= 1000:
+      self.index_increment = 0
       advance_angle = self.torque_samples_inward.sum() / self.torque_gain_inward[v_index] + self.torque_samples_outward.sum() / self.torque_gain_outward[v_index]
     else:
+      self.index_increment = 1
       advance_angle = 0
 
-    return 0.01 * advance_angle
+    return 0.01 * advance_angle * self.inverted
