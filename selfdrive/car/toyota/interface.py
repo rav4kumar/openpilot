@@ -262,7 +262,7 @@ class CarInterface(object):
     ret.longitudinalTuning.deadzoneBP = [0., 9.]
     ret.longitudinalTuning.deadzoneV = [0., .15]
     ret.longitudinalTuning.kpBP = [0., 5., 35.]
-    ret.longitudinalTuning.kiBP = [0., 35.]
+    ret.longitudinalTuning.kiBP = [0., 55.]
     ret.stoppingControl = False
     ret.startAccel = 0.0
 
@@ -274,8 +274,8 @@ class CarInterface(object):
     else:
       ret.gasMaxBP = [0.]
       ret.gasMaxV = [0.5]
-      ret.longitudinalTuning.kpV = [3.6, 2.4, 1.5]
-      ret.longitudinalTuning.kiV = [0.54, 0.36]
+      ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]
+      ret.longitudinalTuning.kiV = [0.001, 0.0010]
 
     return ret
 

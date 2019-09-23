@@ -4,7 +4,7 @@ from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from common.filter_simple import FirstOrderFilter
 from common.stat_live import RunningStatFilter
 
-_AWARENESS_TIME = 100.  # 1.6 minutes limit without user touching steering wheels make the car enter a terminal status
+_AWARENESS_TIME = 360.  # 1.6 minutes limit without user touching steering wheels make the car enter a terminal status
 _AWARENESS_PRE_TIME_TILL_TERMINAL = 25.  # a first alert is issued 25s before expiration
 _AWARENESS_PROMPT_TIME_TILL_TERMINAL = 15.  # a second alert is issued 15s before start decelerating the car
 _DISTRACTED_TIME = 11.
@@ -155,7 +155,7 @@ class DriverStatus():
     self.pose.roll, self.pose.pitch, self.pose.yaw = head_orientation_from_descriptor(driver_monitoring.faceOrientation, driver_monitoring.facePosition, cal_rpy)
     self.blink.left_blink = driver_monitoring.leftBlinkProb * (driver_monitoring.leftEyeProb>_EYE_THRESHOLD)
     self.blink.right_blink = driver_monitoring.rightBlinkProb * (driver_monitoring.rightEyeProb>_EYE_THRESHOLD)
-    self.face_detected = driver_monitoring.faceProb > _FACE_THRESHOLD and not self.is_rhd_region
+    self.face_detected = False #driver_monitoring.faceProb > _FACE_THRESHOLD and not self.is_rhd_region
 
     self.driver_distracted = self._is_driver_distracted(self.pose, self.blink)>0
     # first order filters

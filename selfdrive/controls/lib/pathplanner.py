@@ -2,13 +2,15 @@ import os
 import math
 import numpy as np
 
-# from common.numpy_fast import clip
+from common.numpy_fast import clip
 from common.realtime import sec_since_boot
 from selfdrive.swaglog import cloudlog
 from selfdrive.controls.lib.lateral_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LAT
 from selfdrive.controls.lib.lane_planner import LanePlanner
 import selfdrive.messaging as messaging
+import os.path
+import pickle
 
 LOG_MPC = os.environ.get('LOG_MPC', False)
 
@@ -27,7 +29,13 @@ class PathPlanner(object):
 
     self.setup_mpc(CP.steerRateCost)
     self.solution_invalid_cnt = 0
-    self.path_offset_i = 0.0
+    self.frame = 0
+    if os.path.exists('/data/curvature.p'):
+        self.curvature_offset_i = pickle.load( open( "/data/curvature.p", "rb" ) )
+    else:
+        self.curvature_offset_i = 0.0
+    #self.path_offset_i = 0.0
+
 
   def setup_mpc(self, steer_rate_cost):
     self.libmpc = libmpc_py.libmpc
@@ -57,7 +65,8 @@ class PathPlanner(object):
     # Run MPC
     self.angle_steers_des_prev = self.angle_steers_des_mpc
     VM.update_params(sm['liveParameters'].stiffnessFactor, sm['liveParameters'].steerRatio)
-    curvature_factor = VM.curvature_factor(v_ego)
+    #curvature_factor = VM.curvature_factor(v_ego)
+    curvature_factor = VM.curvature_factor(v_ego) + self.curvature_offset_i
 
     # TODO: Check for active, override, and saturation
     # if active:
@@ -66,6 +75,17 @@ class PathPlanner(object):
     #   self.LP.d_poly[3] += self.path_offset_i
     # else:
     #   self.path_offset_i = 0.0
+    if active and angle_steers - angle_offset > 0.5:
+      self.curvature_offset_i -= self.LP.d_poly[3] / 12000
+      #self.LP.d_poly[3] += self.curvature_offset_i
+    elif active and angle_steers - angle_offset < -0.5:
+      self.curvature_offset_i += self.LP.d_poly[3] / 12000
+
+    self.curvature_offset_i = clip(self.curvature_offset_i, -0.3, 0.3)
+    self.frame += 1
+    if self.frame == 30000: #every 5 mins
+      pickle.dump(self.curvature_offset_i, open("/data/curvature.p", "wb"))
+      self.frame = 0
 
     # account for actuation delay
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers - angle_offset, curvature_factor, VM.sR, CP.steerActuatorDelay)
