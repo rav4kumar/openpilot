@@ -9,7 +9,7 @@ mkdir gen/js
 echo "Installing needed npm modules"
 npm i capnpc-ts capnp-ts
 
-capnpc -o node_modules/.bin/capnpc-ts:gen/ts log.capnp car.capnp
+capnpc -o node_modules/.bin/capnpc-ts:gen/ts log.capnp car.capnp arne182.capnp
 capnpc -o node_modules/.bin/capnpc-ts:gen/ts car.capnp
 
 cat log.capnp | egrep '\([a-zA-Z]*\.[^\s]+\.[^s]+\)' | sed 's/^.*([a-zA-Z]*\.\([a-zA-Z.]*\)).*/\1/' | while read line

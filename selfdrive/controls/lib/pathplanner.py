@@ -1,16 +1,15 @@
-import os
 import math
-import numpy as np
-
-# from common.numpy_fast import clip
+from cereal import arne182
 from common.realtime import sec_since_boot
+from selfdrive.services import service_list
 from selfdrive.swaglog import cloudlog
 from selfdrive.controls.lib.lateral_mpc import libmpc_py
 from selfdrive.controls.lib.drive_helpers import MPC_COST_LAT
 from selfdrive.controls.lib.lane_planner import LanePlanner
 import selfdrive.messaging as messaging
+from common.travis_checker import travis
+#from selfdrive.controls.lib.curvature_learner import CurvatureLearner
 
-LOG_MPC = os.environ.get('LOG_MPC', False)
 
 
 def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_ratio, delay):
@@ -19,15 +18,18 @@ def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_
   return states
 
 
-class PathPlanner(object):
+class PathPlanner():
   def __init__(self, CP):
     self.LP = LanePlanner()
 
     self.last_cloudlog_t = 0
-
+    if not travis:
+      self.latControl_sock = messaging.pub_sock(service_list['latControl'].port)
     self.setup_mpc(CP.steerRateCost)
     self.solution_invalid_cnt = 0
     self.path_offset_i = 0.0
+    #self.frame = 0
+    #self.curvature_offset = CurvatureLearner(debug=False)
 
   def setup_mpc(self, steer_rate_cost):
     self.libmpc = libmpc_py.libmpc
@@ -66,6 +68,12 @@ class PathPlanner(object):
     #   self.LP.d_poly[3] += self.path_offset_i
     # else:
     #   self.path_offset_i = 0.0
+    
+    #if active:
+    #  curvfac = self.curvature_offset.update(angle_steers - angle_offset, self.LP.d_poly, v_ego)
+    #else:
+    #  curvfac = 0.
+    #curvature_factor = VM.curvature_factor(v_ego) + curvfac
 
     # account for actuation delay
     self.cur_state = calc_states_after_delay(self.cur_state, v_ego, angle_steers - angle_offset, curvature_factor, VM.sR, CP.steerActuatorDelay)
@@ -88,7 +96,7 @@ class PathPlanner(object):
     self.angle_steers_des_mpc = float(math.degrees(delta_desired * VM.sR) + angle_offset)
 
     #  Check for infeasable MPC solution
-    mpc_nans = np.any(np.isnan(list(self.mpc_solution[0].delta)))
+    mpc_nans = any(math.isnan(x) for x in self.mpc_solution[0].delta)
     t = sec_since_boot()
     if mpc_nans:
       self.libmpc.init(MPC_COST_LAT.PATH, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, CP.steerRateCost)
@@ -124,12 +132,16 @@ class PathPlanner(object):
 
     pm.send('pathPlan', plan_send)
 
-    if LOG_MPC:
-      dat = messaging.new_message()
-      dat.init('liveMpc')
-      dat.liveMpc.x = list(self.mpc_solution[0].x)
-      dat.liveMpc.y = list(self.mpc_solution[0].y)
-      dat.liveMpc.psi = list(self.mpc_solution[0].psi)
-      dat.liveMpc.delta = list(self.mpc_solution[0].delta)
-      dat.liveMpc.cost = self.mpc_solution[0].cost
-      pm.send('liveMpc', dat)
+    dat = messaging.new_message()
+    dat.init('liveMpc')
+    dat.liveMpc.x = list(self.mpc_solution[0].x)
+    dat.liveMpc.y = list(self.mpc_solution[0].y)
+    dat.liveMpc.psi = list(self.mpc_solution[0].psi)
+    dat.liveMpc.delta = list(self.mpc_solution[0].delta)
+    dat.liveMpc.cost = self.mpc_solution[0].cost
+    pm.send('liveMpc', dat)
+    
+    msg = arne182.LatControl.new_message()
+    msg.anglelater = math.degrees(list(self.mpc_solution[0].delta)[-1])
+    if not travis:
+      self.latControl_sock.send(msg.to_bytes())

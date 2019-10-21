@@ -30,8 +30,13 @@ def circle_through_points(p1, p2, p3):
   B = (x1**2 + y1**2) * (y3 - y2) + (x2**2 + y2**2) * (y1 - y3) + (x3**2 + y3**2) * (y2 - y1)
   C = (x1**2 + y1**2) * (x2 - x3) + (x2**2 + y2**2) * (x3 - x1) + (x3**2 + y3**2) * (x1 - x2)
   D = (x1**2 + y1**2) * (x3 * y2 - x2 * y3) + (x2**2 + y2**2) * (x1 * y3 - x3 * y1) + (x3**2 + y3**2) * (x2 * y1 - x1 * y2)
-
-  return (-B / (2 * A), - C / (2 * A), np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
+  try:
+    if abs((y3-y1)*x2-(x3-x1)*y2+x3*y1-y3*x1)/np.sqrt((y3-y1)**2+(x3-x1)**2) > 0.1:
+      return (-B / (2 * A), - C / (2 * A), np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
+    else:
+      return (-B / (2 * A), - C / (2 * A), 10000)
+  except RuntimeWarning:
+    return x2, y2, 10000
 
 def parse_speed_unit(max_speed):
   """Converts a maxspeed string to m/s based on the unit present in the input.
@@ -179,7 +184,7 @@ class Way:
     best_score = None
     for way in ways:
       way = Way(way, query_results)
-      points = way.points_in_car_frame(lat, lon, heading)
+      points = way.points_in_car_frame(lat, lon, heading, True)
 
       on_way = way.on_way(lat, lon, heading, points)
       if not on_way:
@@ -223,7 +228,10 @@ class Way:
       if closest_way is None or score < best_score:
         closest_way = way
         best_score = score
-
+        
+    if best_score is None:
+      return None
+    
     # Normal score is < 5
     if best_score > 50:
       return None
@@ -271,7 +279,7 @@ class Way:
     lookahead_ways = 5
     way = self
     for i in range(lookahead_ways):
-      way_pts = way.points_in_car_frame(lat, lon, heading)
+      way_pts = way.points_in_car_frame(lat, lon, heading, True)
       #print way_pts
       # Check current lookahead distance
       if way_pts[0,0] < 0 and way_pts[-1,0] < 0:
@@ -324,7 +332,7 @@ class Way:
         if 'maxspeed:backward' in way.way.tags:
           spd = way.way.tags['maxspeed:backward']
           spd = parse_speed_unit(spd)
-          if spd < current_speed_limit:
+          if spd is not None and spd < current_speed_limit:
             speed_ahead = spd
             min_dist = min(np.linalg.norm(way_pts[1, :]),np.linalg.norm(way_pts[0, :]),np.linalg.norm(way_pts[-1, :]))
             speed_ahead_dist = min_dist
@@ -333,7 +341,7 @@ class Way:
         if 'maxspeed:forward' in way.way.tags:
           spd = way.way.tags['maxspeed:forward']
           spd = parse_speed_unit(spd)
-          if spd < current_speed_limit:
+          if spd is not None and spd < current_speed_limit:
             speed_ahead = spd
             min_dist = min(np.linalg.norm(way_pts[1, :]),np.linalg.norm(way_pts[0, :]),np.linalg.norm(way_pts[-1, :]))
             speed_ahead_dist = min_dist
@@ -347,7 +355,7 @@ class Way:
           spd = geocode_maxspeed(way.way.tags, location_info)
           #print "spd is actually"
           #print spd
-        if spd < current_speed_limit:
+        if spd is not None and spd < current_speed_limit:
           speed_ahead = spd
           min_dist = min(np.linalg.norm(way_pts[1, :]),np.linalg.norm(way_pts[0, :]),np.linalg.norm(way_pts[-1, :]))
           speed_ahead_dist = min_dist
@@ -355,6 +363,9 @@ class Way:
           #print min_dist
           
           break
+      way_pts = way.points_in_car_frame(lat, lon, heading, False)
+      #print(way_pts)
+
       try:
         if backwards:
           if way.way.nodes[0].tags['highway']=='mini_roundabout':
@@ -386,45 +397,89 @@ class Way:
         count = 0
         loop_must_break = False
         for n in way.way.nodes:
-          if 'highway' in n.tags and (n.tags['highway']=='stop' or n.tags['highway']=='give_way') and way_pts[count,0] > 0:
-            if backwards and (n.tags['direction']=='backward'  or n.tags['direction']=='both'):
-              print "backward"
-              if way_pts[count, 0] > 0:
-                speed_ahead_dist = way_pts[count, 0]
-                print speed_ahead_dist
-                speed_ahead = 5/3.6
-                if n.tags['highway']=='stop':
-                  speed_ahead = 0
-                loop_must_break = True
-                break
-            elif not backwards and (n.tags['direction']=='forward' or n.tags['direction']=='both'):
-              print "forward"
-              if way_pts[count, 0] > 0:
-                speed_ahead_dist = way_pts[count, 0]
-                print speed_ahead_dist
-                speed_ahead = 5/3.6
-                if n.tags['highway']=='stop':
-                  speed_ahead = 0
-                loop_must_break = True
-                break
-            try:
-              if int(n.tags['direction']) > -0.1 and int(n.tags['direction']) < 360.1:
-                print int(n.tags['direction'])
-                direction = int(n.tags['direction']) - heading
-                if direction < -180:
-                  direction = direction + 360
-                if direction > 180:
-                  direction = direction - 360
-                if abs(direction) > 135:
+          if 'highway' in n.tags and (n.tags['highway']=='stop' or n.tags['highway']=='give_way' or n.tags['highway']=='traffic_signals') and way_pts[count,0] > 0:
+            if 'direction' in n.tags:
+              if backwards and (n.tags['direction']=='backward' or n.tags['direction']=='both'):
+                print("backward")
+                if way_pts[count, 0] > 0:
                   speed_ahead_dist = way_pts[count, 0]
-                  print speed_ahead_dist
+                  print(speed_ahead_dist)
                   speed_ahead = 5/3.6
                   if n.tags['highway']=='stop':
                     speed_ahead = 0
                   loop_must_break = True
                   break
-            except (KeyError, ValueError):
-              pass
+              elif not backwards and (n.tags['direction']=='forward' or n.tags['direction']=='both'):
+                print("forward")
+                if way_pts[count, 0] > 0:
+                  speed_ahead_dist = way_pts[count, 0]
+                  print(speed_ahead_dist)
+                  speed_ahead = 5/3.6
+                  if n.tags['highway']=='stop':
+                    speed_ahead = 0
+                  loop_must_break = True
+                  break
+              try:
+                if int(n.tags['direction']) > -0.1 and int(n.tags['direction']) < 360.1:
+                  print(int(n.tags['direction']))
+                  direction = int(n.tags['direction']) - heading
+                  if direction < -180:
+                    direction = direction + 360
+                  if direction > 180:
+                    direction = direction - 360
+                  if abs(direction) > 135:
+                    speed_ahead_dist = way_pts[count, 0]
+                    print(speed_ahead_dist)
+                    speed_ahead = 5/3.6
+                    if n.tags['highway']=='stop':
+                      speed_ahead = 0
+                    loop_must_break = True
+                    break
+              except (KeyError, ValueError):
+                pass
+            elif 'traffic_signals:direction' in n.tags:
+              if backwards and (n.tags['traffic_signals:direction']=='backward' or n.tags['traffic_signals:direction']=='both'):
+                print("backward")
+                if way_pts[count, 0] > 0:
+                  speed_ahead_dist = way_pts[count, 0]
+                  print(speed_ahead_dist)
+                  speed_ahead = 5/3.6
+                  if n.tags['highway']=='traffic_signals':
+                    speed_ahead = 0
+                  loop_must_break = True
+                  break
+              elif not backwards and (n.tags['traffic_signals:direction']=='forward' or n.tags['traffic_signals:direction']=='both'):
+                print("forward")
+                if way_pts[count, 0] > 0:
+                  speed_ahead_dist = way_pts[count, 0]
+                  print(speed_ahead_dist)
+                  speed_ahead = 5/3.6
+                  if n.tags['highway']=='traffic_signals':
+                    speed_ahead = 0
+                  loop_must_break = True
+                  break
+              try:
+                if int(n.tags['traffic_signals:direction']) > -0.1 and int(n.tags['traffic_signals:direction']) < 360.1:
+                  print(int(n.tags['traffic_signals:direction']))
+                  direction = int(n.tags['traffic_signals:direction']) - heading
+                  if direction < -180:
+                    direction = direction + 360
+                  if direction > 180:
+                    direction = direction - 360
+                  if abs(direction) > 135:
+                    speed_ahead_dist = way_pts[count, 0]
+                    print(speed_ahead_dist)
+                    speed_ahead = 5/3.6
+                    if n.tags['highway']=='traffic_signals':
+                      speed_ahead = 0
+                    loop_must_break = True
+                    break
+              except (KeyError, ValueError):
+                pass
+          if 'railway' in n.tags and n.tags['railway']=='level_crossing':
+            speed_ahead = 0
+            speed_ahead_dist = way_pts[count, 0]
+            loop_must_break = True
           count += 1
         if loop_must_break: break
       except (KeyError, IndexError, ValueError):
@@ -451,22 +506,22 @@ class Way:
 
   def on_way(self, lat, lon, heading, points=None):
     if points is None:
-      points = self.points_in_car_frame(lat, lon, heading)
+      points = self.points_in_car_frame(lat, lon, heading, True)
     x = points[:, 0]
     return np.min(x) < 0. and np.max(x) > 0.
 
   def closest_point(self, lat, lon, heading, points=None):
     if points is None:
-      points = self.points_in_car_frame(lat, lon, heading)
+      points = self.points_in_car_frame(lat, lon, heading, True)
     i = np.argmin(np.linalg.norm(points, axis=1))
     return points[i]
 
   def distance_to_closest_node(self, lat, lon, heading, points=None):
     if points is None:
-      points = self.points_in_car_frame(lat, lon, heading)
+      points = self.points_in_car_frame(lat, lon, heading, True)
     return np.min(np.linalg.norm(points, axis=1))
 
-  def points_in_car_frame(self, lat, lon, heading):
+  def points_in_car_frame(self, lat, lon, heading, flip):
     lc = LocalCoord.from_geodetic([lat, lon, 0.])
 
     # Build rotation matrix
@@ -480,7 +535,7 @@ class Way:
     # Rotate with heading of car
     points_carframe = np.dot(rot, points_carframe[(1, 0, 2), :]).T
     
-    if points_carframe[-1,0] < points_carframe[0,0]:
+    if points_carframe[-1,0] < points_carframe[0,0] and flip:
       points_carframe = np.flipud(points_carframe)
       
     return points_carframe
@@ -599,7 +654,7 @@ class Way:
     
     for i in range(5):
       # Get new points and append to list
-      new_pnts = way.points_in_car_frame(lat, lon, heading)
+      new_pnts = way.points_in_car_frame(lat, lon, heading, True)
 
       try:
         if way.way.tags['junction']=='roundabout' or way.way.tags['junction']=='circular':

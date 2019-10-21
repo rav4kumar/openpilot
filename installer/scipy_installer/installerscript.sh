@@ -15,9 +15,14 @@ fi
 # Download signing key from https://its-pointless.github.io/pointless.gpg 
 wget https://its-pointless.github.io/pointless.gpg
 apt-key add pointless.gpg
+rm -f pointless.gpg
 # Update apt
 apt update
 apt install python-dev
 python3 -m pip install overpy
 python3 -m pip install requests
 python3 -m pip install pyzmq
+python3 -m pip install pycapnp
+python3 -m pip install cffi
+mkdir /system/comma/usr/lib/python3.7/site-packages/pyximport
+cp -r /system/comma/usr/lib/python2.7/site-packages/pyximport/. /system/comma/usr/lib/python3.7/site-packages/pyximport

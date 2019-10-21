@@ -25,7 +25,7 @@ ifeq ($(CEREAL_LIBS),)
 endif
 endif
 
-CEREAL_OBJS = ../../cereal/gen/c/log.capnp.o ../../cereal/gen/c/car.capnp.o
+CEREAL_OBJS = ../../cereal/gen/c/log.capnp.o ../../cereal/gen/c/car.capnp.o ../../cereal/gen/c/arne182.capnp.o
 
 log.capnp.o: ../../cereal/gen/cpp/log.capnp.c++
 	@echo "[ CXX ] $@"
@@ -33,6 +33,11 @@ log.capnp.o: ../../cereal/gen/cpp/log.capnp.c++
            -c -o '$@' '$<'
 
 car.capnp.o: ../../cereal/gen/cpp/car.capnp.c++
+	@echo "[ CXX ] $@"
+	$(CXX) $(CXXFLAGS) $(CEREAL_CXXFLAGS) \
+           -c -o '$@' '$<'
+
+arne182.capnp.o: ../../cereal/gen/cpp/arne182.capnp.c++
 	@echo "[ CXX ] $@"
 	$(CXX) $(CXXFLAGS) $(CEREAL_CXXFLAGS) \
            -c -o '$@' '$<'

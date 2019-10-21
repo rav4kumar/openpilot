@@ -1,7 +1,10 @@
 from common.numpy_fast import interp
 import numpy as np
+from selfdrive.op_params import opParams
+op_params = opParams()
 
-CAMERA_OFFSET = 0.06  # m from center car to camera
+CAMERA_OFFSET = float(op_params.get('cameraOffset', 0.06)) # m
+
 
 def compute_path_pinv(l=50):
   deg = 3
@@ -32,16 +35,16 @@ def calc_d_poly(l_poly, r_poly, p_poly, l_prob, r_prob, lane_width):
   return lr_prob * d_poly_lane + (1.0 - lr_prob) * p_poly
 
 
-class LanePlanner(object):
+class LanePlanner():
   def __init__(self):
     self.l_poly = [0., 0., 0., 0.]
     self.r_poly = [0., 0., 0., 0.]
     self.p_poly = [0., 0., 0., 0.]
     self.d_poly = [0., 0., 0., 0.]
 
-    self.lane_width_estimate = 3.7
+    self.lane_width_estimate = 2.85
     self.lane_width_certainty = 1.0
-    self.lane_width = 3.7
+    self.lane_width = 2.85
 
     self.l_prob = 0.
     self.r_prob = 0.
@@ -70,7 +73,7 @@ class LanePlanner(object):
     self.lane_width_certainty += 0.05 * (self.l_prob * self.r_prob - self.lane_width_certainty)
     current_lane_width = abs(self.l_poly[3] - self.r_poly[3])
     self.lane_width_estimate += 0.005 * (current_lane_width - self.lane_width_estimate)
-    speed_lane_width = interp(v_ego, [0., 31.], [2.8, 3.5])
+    speed_lane_width = interp(v_ego, [0., 14., 20.], [2.5, 3., 3.5]) # German Standards
     self.lane_width = self.lane_width_certainty * self.lane_width_estimate + \
                       (1 - self.lane_width_certainty) * speed_lane_width
 

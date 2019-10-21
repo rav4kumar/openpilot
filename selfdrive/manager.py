@@ -1,10 +1,12 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 import os
 import sys
 import fcntl
 import errno
 import signal
 import subprocess
+import datetime
+from common.spinner import Spinner
 
 from common.basedir import BASEDIR
 sys.path.append(os.path.join(BASEDIR, "pyextra"))
@@ -34,56 +36,29 @@ def unblock_stdout():
         break
 
       try:
-        sys.stdout.write(dat)
+        sys.stdout.write(dat.decode('utf8'))
       except (OSError, IOError):
         pass
 
     os._exit(os.wait()[1])
 
 if __name__ == "__main__":
-  is_neos = os.path.isfile("/init.qcom.rc")
-  neos_update_required = False
-
-  if is_neos:
-    version = int(open("/VERSION").read()) if os.path.isfile("/VERSION") else 0
-    revision = int(open("/REVISION").read()) if version >= 10 else 0 # Revision only present in NEOS 10 and up
-    neos_update_required = version < 10 or (version == 10 and revision < 4)
-
-  if neos_update_required:
-    # update continue.sh before updating NEOS
-    if os.path.isfile(os.path.join(BASEDIR, "scripts", "continue.sh")):
-      from shutil import copyfile
-      copyfile(os.path.join(BASEDIR, "scripts", "continue.sh"), "/data/data/com.termux/files/continue.sh")
-
-    # run the updater
-    print("Starting NEOS updater")
-    subprocess.check_call(["git", "clean", "-xdf"], cwd=BASEDIR)
-    updater_dir = os.path.join(BASEDIR, "installer", "updater")
-    manifest_path = os.path.realpath(os.path.join(updater_dir, "update.json"))
-    os.system(os.path.join(updater_dir, "updater") + " file://" + manifest_path)
-    raise Exception("NEOS outdated")
-  elif os.path.isdir("/data/neoupdate"):
-    from shutil import rmtree
-    rmtree("/data/neoupdate")
-
   unblock_stdout()
 
 if not (os.system("python3 -m pip list | grep 'scipy' ") == 0):
+  os.system("cd /data/openpilot/installer/scipy_installer/ && ./scipy_installer")
+if not (os.system("python3 -m pip list | grep 'cffi' ") == 0):
   os.system("cd /data/openpilot/installer/scipy_installer/ && ./scipy_installer")
 
 import glob
 import shutil
 import hashlib
 import importlib
-import re
-import stat
-import subprocess
 import traceback
 from multiprocessing import Process
 
 from setproctitle import setproctitle  #pylint: disable=no-name-in-module
 
-from common.file_helpers import atomic_write_in_dir_neos
 from common.params import Params
 import cereal
 ThermalStatus = cereal.log.ThermalData.ThermalStatus
@@ -120,7 +95,7 @@ managed_processes = {
   "sensord": ("selfdrive/sensord", ["./start_sensord.py"]),
   "gpsd": ("selfdrive/sensord", ["./start_gpsd.py"]),
   "updated": "selfdrive.updated",
-  "mapd": ("selfdrive.mapd", ["./start.py"]),
+  "mapd": ("selfdrive/mapd", ["./mapd.py"]),
 }
 daemon_processes = {
   "athenad": "selfdrive.athena.athenad",
@@ -138,7 +113,7 @@ unkillable_processes = ['visiond']
 interrupt_processes = []
 
 # processes to end with SIGKILL instead of SIGTERM
-kill_processes = ['sensord']
+kill_processes = ['sensord', 'paramsd']
 
 persistent_processes = [
   'thermald',
@@ -257,9 +232,10 @@ def prepare_managed_process(p):
       subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
     except subprocess.CalledProcessError:
       # make clean if the build failed
-      cloudlog.warning("building %s failed, make clean" % (proc, ))
-      subprocess.check_call(["make", "clean"], cwd=os.path.join(BASEDIR, proc[0]))
-      subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
+      if proc[0] != 'selfdrive/mapd':
+        cloudlog.warning("building %s failed, make clean" % (proc, ))
+        subprocess.check_call(["make", "clean"], cwd=os.path.join(BASEDIR, proc[0]))
+        subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, proc[0]))
 
 def kill_managed_process(name):
   if name not in running or name not in managed_processes:
@@ -410,7 +386,7 @@ def manager_thread():
       break
 
 def get_installed_apks():
-  dat = subprocess.check_output(["pm", "list", "packages", "-f"]).strip().split("\n")
+  dat = subprocess.check_output(["pm", "list", "packages", "-f"], encoding='utf8').strip().split("\n")  # pylint: disable=unexpected-keyword-arg
   ret = {}
   for x in dat:
     if x.startswith("package:"):
@@ -445,10 +421,10 @@ def update_apks():
     if not os.path.exists(apk_path):
       continue
 
-    h1 = hashlib.sha1(open(apk_path).read()).hexdigest()
+    h1 = hashlib.sha1(open(apk_path, 'rb').read()).hexdigest()
     h2 = None
     if installed[app] is not None:
-      h2 = hashlib.sha1(open(installed[app]).read()).hexdigest()
+      h2 = hashlib.sha1(open(installed[app], 'rb').read()).hexdigest()
       cloudlog.info("comparing version of %s  %s vs %s" % (app, h1, h2))
 
     if h2 is None or h1 != h2:
@@ -462,46 +438,7 @@ def update_apks():
 
       assert success
 
-def update_ssh():
-  ssh_home_dirpath = "/system/comma/home/.ssh/"
-  auth_keys_path = os.path.join(ssh_home_dirpath, "authorized_keys")
-  auth_keys_persist_path = os.path.join(ssh_home_dirpath, "authorized_keys.persist")
-  auth_keys_mode = stat.S_IREAD | stat.S_IWRITE
-
-  params = Params()
-  github_keys = params.get("GithubSshKeys") or ''
-
-  old_keys = open(auth_keys_path).read()
-  has_persisted_keys = os.path.exists(auth_keys_persist_path)
-  if has_persisted_keys:
-    persisted_keys = open(auth_keys_persist_path).read()
-  else:
-    # add host filter
-    persisted_keys = re.sub(r'^(?!.+?from.+? )(ssh|ecdsa)', 'from="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" \\1', old_keys, flags=re.MULTILINE)
-
-  new_keys = persisted_keys + '\n' + github_keys
-
-  if has_persisted_keys and new_keys == old_keys and os.stat(auth_keys_path)[stat.ST_MODE] == auth_keys_mode:
-    # nothing to do - let's avoid remount
-    return
-
-  try:
-    subprocess.check_call(["mount", "-o", "rw,remount", "/system"])
-    if not has_persisted_keys:
-      atomic_write_in_dir_neos(auth_keys_persist_path, persisted_keys, mode=auth_keys_mode)
-
-    atomic_write_in_dir_neos(auth_keys_path, new_keys, mode=auth_keys_mode)
-  finally:
-    try:
-      subprocess.check_call(["mount", "-o", "ro,remount", "/system"])
-    except:
-      cloudlog.exception("Failed to remount as read-only")
-      # this can fail due to "Device busy" - reboot if so
-      os.system("reboot")
-      raise RuntimeError
-
 def manager_update():
-  update_ssh()
   update_apks()
 
   uninstall = [app for app in get_installed_apks().keys() if app in ("com.spotify.music", "com.waze")]
@@ -509,13 +446,16 @@ def manager_update():
     cloudlog.info("uninstalling %s" % app)
     os.system("pm uninstall % s" % app)
 
-def manager_prepare():
+def manager_prepare(spinner=None):
   # build cereal first
   subprocess.check_call(["make", "-j4"], cwd=os.path.join(BASEDIR, "cereal"))
 
   # build all processes
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
-  for p in managed_processes:
+
+  for i, p in enumerate(managed_processes):
+    if spinner is not None:
+      spinner.update("%d" % (100.0 * (i + 1) / len(managed_processes),))
     prepare_managed_process(p)
 
 def uninstall():
@@ -562,12 +502,16 @@ def main():
   params.manager_start()
 
   # set unset params
+  if params.get("CompletedTrainingVersion") is None:
+    params.put("CompletedTrainingVersion", "0")
   if params.get("IsMetric") is None:
     params.put("IsMetric", "0")
   if params.get("RecordFront") is None:
     params.put("RecordFront", "0")
   if params.get("HasAcceptedTerms") is None:
     params.put("HasAcceptedTerms", "0")
+  if params.get("HasCompletedSetup") is None:
+    params.put("HasCompletedSetup", "0")
   if params.get("IsUploadRawEnabled") is None:
     params.put("IsUploadRawEnabled", "1")
   if params.get("IsUploadVideoOverCellularEnabled") is None:
@@ -582,6 +526,11 @@ def main():
     params.put("LimitSetSpeed", "0")
   if params.get("LimitSetSpeedNeural") is None:
     params.put("LimitSetSpeedNeural", "0")
+  if params.get("LastUpdateTime") is None:
+    t = datetime.datetime.now().isoformat()
+    params.put("LastUpdateTime", t.encode('utf8'))
+  if params.get("OpenpilotEnabledToggle") is None:
+    params.put("OpenpilotEnabledToggle", "1")
 
   # is this chffrplus?
   if os.getenv("PASSIVE") is not None:
@@ -590,21 +539,11 @@ def main():
   if params.get("Passive") is None:
     raise Exception("Passive must be set to continue")
 
-  # put something on screen while we set things up
-  if os.getenv("PREPAREONLY") is not None:
-    spinner_proc = None
-  else:
-    spinner_text = "chffrplus" if params.get("Passive")=="1" else "openpilot"
-    spinner_proc = subprocess.Popen(["./spinner", "loading %s"%spinner_text],
-      cwd=os.path.join(BASEDIR, "selfdrive", "ui", "spinner"),
-      close_fds=True)
-  try:
-    manager_update()
-    manager_init()
-    manager_prepare()
-  finally:
-    if spinner_proc:
-      spinner_proc.terminate()
+  with Spinner() as spinner:
+      spinner.update("0") # Show progress bar
+      manager_update()
+      manager_init()
+      manager_prepare(spinner)
 
   if os.getenv("PREPAREONLY") is not None:
     return

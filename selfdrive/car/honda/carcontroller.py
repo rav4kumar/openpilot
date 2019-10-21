@@ -73,7 +73,7 @@ HUDData = namedtuple("HUDData",
                       "lanes", "fcw", "acc_alert", "steer_required"])
 
 
-class CarController(object):
+class CarController():
   def __init__(self, dbc_name):
     self.braking = False
     self.brake_steady = 0.
@@ -134,7 +134,13 @@ class CarController(object):
     apply_gas = clip(actuators.gas, 0., 1.)
     apply_brake = int(clip(self.brake_last * BRAKE_MAX, 0, BRAKE_MAX - 1))
     apply_steer = int(clip(-actuators.steer * STEER_MAX, -STEER_MAX, STEER_MAX))
-
+    
+    if not CS.CP.enableGasInterceptor and CS.pedal_gas > 0:
+      apply_brake = 0.0
+    elif CS.user_gas_pressed:
+      apply_brake = 0.0
+    if CS.brake_pressed != 0:
+      apply_gas = 0.0
     lkas_active = enabled and not CS.steer_not_allowed
 
     # Send CAN commands.

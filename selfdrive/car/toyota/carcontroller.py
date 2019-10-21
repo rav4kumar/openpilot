@@ -13,7 +13,7 @@ VisualAlert = car.CarControl.HUDControl.VisualAlert
 
 # Accel limits
 ACCEL_HYST_GAP = 0.02  # don't change accel command for small oscilalitons within this value
-ACCEL_MAX = 1.5  # 1.5 m/s2
+ACCEL_MAX = 3.0  # 3   m/s2
 ACCEL_MIN = -3.0 # 3   m/s2
 ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
 
@@ -21,8 +21,8 @@ ACCEL_SCALE = max(ACCEL_MAX, -ACCEL_MIN)
 class SteerLimitParams:
   STEER_MAX = 1500
   STEER_DELTA_UP = 10       # 1.5s time to peak torque
-  STEER_DELTA_DOWN = 25     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
-  STEER_ERROR_MAX = 350     # max delta between torque cmd and torque motor
+  STEER_DELTA_DOWN = 44     # always lower than 45 otherwise the Rav4 faults (Prius seems ok with 50)
+  STEER_ERROR_MAX = 250     # max delta between torque cmd and torque motor
 
 # Steer angle limits (tested at the Crows Landing track and considered ok)
 ANGLE_MAX_BP = [0., 5.]
@@ -89,7 +89,7 @@ def ipas_state_transition(steer_angle_enabled, enabled, ipas_active, ipas_reset_
     return False, 0
 
 
-class CarController(object):
+class CarController():
   def __init__(self, dbc_name, car_fingerprint, enable_camera, enable_dsu, enable_apg):
     self.braking = False
     # redundant safety check with the board
@@ -133,23 +133,56 @@ class CarController(object):
 
     apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled)
     apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
-
+    
+    if CS.CP.enableGasInterceptor:
+      if CS.pedal_gas > 15.0:
+        apply_accel = max(apply_accel, 0.06)
+      if CS.brake_pressed:
+        apply_gas = 0.0
+        apply_accel = min(apply_accel, 0.00)
+    else:
+      if CS.pedal_gas > 0.0:
+        apply_accel = max(apply_accel, 0.0)
+      if CS.brake_pressed and CS.v_ego > 1:
+        apply_accel = min(apply_accel, 0.0)
+      
     # steer torque
     apply_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
-
-    apply_steer = apply_toyota_steer_torque_limits(apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
-
+    
     # only cut torque when steer state is a known fault
-    if CS.steer_state in [9, 25]:
+    if CS.steer_state in [9, 25] and self.last_steer > 0:
       self.last_fault_frame = frame
 
-    # Cut steering for 2s after fault
-    if not enabled or (frame - self.last_fault_frame < 200):
+    # Cut steering for 1s after fault
+    if not enabled or (frame - self.last_fault_frame < 100):
       apply_steer = 0
       apply_steer_req = 0
     else:
       apply_steer_req = 1
 
+    if not enabled and right_lane_depart and CS.v_ego > 12.5 and not CS.right_blinker_on:
+      apply_steer = self.last_steer + 3
+      apply_steer = min(apply_steer , 800)
+      #print "right"
+      #print apply_steer
+      apply_steer_req = 1
+      
+    if not enabled and left_lane_depart and CS.v_ego > 12.5 and not CS.left_blinker_on:
+      apply_steer = self.last_steer - 3
+      apply_steer = max(apply_steer , -800)
+      #print "left"
+      #print apply_steer
+      apply_steer_req = 1
+      
+    if abs(CS.angle_steers) > 100 or abs(CS.angle_steers_rate) > 100:
+      apply_steer = 0
+      apply_steer_req = 0
+      
+    apply_steer = apply_toyota_steer_torque_limits(apply_steer, self.last_steer, CS.steer_torque_motor, SteerLimitParams)
+    
+    if apply_steer == 0 and self.last_steer == 0:
+      apply_steer_req = 0
+    
     self.steer_angle_enabled, self.ipas_reset_counter = \
       ipas_state_transition(self.steer_angle_enabled, enabled, CS.ipas_active, self.ipas_reset_counter)
     #print("{0} {1} {2}".format(self.steer_angle_enabled, self.ipas_reset_counter, CS.ipas_active))
@@ -257,14 +290,14 @@ class CarController(object):
         # special cases
         if fr_step == 5 and ecu == ECU.CAM and bus == 1:
           cnt = (((frame // 5) % 7) + 1) << 5
-          vl = chr(cnt) + vl
+          vl = bytes([cnt]) + vl
         elif addr in (0x489, 0x48a) and bus == 0:
           # add counter for those 2 messages (last 4 bits)
           cnt = ((frame // 100) % 0xf) + 1
           if addr == 0x48a:
             # 0x48a has a 8 preceding the counter
             cnt += 1 << 7
-          vl += chr(cnt)
+          vl += bytes([cnt])
 
         can_sends.append(make_can_msg(addr, vl, bus, False))
 

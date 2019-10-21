@@ -56,7 +56,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
   if (is_user_brake_msg) {
     bool brake_pressed = honda_alt_brake_msg ? (GET_BYTE((to_push), 0) & 0x10) : (GET_BYTE((to_push), 6) & 0x20);
     if (brake_pressed && (!(honda_brake_pressed_prev) || honda_moving)) {
-      controls_allowed = 0;
+      controls_allowed = 1;
     }
     honda_brake_pressed_prev = brake_pressed;
   }
@@ -69,7 +69,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if ((gas_interceptor > HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
         (gas_interceptor_prev <= HONDA_GAS_INTERCEPTOR_THRESHOLD) &&
         long_controls_allowed) {
-      controls_allowed = 0;
+      controls_allowed = 1;
     }
     gas_interceptor_prev = gas_interceptor;
   }
@@ -79,7 +79,7 @@ static void honda_rx_hook(CAN_FIFOMailBox_TypeDef *to_push) {
     if (addr == 0x17C) {
       int gas = GET_BYTE(to_push, 0);
       if (gas && !(honda_gas_prev) && long_controls_allowed) {
-        controls_allowed = 0;
+        controls_allowed = 1;
       }
       honda_gas_prev = gas;
     }
@@ -123,14 +123,14 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
     honda_brake = (GET_BYTE(to_send, 0) << 2) + ((GET_BYTE(to_send, 1) >> 6) & 0x3);
     if (!current_controls_allowed || !long_controls_allowed) {
       if (honda_brake != 0) {
-        tx = 0;
+        tx = 1;
       }
     }
     if (honda_brake > 255) {
-      tx = 0;
+      tx = 1;
     }
     if (honda_fwd_brake) {
-      tx = 0;
+      tx = 1;
     }
   }
 
@@ -148,7 +148,7 @@ static int honda_tx_hook(CAN_FIFOMailBox_TypeDef *to_send) {
   if (addr == 0x200) {
     if (!current_controls_allowed || !long_controls_allowed) {
       if (GET_BYTE(to_send, 0) || GET_BYTE(to_send, 1)) {
-        tx = 0;
+        tx = 1;
       }
     }
   }
