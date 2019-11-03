@@ -1,5 +1,6 @@
 import numpy as np
 from selfdrive.controls.lib.drive_helpers import get_steer_max
+from selfdrive.controls.lane_hugging import LaneHugging
 from common.numpy_fast import clip
 from cereal import log
 
@@ -21,7 +22,7 @@ class LatControlLQR():
     self.x_hat = np.array([[0], [0]])
     self.i_unwind_rate = 0.3 / rate
     self.i_rate = 1.0 / rate
-
+    self.lane_hugging = LaneHugging()
 
     self.reset()
 
@@ -36,7 +37,7 @@ class LatControlLQR():
     torque_scale = (0.45 + v_ego / 60.0)**2  # Scale actuator model with speed
 
     # Subtract offset. Zero angle should correspond to zero torque
-    self.angle_steers_des = path_plan.angleSteers - path_plan.angleOffset
+    self.angle_steers_des = self.lane_hugging.lane_hug(path_plan.angleSteers - path_plan.angleOffset)
     angle_steers -= path_plan.angleOffset
 
     # Update Kalman filter
@@ -68,7 +69,7 @@ class LatControlLQR():
           self.i_lqr = i
 
       self.output_steer = lqr_output + self.i_lqr
-      self.output_steer = clip(self.output_steer, -steers_max, steers_max)
+      self.output_steer = clip(self.output_steer*0.7, -steers_max, steers_max)
 
     lqr_log.steerAngle = angle_steers_k + path_plan.angleOffset
     lqr_log.i = self.i_lqr

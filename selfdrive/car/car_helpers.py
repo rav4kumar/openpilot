@@ -1,5 +1,7 @@
 import os
 import zmq
+import json
+import threading
 from cereal import car
 from common.params import Params
 from common.basedir import BASEDIR
@@ -8,7 +10,12 @@ from selfdrive.car.vin import get_vin, VIN_UNKNOWN
 from selfdrive.swaglog import cloudlog
 import selfdrive.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
+import selfdrive.crash as crash
+from common.op_params import opParams
+from common.travis_checker import travis
 
+op_params = opParams()
+use_car_caching = op_params.get('use_car_caching', True)
 
 def get_one_can(logcan):
   while True:
@@ -71,6 +78,11 @@ def only_toyota_left(candidate_cars):
 def fingerprint(logcan, sendcan, has_relay):
   params = Params()
   car_params = params.get("CarParams")
+  
+  if not travis:
+    cached_fingerprint = params.get('CachedFingerprint')
+  else:
+    cached_fingerprint = None
 
   if car_params is not None:
     # use already stored VIN: a new VIN query cannot be done, since panda isn't in ELM327 mode
@@ -92,6 +104,11 @@ def fingerprint(logcan, sendcan, has_relay):
   car_fingerprint = None
   done = False
 
+  if cached_fingerprint is not None and use_car_caching:  # if we previously identified a car and fingerprint and user hasn't disabled caching
+    cached_fingerprint = json.loads(cached_fingerprint)
+    finger[0] = {key: value for key, value in cached_fingerprint[1].items()}
+    return (str(cached_fingerprint[0]), finger, vin)
+  
   while not done:
     a = get_one_can(logcan)
 
@@ -127,8 +144,14 @@ def fingerprint(logcan, sendcan, has_relay):
     frame += 1
 
   cloudlog.warning("fingerprinted %s", car_fingerprint)
+  params.put("CachedFingerprint", json.dumps([car_fingerprint, {int(key): value for key, value in finger[0].items()}]))
   return car_fingerprint, finger, vin
 
+def crash_log(candidate):
+  crash.capture_warning("fingerprinted %s" % candidate)
+
+def crash_log2(fingerprints):
+  crash.capture_warning("car doesn't match any fingerprints: %s" % fingerprints)
 
 def get_car(logcan, sendcan, has_relay=False):
 
@@ -136,8 +159,13 @@ def get_car(logcan, sendcan, has_relay=False):
 
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
+    if not travis:
+      y = threading.Thread(target=crash_log2, args=(fingerprints,))
+      y.start()
     candidate = "mock"
-
+  if not travis:
+    x = threading.Thread(target=crash_log, args=(candidate,))
+    x.start()
   CarInterface, CarController = interfaces[candidate]
   car_params = CarInterface.get_params(candidate, fingerprints, vin, has_relay)
 

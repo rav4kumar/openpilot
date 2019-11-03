@@ -6,6 +6,9 @@ import capnp
 from selfdrive.version import version, dirty
 
 from selfdrive.swaglog import cloudlog
+from common.op_params import opParams
+
+op_params = opParams()
 
 if os.getenv("NOLOG") or os.getenv("NOCRASH"):
   def capture_exception(*exc_info):
@@ -19,8 +22,14 @@ if os.getenv("NOLOG") or os.getenv("NOCRASH"):
 else:
   from raven import Client
   from raven.transport.http import HTTPTransport
+
+  tags = {'dirty': dirty}
+  uniqueID = op_params.get('uniqueID', None)
+  if uniqueID is not None:
+    tags['uniqueID'] = uniqueID
+
   client = Client('https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547',
-                  install_sys_hook=False, transport=HTTPTransport, release=version, tags={'dirty': dirty})
+                  install_sys_hook=False, transport=HTTPTransport, release=version, tags=tags)
 
   def capture_exception(*args, **kwargs):
     exc_info = sys.exc_info()

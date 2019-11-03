@@ -21,7 +21,7 @@ from selfdrive.version import version, dirty
 
 from common.transformations.coordinates import geodetic2ecef
 import selfdrive.mapd.messaging as messaging
-from selfdrive.mapd.mapd_helpers import MAPS_LOOKAHEAD_DISTANCE, Way, circle_through_points
+from selfdrive.mapd.mapd_helpers import MAPS_LOOKAHEAD_DISTANCE, Way, circle_through_points, rate_curvature_points
 
 OVERPASS_API_URL = "https://z.overpass-api.de/api/interpreter"
 OVERPASS_API_URL2 = "https://lz4.overpass-api.de/api/interpreter"
@@ -204,7 +204,7 @@ def mapsd_thread():
     
     fix_ok = gps.flags & 1
     
-    if gps.accuracy > 2.0:
+    if gps.accuracy > 2.0 and not speedLimittrafficvalid:
       fix_ok = False
     if not fix_ok or last_query_result is None or not cache_valid:
       cur_way = None
@@ -245,7 +245,7 @@ def mapsd_thread():
         if curvature_valid:
           # Compute the curvature for each point
           with np.errstate(divide='ignore'):
-            circles = [circle_through_points(*p) for p in zip(pnts, pnts[1:], pnts[2:])]
+            circles = [circle_through_points(*p, direction=True) for p in zip(pnts, pnts[1:], pnts[2:])]
             circles = np.asarray(circles)
             radii = np.nan_to_num(circles[:, 2])
             radii[radii < 15.] = 10000
@@ -256,7 +256,9 @@ def mapsd_thread():
               radii = radii*2.8
          
             curvature = 1. / radii
-
+          rate = [rate_curvature_points(*p) for p in zip(pnts[1:], pnts[2:],curvature[0:],curvature[1:])]
+          rate = ([0] + rate)
+          curvature = np.multiply(np.minimum(np.multiply(rate,4000)+0.7,1.1),curvature)
           # Index of closest point
           closest = np.argmin(np.linalg.norm(pnts, axis=1))
           dist_to_closest = pnts[closest, 0]  # We can use x distance here since it should be close
@@ -275,7 +277,6 @@ def mapsd_thread():
           curvature = curvature[close_idx]
 
           if len(curvature):
-            # TODO: Determine left or right turn
             curvature = np.nan_to_num(curvature)
 
             

@@ -5,7 +5,7 @@ from datetime import datetime
 from common.basedir import BASEDIR
 from selfdrive.config import Conversions as CV
 from common.transformations.coordinates import LocalCoord, geodetic2ecef
-
+Traffic_Debug = False # if traffic signals do not have a direction stop for them anyway
 LOOKAHEAD_TIME = 10.
 MAPS_LOOKAHEAD_DISTANCE = 50 * LOOKAHEAD_TIME
 
@@ -19,7 +19,15 @@ DEFAULT_SPEEDS_BY_REGION = {}
 with open(DEFAULT_SPEEDS_BY_REGION_JSON_FILE, "rb") as f:
   DEFAULT_SPEEDS_BY_REGION = json.loads(f.read())
 
-def circle_through_points(p1, p2, p3):
+def rate_curvature_points(p2,p3,curvature2,curvature3):
+  x2, y2, _ = p2
+  x3, y3, _ = p3
+  if abs(curvature3) > abs(curvature2):
+    return abs((curvature3-curvature2)/(np.sqrt((x3-x2)**2+(y3-y2)**2)))
+  else:
+    return 0
+
+def circle_through_points(p1, p2, p3, force=False, direction=False):
   """Fits a circle through three points
   Formulas from: http://www.ambrsoft.com/trigocalc/circle3d.htm"""
   x1, y1, _ = p1
@@ -31,8 +39,14 @@ def circle_through_points(p1, p2, p3):
   C = (x1**2 + y1**2) * (x2 - x3) + (x2**2 + y2**2) * (x3 - x1) + (x3**2 + y3**2) * (x1 - x2)
   D = (x1**2 + y1**2) * (x3 * y2 - x2 * y3) + (x2**2 + y2**2) * (x1 * y3 - x3 * y1) + (x3**2 + y3**2) * (x2 * y1 - x1 * y2)
   try:
-    if abs((y3-y1)*x2-(x3-x1)*y2+x3*y1-y3*x1)/np.sqrt((y3-y1)**2+(x3-x1)**2) > 0.1:
-      return (-B / (2 * A), - C / (2 * A), np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
+    if abs((y3-y1)*x2-(x3-x1)*y2+x3*y1-y3*x1)/np.sqrt((y3-y1)**2+(x3-x1)**2) > 0.1 or force:
+      if direction:
+        if (x2-x1)*(y3-y1)-(y2-y1)*(x3-x1)>0:
+          return (-B / (2 * A), - C / (2 * A), np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
+        else:
+          return (-B / (2 * A), - C / (2 * A), -np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
+      else:
+        return (-B / (2 * A), - C / (2 * A), np.sqrt((B**2 + C**2 - 4 * A * D) / (4 * A**2)))
     else:
       return (-B / (2 * A), - C / (2 * A), 10000)
   except RuntimeWarning:
@@ -310,9 +324,9 @@ class Way:
             a = 111132.954*math.cos(float(latmax+latmin)/360*3.141592)*float(lonmax-lonmin)
           else:
             if way.way.nodes[1].id == way.way.nodes[-1].id:
-              circle = 30
+              circle = [0,0,30]
             else:
-              circle = circle_through_points([way.way.nodes[0].lat,way.way.nodes[0].lon,1], [way.way.nodes[1].lat,way.way.nodes[1].lon,1], [way.way.nodes[-1].lat,way.way.nodes[-1].lon,1])
+              circle = circle_through_points([way.way.nodes[0].lat,way.way.nodes[0].lon,1], [way.way.nodes[1].lat,way.way.nodes[1].lon,1], [way.way.nodes[-1].lat,way.way.nodes[-1].lon,1],True)
             a = 111132.954*math.cos(float(latmax+latmin)/360*3.141592)*float(circle[2])*2
           speed_ahead = np.sqrt(1.6075*a)
           min_dist = 999.9
@@ -476,9 +490,19 @@ class Way:
                     break
               except (KeyError, ValueError):
                 pass
+            else:
+              if way_pts[count, 0] > 0 and Traffic_Debug:
+                print("no direction")
+                speed_ahead_dist = max(0. , way_pts[count, 0] - 10.0)
+                print(speed_ahead_dist)
+                speed_ahead = 5/3.6
+                if n.tags['highway']=='stop':
+                  speed_ahead = 0
+                loop_must_break = True
+                break
           if 'railway' in n.tags and n.tags['railway']=='level_crossing':
             speed_ahead = 0
-            speed_ahead_dist = way_pts[count, 0]
+            speed_ahead_dist = max(0. , way_pts[count, 0] - 10.0)
             loop_must_break = True
           count += 1
         if loop_must_break: break

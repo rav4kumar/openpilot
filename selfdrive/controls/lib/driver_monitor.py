@@ -3,10 +3,15 @@ from common.realtime import DT_CTRL, DT_DMON
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from common.filter_simple import FirstOrderFilter
 from common.stat_live import RunningStatFilter
-from selfdrive.op_params import opParams
-op_params = opParams()
-factor = op_params.get('wheelTouchFactor', 1.0)
+from common.op_params import opParams
+from common.travis_checker import travis
 
+op_params = opParams()
+factor = op_params.get('awareness_factor', 10.0)
+
+if travis:
+  factor = 1.0
+  
 _AWARENESS_TIME = 100. * factor  # 1.6 minutes limit without user touching steering wheels make the car enter a terminal status
 _AWARENESS_PRE_TIME_TILL_TERMINAL = 25. * factor  # a first alert is issued 25s before expiration
 _AWARENESS_PROMPT_TIME_TILL_TERMINAL = 15. * factor  # a second alert is issued 15s before start decelerating the car

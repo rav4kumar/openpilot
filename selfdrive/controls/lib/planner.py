@@ -3,7 +3,6 @@ import math
 from datetime import datetime
 import time
 from selfdrive.services import service_list
-import selfdrive.messaging as messaging
 import zmq
 import numpy as np
 from cereal import arne182
@@ -19,7 +18,7 @@ from selfdrive.controls.lib.speed_smoother import speed_smoother
 from selfdrive.controls.lib.longcontrol import LongCtrlState, MIN_CAN_SPEED
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
-from selfdrive.op_params import opParams
+from common.op_params import opParams
 op_params = opParams()
 offset = op_params.get('speed_offset', 0) # m/s
 osm = op_params.get('osm', True)
@@ -34,7 +33,7 @@ AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distract
 
 # lookup tables VS speed to determine min and max accels in cruise
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MIN_V  = [-0.8, -0.7, -0.6, -0.5, -0.3]
+_A_CRUISE_MIN_V  = [-1.6, -0.7, -0.6, -0.5, -0.3]
 _A_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
 
 # need fast accel at very low speed for stop and go
@@ -215,7 +214,10 @@ class Planner():
     try:
       if sm['liveMapData'].speedLimitValid and osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
         speed_limit = sm['liveMapData'].speedLimit
-        v_speedlimit = speed_limit + offset
+        if v_speedlimit is not None and offset is not None and v_speedlimit > offset:
+          v_speedlimit = speed_limit + offset
+        else:
+          v_speedlimit = speed_limit
       else:
         speed_limit = None
       if sm['liveMapData'].speedLimitAheadValid and sm['liveMapData'].speedLimitAheadDistance < speed_ahead_distance and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
@@ -232,7 +234,10 @@ class Planner():
           speed_limit_ahead = sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)*(sm['liveMapData'].speedLimitAheadDistance - distanceatlowlimit)/(speed_ahead_distance - distanceatlowlimit)
         else:
           speed_limit_ahead = sm['liveMapData'].speedLimitAhead
-        v_speedlimit_ahead = speed_limit_ahead + offset
+        if v_speedlimit_ahead is not None and offset is not None and v_speedlimit_ahead > offset:
+          v_speedlimit_ahead = speed_limit_ahead + offset
+        else:
+          v_speedlimit_ahead = speed_limit_ahead
       if sm['liveMapData'].curvatureValid and osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
         curvature = abs(sm['liveMapData'].curvature)
         radius = 1/max(1e-4, curvature)
@@ -266,7 +271,7 @@ class Planner():
         time_to_turn = max(1.0, sm['liveMapData'].distToTurn / max((v_ego + v_curvature_map)/2, 1.))
         required_decel = min(0, (v_curvature_map - v_ego) / time_to_turn)
         accel_limits[0] = max(accel_limits[0], required_decel)
-      if v_speedlimit_ahead < v_speedlimit and self.longitudinalPlanSource =='cruise' and v_ego > v_speedlimit_ahead:
+      if v_speedlimit_ahead < v_speedlimit and self.longitudinalPlanSource =='cruise' and v_ego > v_speedlimit_ahead and sm['liveMapData'].speedLimitAheadDistance > 0.10:
         required_decel = min(0, (v_speedlimit_ahead*v_speedlimit_ahead - v_ego*v_ego)/(sm['liveMapData'].speedLimitAheadDistance*2))
         required_decel = max(required_decel, -3.0)
         accel_limits[0] = required_decel

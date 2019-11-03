@@ -7,6 +7,7 @@ from common.numpy_fast import clip
 from selfdrive.car.toyota.carcontroller import SteerLimitParams
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.controls.lib.drive_helpers import get_steer_max
+from selfdrive.controls.lane_hugging import LaneHugging
 
 
 class LatControlINDI():
@@ -39,6 +40,7 @@ class LatControlINDI():
     self.outer_loop_gain = CP.lateralTuning.indi.outerLoopGain
     self.inner_loop_gain = CP.lateralTuning.indi.innerLoopGain
     self.alpha = 1. - DT_CTRL / (self.RC + DT_CTRL)
+    self.lane_hugging = LaneHugging()
 
     self.reset()
 
@@ -62,7 +64,7 @@ class LatControlINDI():
       self.output_steer = 0.0
       self.delayed_output = 0.0
     else:
-      self.angle_steers_des = path_plan.angleSteers
+      self.angle_steers_des = self.lane_hugging.lane_hug(path_plan.angleSteers)
       self.rate_steers_des = path_plan.rateSteers
 
       steers_des = math.radians(self.angle_steers_des)

@@ -4,7 +4,7 @@ import string
 import random
 import os
 from common.params import Params
-from selfdrive.op_params import opParams
+from common.op_params import opParams
 op_params = opParams()
 uniqueID = op_params.get('uniqueID', None)
 
