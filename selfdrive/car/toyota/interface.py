@@ -21,6 +21,7 @@ class CarInterface(CarInterfaceBase):
     self.gas_pressed_prev = False
     self.brake_pressed_prev = False
     self.cruise_enabled_prev = False
+    self.stay_engaged = True
 
     # *** init the major players ***
     self.CS = CarState(CP)
@@ -352,8 +353,23 @@ class CarInterface(CarInterfaceBase):
     ret.steeringPressed = self.CS.steer_override
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
+    # events
+    events = []
+
     # cruise state
-    ret.cruiseState.enabled = self.CS.pcm_acc_active
+    if not self.cruise_enabled_prev:
+      self.waiting = False
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+    else:
+      if self.stay_engaged:
+        ret.cruiseState.enabled = bool(self.CS.main_on)
+      if not self.CS.pcm_acc_active:
+        if bool(self.CS.main_on):
+          events.append(create_event('longControlDisabled', [ET.WARNING]))
+        ret.brakePressed = True
+        self.waiting = False
+    if self.CS.v_ego < 1 or not self.stay_engaged:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
     ret.cruiseState.speed = self.CS.v_cruise_pcm * CV.KPH_TO_MS
     ret.cruiseState.available = bool(self.CS.main_on)
     ret.cruiseState.speedOffset = 0.
@@ -389,16 +405,18 @@ class CarInterface(CarInterfaceBase):
     ret.genericToggle = self.CS.generic_toggle
     ret.stockAeb = self.CS.stock_aeb
 
-    # events
-    events = []
+    if ret.cruiseState.enabled and not self.cruise_enabled_prev:  # this lets us modularize which checks we want to turn off op if cc was engaged previoiusly or not
+      disengage_event = True
+    else:
+      disengage_event = False
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera:
       events.append(create_event('invalidGiraffeToyota', [ET.PERMANENT]))
     if not ret.gearShifter == GearShifter.drive and self.CP.openpilotLongitudinalControl:
       events.append(create_event('wrongGear', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
-    if ret.doorOpen:
+    if ret.doorOpen and disengage_event:
       events.append(create_event('doorOpen', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
-    if ret.seatbeltUnlatched:
+    if ret.seatbeltUnlatched and disengage_event:
       events.append(create_event('seatbeltNotLatched', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if self.CS.esp_disabled and self.CP.openpilotLongitudinalControl:
       events.append(create_event('espDisabled', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
@@ -422,15 +440,17 @@ class CarInterface(CarInterfaceBase):
     # enable request in prius is simple, as we activate when Toyota is active (rising edge)
     if ret.cruiseState.enabled and not self.cruise_enabled_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
+      if events[0].name == 'longControlDisabled':
+        del events[0]
     elif not ret.cruiseState.enabled:
       events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
 
     # disable on pedals rising edge or when brake is pressed and speed isn't zero
-    if (ret.gasPressed and not self.gas_pressed_prev) or \
-       (ret.brakePressed and (not self.brake_pressed_prev or ret.vEgo > 0.001)):
+    if (((ret.gasPressed and not self.gas_pressed_prev) or \
+       (ret.brakePressed and (not self.brake_pressed_prev or ret.vEgo > 0.001))) and disengage_event) or (ret.brakePressed and not self.brake_pressed_prev and ret.vEgo < 0.1):
       events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
 
-    if ret.gasPressed:
+    if ret.gasPressed and disengage_event:
       events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
 
     ret.events = events
