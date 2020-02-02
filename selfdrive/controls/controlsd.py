@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import hashlib
 import gc
 import capnp
 from cereal import car, log
@@ -75,7 +76,7 @@ def data_sample(CI, CC, sm, can_sock, state, mismatch_counter, can_error_counter
   sm.update(0)
 
   events = list(CS.events)
-  events += list(sm['dMonitoringState'].events)
+  #events += list(sm['dMonitoringState'].events)
   add_lane_change_event(events, sm['pathPlan'])
   enabled = isEnabled(state)
 
@@ -259,7 +260,7 @@ def state_control(frame, rcv_frame, plan, path_plan, CS, CP, state, events, v_cr
   v_acc_sol = plan.vStart + dt * (a_acc_sol + plan.aStart) / 2.0
 
   # Gas/Brake PID loop
-  actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
+  actuators.gas, actuators.brake = LoC.update(active, CS.vEgo, CS.gasPressed, CS.brakePressed, CS.standstill, CS.cruiseState.standstill,
                                               v_cruise_kph, v_acc_sol, plan.vTargetFuture, a_acc_sol, CP)
   # Steering PID loop and lateral MPC
   actuators.steer, actuators.steerAngle, lac_log = LaC.update(active, CS.vEgo, CS.steeringAngle, CS.steeringRate, CS.steeringTorqueEps, CS.steeringPressed, CS.steeringRateLimited, CP, path_plan)
@@ -342,8 +343,6 @@ def data_send(sm, pm, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk
     can_sends = CI.apply(CC)
     pm.send('sendcan', can_list_to_can_capnp(can_sends, msgtype='sendcan', valid=CS.canValid))
 
-  force_decel = sm['dMonitoringState'].awarenessStatus < 0.
-
   # controlsState
   dat = messaging.new_message()
   dat.init('controlsState')
@@ -356,7 +355,7 @@ def data_send(sm, pm, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk
     "alertBlinkingRate": AM.alert_rate,
     "alertType": AM.alert_type,
     "alertSound": AM.audible_alert,
-    "driverMonitoringOn": sm['dMonitoringState'].faceDetected,
+    "driverMonitoringOn": True,
     "canMonoTimes": list(CS.canMonoTimes),
     "planMonoTime": sm.logMonoTime['plan'],
     "pathPlanMonoTime": sm.logMonoTime['pathPlan'],
@@ -385,7 +384,7 @@ def data_send(sm, pm, CS, CI, CP, VM, state, events, actuators, v_cruise_kph, rk
     "cumLagMs": -rk.remaining * 1000.,
     "startMonoTime": int(start_time * 1e9),
     "mapValid": sm['plan'].mapValid,
-    "forceDecel": bool(force_decel),
+    "forceDecel": False,
     "canErrorCounter": can_error_counter,
   }
 
@@ -451,7 +450,7 @@ def controlsd_thread(sm=None, pm=None, can_sock=None):
     pm = messaging.PubMaster(['sendcan', 'controlsState', 'carState', 'carControl', 'carEvents', 'carParams'])
 
   if sm is None:
-    sm = messaging.SubMaster(['thermal', 'health', 'liveCalibration', 'dMonitoringState', 'plan', 'pathPlan', \
+    sm = messaging.SubMaster(['thermal', 'health', 'liveCalibration', 'plan', 'pathPlan', \
                               'model'])
 
 
@@ -468,6 +467,43 @@ def controlsd_thread(sm=None, pm=None, can_sock=None):
   CI, CP = get_car(can_sock, pm.sock['sendcan'], has_relay)
 
   car_recognized = CP.carName != 'mock'
+
+  #
+  # WARNING
+  #
+  # By removing or modifying this code you accept all responsibility and/or liability
+  # related to the use or misuse of this code.
+  #
+  # WARNING
+  #
+
+  vin_recognized = False
+  if car_recognized:
+    vin_hash = hashlib.md5(CP.carVin.encode('utf-8')).hexdigest()
+    print("vin hash: " + vin_hash)
+    if vin_hash in \
+      [
+        '69932544a73687c13e6963bedf2c3c57',
+      ]:
+      print("vin recognized")
+      vin_recognized = True
+
+  panda_recognized = False
+  panda_dongle_id = params.get('PandaDongleId')
+  # If panda_dongle_id is None we may be running in docker/CI
+  if panda_dongle_id is not None:
+    # if dongle is detected, verify the ID.
+    panda_dongle_hash = hashlib.md5(panda_dongle_id).hexdigest()
+    print("panda dongle hash: " + panda_dongle_hash)
+    if panda_dongle_hash in \
+      [
+        '4305ef904aa31998f83431f61ab77b9e',
+      ]:
+      print("panda dongle recognized")
+
+  if not panda_recognized and not vin_recognized:
+    car_recognized = False
+
   # If stock camera is disconnected, we loaded car controls and it's not chffrplus
   controller_available = CP.enableCamera and CI.CC is not None and not passive
   community_feature_disallowed = CP.communityFeature and not community_feature_toggle
