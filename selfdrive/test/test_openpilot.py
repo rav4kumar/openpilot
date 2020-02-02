@@ -3,15 +3,10 @@ import os
 os.environ['FAKEUPLOAD'] = "1"
 
 from common.apk import update_apks, start_frame, pm_apply_packages, android_packages
-from common.params import Params
 from common.testing import phone_only
 from selfdrive.manager import manager_init, manager_prepare
 from selfdrive.manager import start_managed_process, kill_managed_process, get_running
-from selfdrive.manager import start_daemon_process
 from functools import wraps
-import json
-import requests
-import signal
 import subprocess
 import time
 
@@ -80,7 +75,7 @@ def test_logging():
   time.sleep(1.0)
 
 @phone_only
-@with_processes(['camerad', 'modeld', 'dmonitoringmodeld'])
+@with_processes(['camerad', 'modeld'])
 def test_visiond():
   print("VISIOND IS SET UP")
   time.sleep(5.0)
@@ -99,11 +94,11 @@ def test_ui():
 
 # will have one thing to upload if loggerd ran
 # TODO: assert it actually uploaded
-@phone_only
-@with_processes(['uploader'])
-def test_uploader():
-  print("UPLOADER")
-  time.sleep(10.0)
+#@phone_only
+#@with_processes(['uploader'])
+#def test_uploader():
+#  print("UPLOADER")
+#  time.sleep(10.0)
 
 # @phone_only
 # def test_athena():
