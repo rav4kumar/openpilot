@@ -120,10 +120,11 @@ from common.params import Params
 import selfdrive.crash as crash
 from selfdrive.swaglog import cloudlog
 from selfdrive.registration import register
-from selfdrive.version import version, dirty
+from selfdrive.version import version, dirty, terms_version, training_version, get_git_commit, get_git_branch, get_git_remote
 from selfdrive.loggerd.config import ROOT
 from selfdrive.launcher import launcher
 from common import android
+from common.android import get_subscriber_info
 from common.apk import update_apks, pm_apply_packages, start_frame
 
 ThermalStatus = cereal.log.ThermalData.ThermalStatus
@@ -131,14 +132,14 @@ ThermalStatus = cereal.log.ThermalData.ThermalStatus
 # comment out anything you don't want to run
 managed_processes = {
   "thermald": "selfdrive.thermald",
-  "uploader": "selfdrive.loggerd.uploader",
+  #"uploader": "selfdrive.loggerd.uploader",
   "deleter": "selfdrive.loggerd.deleter",
   "controlsd": "selfdrive.controls.controlsd",
   "plannerd": "selfdrive.controls.plannerd",
   "radard": "selfdrive.controls.radard",
-  "dmonitoringd": "selfdrive.controls.dmonitoringd",
+  #"dmonitoringd": "selfdrive.controls.dmonitoringd",
   "ubloxd": ("selfdrive/locationd", ["./ubloxd"]),
-  "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
+  #"loggerd": ("selfdrive/loggerd", ["./loggerd"]),
   "logmessaged": "selfdrive.logmessaged",
   "tombstoned": "selfdrive.tombstoned",
   "logcatd": ("selfdrive/logcatd", ["./logcatd"]),
@@ -152,13 +153,13 @@ managed_processes = {
   "sensord": ("selfdrive/sensord", ["./sensord"]),
   "clocksd": ("selfdrive/clocksd", ["./clocksd"]),
   "gpsd": ("selfdrive/sensord", ["./gpsd"]),
-  "updated": "selfdrive.updated",
-  "dmonitoringmodeld": ("selfdrive/modeld", ["./dmonitoringmodeld"]),
+  #"updated": "selfdrive.updated",
+  #"dmonitoringmodeld": ("selfdrive/modeld", ["./dmonitoringmodeld"]),
   "modeld": ("selfdrive/modeld", ["./modeld"]),
 }
 
 daemon_processes = {
-  "manage_athenad": ("selfdrive.athena.manage_athenad", "AthenadPid"),
+  #"manage_athenad": ("selfdrive.athena.manage_athenad", "AthenadPid"),
 }
 
 running = {}
@@ -181,21 +182,21 @@ persistent_processes = [
   'thermald',
   'logmessaged',
   'ui',
-  'uploader',
+  #'uploader',
 ]
 if ANDROID:
   persistent_processes += [
     'logcatd',
     'tombstoned',
-    'updated',
+    #'updated',
   ]
 
 car_started_processes = [
   'controlsd',
   'plannerd',
-  'loggerd',
+  #'loggerd',
   'radard',
-  'dmonitoringd',
+  #'dmonitoringd',
   'calibrationd',
   'paramsd',
   'camerad',
@@ -208,7 +209,7 @@ if ANDROID:
     'sensord',
     'clocksd',
     'gpsd',
-    'dmonitoringmodeld',
+    #'dmonitoringmodeld',
     'deleter',
   ]
 
@@ -336,7 +337,8 @@ def cleanup_all_processes(signal, frame):
 
 # ****************** run loop ******************
 
-def manager_init(should_register=True):
+def manager_init(should_register=False):
+  params = Params()    # apparently not registering in registration.py requires us to do this here
   if should_register:
     reg_res = register()
     if reg_res:
@@ -344,7 +346,19 @@ def manager_init(should_register=True):
     else:
       raise Exception("server registration failed")
   else:
-    dongle_id = "c"*16
+    # apparently not registering in registration.py requires us to do this here
+    params.put("Version", version)
+    params.put("TermsVersion", terms_version)
+    params.put("TrainingVersion", training_version)
+    params.put("GitCommit", get_git_commit())
+    params.put("GitBranch", get_git_branch())
+    params.put("GitRemote", get_git_remote())
+    params.put("SubscriberInfo", get_subscriber_info())
+    dongle_id = params.get('DongleId')
+    if dongle_id:
+      dongle_id = dongle_id.decode("utf-8")
+    else:
+      dongle_id = str("c"*16)
 
   # set dongle id
   cloudlog.info("dongle id is " + dongle_id)
@@ -377,7 +391,7 @@ def manager_thread():
   cloudlog.info({"environ": os.environ})
 
   # save boot log
-  subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
+  #subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
 
   params = Params()
 
