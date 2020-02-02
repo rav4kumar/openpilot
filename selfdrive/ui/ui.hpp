@@ -86,6 +86,8 @@ typedef struct UIScene {
   float v_ego;
   bool decel_for_model;
 
+  float angleSteers;
+
   float speedlimit;
   bool speedlimit_valid;
   bool map_valid;
@@ -115,8 +117,11 @@ typedef struct UIScene {
 
   float awareness_status;
 
+  bool steerOverride;
+
   // Used to show gps planner status
   bool gps_planner_active;
+  bool brakeLights;
 } UIScene;
 
 typedef struct {
@@ -156,6 +161,7 @@ typedef struct UIState {
   int img_turn;
   int img_face;
   int img_map;
+  int img_brake;
 
   // sockets
   Context *ctx;
@@ -163,6 +169,7 @@ typedef struct UIState {
   SubSocket *controlsstate_sock;
   SubSocket *livecalibration_sock;
   SubSocket *radarstate_sock;
+  SubSocket *carstate_sock;
   SubSocket *map_data_sock;
   SubSocket *uilayout_sock;
   Poller * poller;
