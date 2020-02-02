@@ -1,7 +1,6 @@
 #!/usr/bin/env python3.7
 import os
 import json
-import copy
 import datetime
 import psutil
 from smbus2 import SMBus
@@ -17,6 +16,10 @@ from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.loggerd.config import get_available_percent
 from selfdrive.pandad import get_expected_signature
+
+import signal
+import time
+from panda import Panda
 
 FW_SIGNATURE = get_expected_signature()
 
@@ -136,9 +139,30 @@ def handle_fan_uno(max_cpu_temp, bat_temp, fan_speed, ignition):
 
   return new_speed
 
+def check_car_battery_voltage(should_start, health, charging_disabled, msg):
+  # charging disallowed if:
+  #   - there are health packets from panda, and;
+  #   - 12V battery voltage is too low, and;
+  #   - onroad isn't started
+  #print(health)
+  BATT_CHARGE_MIN = 60
+  BATT_CHARGE_MAX = 70
+  CAR_VOLTAGE_MIN_EON_SHUTDOWN = 11800
+  if charging_disabled and (health is None or health.health.voltage > (CAR_VOLTAGE_MIN_EON_SHUTDOWN + 500)) and (msg.thermal.batteryPercent < BATT_CHARGE_MIN):
+    charging_disabled = False
+    os.system('echo "1" > /sys/class/power_supply/battery/charging_enabled')
+  elif not charging_disabled and ((msg.thermal.batteryPercent > BATT_CHARGE_MAX) or (health is not None and health.health.voltage < CAR_VOLTAGE_MIN_EON_SHUTDOWN and not should_start)):
+    charging_disabled = True
+    os.system('echo "0" > /sys/class/power_supply/battery/charging_enabled')
+  elif msg.thermal.batteryCurrent < 0 and msg.thermal.batteryPercent > BATT_CHARGE_MAX:
+    charging_disabled = True
+    os.system('echo "0" > /sys/class/power_supply/battery/charging_enabled')
+
+  return charging_disabled
+
 def thermald_thread():
   # prevent LEECO from undervoltage
-  BATT_PERC_OFF = 10 if LEON else 3
+  BATT_PERC_OFF = 50
 
   health_timeout = int(1000 * 2.5 * DT_TRML)  # 2.5x the expected health frequency
 
@@ -162,7 +186,8 @@ def thermald_thread():
   current_filter = FirstOrderFilter(0., CURRENT_TAU, DT_TRML)
   health_prev = None
   fw_version_match_prev = True
-  current_connectivity_alert = None
+  #current_connectivity_alert = None
+  charging_disabled = False
   time_valid_prev = True
   should_start_prev = False
 
@@ -278,9 +303,9 @@ def thermald_thread():
     #    params.delete("Offroad_ConnectivityNeeded")
     #    params.put("Offroad_ConnectivityNeededPrompt", json.dumps(alert_connectivity_prompt))
     #elif current_connectivity_alert is not None:
-    #  current_connectivity_alert = None
-    #  params.delete("Offroad_ConnectivityNeeded")
-    #  params.delete("Offroad_ConnectivityNeededPrompt")
+    #current_connectivity_alert = None
+    params.delete("Offroad_ConnectivityNeeded")
+    params.delete("Offroad_ConnectivityNeededPrompt")
 
     # start constellation of processes when the car starts
     ignition = health is not None and (health.health.ignitionLine or health.health.ignitionCan)
@@ -348,8 +373,26 @@ def thermald_thread():
       # more than a minute but we were running
       if msg.thermal.batteryPercent < BATT_PERC_OFF and msg.thermal.batteryStatus == "Discharging" and \
          started_seen and (sec_since_boot() - off_ts) > 60:
+        serials = Panda.list()
+        if serials:
+          # If panda is found, kill boardd, if boardd is flapping, and UsbPowerMode is CDP when shutdown,
+          # device has a possibility of rebooting. Also, we need control of USB so we can force UsbPowerMode to client.
+          for proc in psutil.process_iter():
+            if proc.name() == 'boardd':
+              print(proc.pid)
+              os.kill(proc.pid, signal.SIGKILL)
+              time.sleep(1)
+              break
+          # set usb power to client
+          for serial in serials:
+            panda = Panda(serial)
+            # set usbpowermode to client (1)
+            panda.set_usb_power(1)
         os.system('LD_LIBRARY_PATH="" svc power shutdown')
 
+    charging_disabled = check_car_battery_voltage(should_start, health, charging_disabled, msg)
+
+    msg.thermal.chargingDisabled = charging_disabled
     msg.thermal.chargingError = current_filter.x > 0. and msg.thermal.batteryPercent < 90  # if current is positive, then battery is being discharged
     msg.thermal.started = started_ts is not None
     msg.thermal.startedTs = int(1e9*(started_ts or 0))
