@@ -76,7 +76,6 @@ def data_sample(CI, CC, sm, can_sock, state, mismatch_counter, can_error_counter
   sm.update(0)
 
   events = list(CS.events)
-  #events += list(sm['dMonitoringState'].events)
   add_lane_change_event(events, sm['pathPlan'])
   enabled = isEnabled(state)
 
@@ -546,9 +545,6 @@ def controlsd_thread(sm=None, pm=None, can_sock=None):
   sm['pathPlan'].sensorValid = True
   sm['pathPlan'].posenetValid = True
   sm['thermal'].freeSpace = 1.
-  sm['dMonitoringState'].events = []
-  sm['dMonitoringState'].awarenessStatus = 1.
-  sm['dMonitoringState'].faceDetected = False
 
   # detect sound card presence
   sounds_available = not os.path.isfile('/EON') or (os.path.isdir('/proc/asound/card0') and open('/proc/asound/card0/state').read().strip() == 'ONLINE')
