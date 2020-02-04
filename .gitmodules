@@ -13,4 +13,3 @@
 [submodule "cereal"]
 	path = cereal
 	url = https://github.com/brianczapiga/cereal.git
-
