@@ -263,8 +263,8 @@ class CarInterface(CarInterfaceBase):
     # steer, gas, brake limitations VS speed
     ret.steerMaxBP = [16. * CV.KPH_TO_MS, 45. * CV.KPH_TO_MS]  # breakpoints at 1 and 40 kph
     ret.steerMaxV = [1., 1.]  # 2/3rd torque allowed above 45 kph
-    ret.brakeMaxBP = [0.]
-    ret.brakeMaxV = [1.]
+    ret.brakeMaxBP = [0., 35., 55.]
+    ret.brakeMaxV = [1.0, 0.8, 0.7]
 
     ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
     # In TSS2 cars the camera does long control
@@ -297,10 +297,10 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpV = [1.0, 0.75, 0.3]
       ret.longitudinalTuning.kiV = [0.15, 0.1]
     else:
-      ret.gasMaxBP = [0., 9., 55]
-      ret.gasMaxV = [0.3, 0.5, 0.7]
-      ret.longitudinalTuning.kpV = [2.5, 1.5, 0.325]
-      ret.longitudinalTuning.kiV = [0.3, 0.10]
+      ret.gasMaxBP = [0., 9., 55]                      # Stock: 0.
+      ret.gasMaxV = [0.35, 0.5, 0.7]                   # Stock: 0.5
+      ret.longitudinalTuning.kpV = [3.25, 1.85, 0.875] # Stock: 3.6, 2.4, 1.5
+      ret.longitudinalTuning.kiV = [0.3, 0.10]         # Stock: 0.54, 0.36
 
     return ret
 
