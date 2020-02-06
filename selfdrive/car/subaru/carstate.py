@@ -1,7 +1,7 @@
 import copy
 from common.kalman.simple_kalman import KF1D
 from selfdrive.config import Conversions as CV
-from selfdrive.can.parser import CANParser
+from opendbc.can.parser import CANParser
 from selfdrive.car.subaru.values import DBC, STEER_THRESHOLD
 
 def get_powertrain_can_parser(CP):
@@ -82,15 +82,17 @@ def get_camera_can_parser(CP):
   return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
 
 
-class CarState(object):
+class CarState():
   def __init__(self, CP):
     # initialize can parser
     self.CP = CP
 
     self.car_fingerprint = CP.carFingerprint
     self.left_blinker_on = False
+    self.left_blinker_cnt = 0
     self.prev_left_blinker_on = False
     self.right_blinker_on = False
+    self.right_blinker_cnt = 0
     self.prev_right_blinker_on = False
     self.steer_torque_driver = 0
     self.steer_not_allowed = False
@@ -123,7 +125,7 @@ class CarState(object):
       self.v_cruise_pcm *= CV.MPH_TO_KPH
 
     v_wheel = (self.v_wheel_fl + self.v_wheel_fr + self.v_wheel_rl + self.v_wheel_rr) / 4.
-    # Kalman filter, even though Hyundai raw wheel speed is heaviliy filtered by default
+    # Kalman filter, even though Subaru raw wheel speed is heaviliy filtered by default
     if abs(v_wheel - self.v_ego) > 2.0:  # Prevent large accelerations when car starts at non zero speed
       self.v_ego_kf.x = [[v_wheel], [0.0]]
 
@@ -136,8 +138,14 @@ class CarState(object):
 
     self.prev_left_blinker_on = self.left_blinker_on
     self.prev_right_blinker_on = self.right_blinker_on
-    self.left_blinker_on = cp.vl["Dashlights"]['LEFT_BLINKER'] == 1
-    self.right_blinker_on = cp.vl["Dashlights"]['RIGHT_BLINKER'] == 1
+
+    # continuous blinker signals for assisted lane change
+    self.left_blinker_cnt = 50 if cp.vl["Dashlights"]['LEFT_BLINKER'] else max(self.left_blinker_cnt - 1, 0)
+    self.left_blinker_on = self.left_blinker_cnt > 0
+
+    self.right_blinker_cnt = 50 if cp.vl["Dashlights"]['RIGHT_BLINKER'] else max(self.right_blinker_cnt - 1, 0)
+    self.right_blinker_on = self.right_blinker_cnt > 0
+
     self.seatbelt_unlatched = cp.vl["Dashlights"]['SEATBELT_FL'] == 1
     self.steer_torque_driver = cp.vl["Steering_Torque"]['Steer_Torque_Sensor']
     self.acc_active = cp.vl["CruiseControl"]['Cruise_Activated']

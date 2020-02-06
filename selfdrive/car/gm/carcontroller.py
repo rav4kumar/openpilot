@@ -5,7 +5,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.gm import gmcan
 from selfdrive.car.gm.values import DBC, SUPERCRUISE_CARS
-from selfdrive.can.packer import CANPacker
+from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -68,15 +68,15 @@ def process_hud_alert(hud_alert):
     steer = 1
   return steer
 
-class CarController(object):
+class CarController():
   def __init__(self, canbus, car_fingerprint):
     self.pedal_steady = 0.
     self.start_time = 0.
-    self.chime = 0
     self.steer_idx = 0
     self.apply_steer_last = 0
     self.car_fingerprint = car_fingerprint
     self.lka_icon_status_last = (False, False)
+    self.steer_rate_limited = False
 
     # Setup detection helper. Routes commands to
     # an appropriate CAN bus number.
@@ -87,7 +87,7 @@ class CarController(object):
     self.packer_ch = CANPacker(DBC[car_fingerprint]['chassis'])
 
   def update(self, enabled, CS, frame, actuators, \
-             hud_v_cruise, hud_show_lanes, hud_show_car, chime, chime_cnt, hud_alert):
+             hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert):
 
     P = self.params
 
@@ -103,8 +103,9 @@ class CarController(object):
     if (frame % P.STEER_STEP) == 0:
       lkas_enabled = enabled and not CS.steer_not_allowed and CS.v_ego > P.MIN_STEER_SPEED
       if lkas_enabled:
-        apply_steer = actuators.steer * P.STEER_MAX
-        apply_steer = apply_std_steer_torque_limits(apply_steer, self.apply_steer_last, CS.steer_torque_driver, P)
+        new_steer = actuators.steer * P.STEER_MAX
+        apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.steer_torque_driver, P)
+        self.steer_rate_limited = new_steer != apply_steer
       else:
         apply_steer = 0
 
@@ -182,22 +183,5 @@ class CarController(object):
           or lka_icon_status != self.lka_icon_status_last:
         can_sends.append(gmcan.create_lka_icon_command(canbus.sw_gmlan, lka_active, lka_critical, steer))
         self.lka_icon_status_last = lka_icon_status
-
-    # Send chimes
-    if self.chime != chime:
-      duration = 0x3c
-
-      # There is no 'repeat forever' chime command
-      # TODO: Manage periodic re-issuing of chime command
-      # and chime cancellation
-      if chime_cnt == -1:
-        chime_cnt = 10
-
-      if chime != 0:
-        can_sends.append(gmcan.create_chime_command(canbus.sw_gmlan, chime, duration, chime_cnt))
-
-      # If canceling a repeated chime, cancel command must be
-      # issued for the same chime type and duration
-      self.chime = chime
 
     return can_sends

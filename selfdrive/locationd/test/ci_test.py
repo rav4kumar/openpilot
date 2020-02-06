@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import subprocess
 import os
 import sys
@@ -37,9 +37,6 @@ def main(args):
     if not os.path.isfile(stream_file_path):
       print('Extract file failed')
       sys.exit(-3)
-
-    print('Compiling test app...')
-    subprocess.check_call(["make", "ubloxd_test"], cwd=ubloxd_dir)
 
     print('Run regression test - CC parser...')
     if args.valgrind:

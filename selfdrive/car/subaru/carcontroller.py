@@ -1,8 +1,8 @@
 #from common.numpy_fast import clip
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.subaru import subarucan
-from selfdrive.car.subaru.values import CAR, DBC
-from selfdrive.can.packer import CANPacker
+from selfdrive.car.subaru.values import DBC
+from opendbc.can.packer import CANPacker
 
 
 class CarControllerParams():
@@ -11,14 +11,13 @@ class CarControllerParams():
     self.STEER_STEP = 2                # how often we update the steer cmd
     self.STEER_DELTA_UP = 50           # torque increase per refresh, 0.8s to max
     self.STEER_DELTA_DOWN = 70         # torque decrease per refresh
-    if car_fingerprint == CAR.IMPREZA:
-      self.STEER_DRIVER_ALLOWANCE = 60   # allowed driver torque before start limiting
-      self.STEER_DRIVER_MULTIPLIER = 10   # weight driver torque heavily
-      self.STEER_DRIVER_FACTOR = 1     # from dbc
+    self.STEER_DRIVER_ALLOWANCE = 60   # allowed driver torque before start limiting
+    self.STEER_DRIVER_MULTIPLIER = 10  # weight driver torque heavily
+    self.STEER_DRIVER_FACTOR = 1       # from dbc
 
 
 
-class CarController(object):
+class CarController():
   def __init__(self, car_fingerprint):
     self.lkas_active = False
     self.steer_idx = 0
@@ -26,11 +25,11 @@ class CarController(object):
     self.car_fingerprint = car_fingerprint
     self.es_distance_cnt = -1
     self.es_lkas_cnt = -1
+    self.steer_rate_limited = False
 
     # Setup detection helper. Routes commands to
     # an appropriate CAN bus number.
     self.params = CarControllerParams(car_fingerprint)
-    print(DBC)
     self.packer = CANPacker(DBC[car_fingerprint]['pt'])
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, visual_alert, left_line, right_line):
@@ -50,8 +49,9 @@ class CarController(object):
 
       # limits due to driver torque
 
-      apply_steer = int(round(apply_steer))
-      apply_steer = apply_std_steer_torque_limits(apply_steer, self.apply_steer_last, CS.steer_torque_driver, P)
+      new_steer = int(round(apply_steer))
+      apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.steer_torque_driver, P)
+      self.steer_rate_limited = new_steer != apply_steer
 
       lkas_enabled = enabled and not CS.steer_not_allowed
 

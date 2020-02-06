@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ROS has a parameter server, we have files.
 
 The parameter store is a persistent key value store, implemented as a directory with a writer lock.
@@ -27,8 +27,9 @@ import sys
 import shutil
 import fcntl
 import tempfile
+import threading
 from enum import Enum
-
+from common.basedir import PARAMS
 
 def mkdirs_exists_ok(path):
   try:
@@ -53,35 +54,53 @@ keys = {
   "AthenadPid": [TxType.PERSISTENT],
   "CalibrationParams": [TxType.PERSISTENT],
   "CarParams": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "CarParamsCache": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
   "CarVin": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "CommunityFeaturesToggle": [TxType.PERSISTENT],
   "CompletedTrainingVersion": [TxType.PERSISTENT],
   "ControlsParams": [TxType.PERSISTENT],
   "DoUninstall": [TxType.CLEAR_ON_MANAGER_START],
   "DongleId": [TxType.PERSISTENT],
-  "GithubSshKeys": [TxType.PERSISTENT],
   "GitBranch": [TxType.PERSISTENT],
   "GitCommit": [TxType.PERSISTENT],
   "GitRemote": [TxType.PERSISTENT],
+  "GithubSshKeys": [TxType.PERSISTENT],
   "HasAcceptedTerms": [TxType.PERSISTENT],
-  "IsDriverMonitoringEnabled": [TxType.PERSISTENT],
-  "IsFcwEnabled": [TxType.PERSISTENT],
+  "HasCompletedSetup": [TxType.PERSISTENT],
+  "IsLdwEnabled": [TxType.PERSISTENT],
   "IsGeofenceEnabled": [TxType.PERSISTENT],
   "IsMetric": [TxType.PERSISTENT],
-  "IsUpdateAvailable": [TxType.PERSISTENT],
+  "IsOffroad": [TxType.CLEAR_ON_MANAGER_START],
+  "IsRHD": [TxType.PERSISTENT],
+  "IsTakingSnapshot": [TxType.CLEAR_ON_MANAGER_START],
+  "IsUpdateAvailable": [TxType.CLEAR_ON_MANAGER_START],
   "IsUploadRawEnabled": [TxType.PERSISTENT],
-  "IsUploadVideoOverCellularEnabled": [TxType.PERSISTENT],
+  "LastUpdateTime": [TxType.PERSISTENT],
   "LimitSetSpeed": [TxType.PERSISTENT],
   "LimitSetSpeedNeural": [TxType.PERSISTENT],
   "LiveParameters": [TxType.PERSISTENT],
   "LongitudinalControl": [TxType.PERSISTENT],
+  "OpenpilotEnabledToggle": [TxType.PERSISTENT],
+  "PandaFirmware": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "PandaFirmwareHex": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "PandaDongleId": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
   "Passive": [TxType.PERSISTENT],
   "RecordFront": [TxType.PERSISTENT],
+  "ReleaseNotes": [TxType.PERSISTENT],
   "ShouldDoUpdate": [TxType.CLEAR_ON_MANAGER_START],
   "SpeedLimitOffset": [TxType.PERSISTENT],
   "SubscriberInfo": [TxType.PERSISTENT],
   "TermsVersion": [TxType.PERSISTENT],
   "TrainingVersion": [TxType.PERSISTENT],
+  "UpdateAvailable": [TxType.CLEAR_ON_MANAGER_START],
   "Version": [TxType.PERSISTENT],
+  "Offroad_ChargeDisabled": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "Offroad_ConnectivityNeeded": [TxType.CLEAR_ON_MANAGER_START],
+  "Offroad_ConnectivityNeededPrompt": [TxType.CLEAR_ON_MANAGER_START],
+  "Offroad_TemperatureTooHigh": [TxType.CLEAR_ON_MANAGER_START],
+  "Offroad_PandaFirmwareMismatch": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  "Offroad_InvalidTime": [TxType.CLEAR_ON_MANAGER_START],
+  "Offroad_IsTakingSnapshot": [TxType.CLEAR_ON_MANAGER_START],
 }
 
 
@@ -93,7 +112,7 @@ def fsync_dir(path):
     os.close(fd)
 
 
-class FileLock(object):
+class FileLock():
   def __init__(self, path, create):
     self._path = path
     self._create = create
@@ -109,7 +128,7 @@ class FileLock(object):
       self._fd = None
 
 
-class DBAccessor(object):
+class DBAccessor():
   def __init__(self, path):
     self._path = path
     self._vals = None
@@ -279,6 +298,9 @@ def read_db(params_path, key):
     return None
 
 def write_db(params_path, key, value):
+  if isinstance(value, str):
+    value = value.encode('utf8')
+
   prev_umask = os.umask(0)
   lock = FileLock(params_path+"/.lock", True)
   lock.acquire()
@@ -297,14 +319,19 @@ def write_db(params_path, key, value):
     os.umask(prev_umask)
     lock.release()
 
-class Params(object):
-  def __init__(self, db='/data/params'):
+class Params():
+  def __init__(self, db=PARAMS):
     self.db = db
 
     # create the database if it doesn't exist...
     if not os.path.exists(self.db+"/d"):
       with self.transaction(write=True):
         pass
+
+  def clear_all(self):
+    shutil.rmtree(self.db, ignore_errors=True)
+    with self.transaction(write=True):
+      pass
 
   def transaction(self, write=False):
     if write:
@@ -328,7 +355,7 @@ class Params(object):
     with self.transaction(write=True) as txn:
       txn.delete(key)
 
-  def get(self, key, block=False):
+  def get(self, key, block=False, encoding=None):
     if key not in keys:
       raise UnknownKeyName(key)
 
@@ -338,13 +365,36 @@ class Params(object):
         break
       # is polling really the best we can do?
       time.sleep(0.05)
+
+    if ret is not None and encoding is not None:
+      ret = ret.decode(encoding)
+
     return ret
 
   def put(self, key, dat):
+    """
+    Warning: This function blocks until the param is written to disk!
+    In very rare cases this can take over a second, and your code will hang.
+
+    Use the put_nonblocking helper function in time sensitive code, but
+    in general try to avoid writing params as much as possible.
+    """
+
     if key not in keys:
       raise UnknownKeyName(key)
 
     write_db(self.db, key, dat)
+
+
+def put_nonblocking(key, val):
+  def f(key, val):
+    params = Params()
+    params.put(key, val)
+
+  t = threading.Thread(target=f, args=(key, val))
+  t.start()
+  return t
+
 
 if __name__ == "__main__":
   params = Params()

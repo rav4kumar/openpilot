@@ -1,3 +1,84 @@
+Version 0.7.2 (2020-02-07)
+========================
+ * ECU firmware version based fingerprinting for Honda & Toyota
+ * New driving model: improved path prediction during turns and lane changes and better lead speed tracking
+ * Improve driver monitoring under extreme lighting and add low accuracy alert
+ * Support for 2019 Rav4 Hybrid thanks to illumiN8i!
+ * Support for 2016, 2017 and 2020 Lexus RX thanks to illumiN8i!
+ * Support for 2020 Chrysler Pacifica Hybrid thanks to adhintz!
+
+Version 0.7.1 (2020-01-20)
+========================
+ * comma two support!
+ * Lane Change Assist above 45 mph!
+ * Replace zmq with custom messaging library, msgq!
+ * Supercombo model: calibration and driving models are combined for better lead estimate
+ * More robust updater thanks to jyoung8607! Requires NEOS update
+ * Improve low speed ACC tuning
+
+Version 0.7 (2019-12-13)
+========================
+ * Move to SCons build system!
+ * Add Lane Departure Warning (LDW) for all supported vehicles!
+ * NEOS update: increase wifi speed thanks to jyoung8607!
+ * Adaptive driver monitoring based on scene
+ * New driving model trained end-to-end: improve lane lines and lead detection
+ * Smarter torque limit alerts for all cars
+ * Improve GM longitudinal control: proper computations for 15Hz radar
+ * Move GM port, Toyota with DSU removed, comma pedal in community features; toggle switch required
+ * Remove upload over cellular toggle: only upload qlog and qcamera files if not on wifi
+ * Refactor Panda code towards ISO26262 and SIL2 compliancy
+ * Forward stock FCW for Honda Nidec
+ * Volkswagen port now standard: comma Harness intercepts stock camera
+
+Version 0.6.6 (2019-11-05)
+========================
+ * Volkswagen support thanks to jyoung8607!
+ * Toyota Corolla Hybrid with TSS 2.0 support thanks to u8511049!
+ * Lexus ES with TSS 2.0 support thanks to energee!
+ * Fix GM ignition detection and lock safety mode not required anymore
+ * Log panda firmware and dongle ID thanks to martinl!
+ * New driving model: improve path prediction and lead detection
+ * New driver monitoring model, 4x smaller and running on DSP
+ * Display an alert and don't start openpilot if panda has wrong firmware
+ * Fix bug preventing EON from terminating processes after a drive
+ * Remove support for Toyota giraffe without the 120Ohm resistor
+
+Version 0.6.5 (2019-10-07)
+========================
+ * NEOS update: upgrade to Python3 and new installer!
+ * comma Harness support!
+ * New driving model: improve path prediction
+ * New driver monitoring model: more accurate face and eye detection
+ * Redesign offroad screen to display updates and alerts
+ * Increase maximum allowed acceleration
+ * Prevent car 12V battery drain by cutting off EON charge after 3 days of no drive
+ * Lexus CT Hybrid support thanks to thomaspich!
+ * Louder chime for critical alerts
+ * Add toggle to switch to dashcam mode
+ * Fix "invalid vehicle params" error on DSU-less Toyota
+
+Version 0.6.4 (2019-09-08)
+========================
+ * Forward stock AEB for Honda Nidec
+ * Improve lane centering on banked roads
+ * Always-on forward collision warning
+ * Always-on driver monitoring, except for right hand drive countries
+ * Driver monitoring learns the user's normal driving position
+ * Honda Fit support thanks to energee!
+ * Lexus IS support
+
+Version 0.6.3 (2019-08-12)
+========================
+ * Alert sounds from EON: requires NEOS update
+ * Improve driver monitoring: eye tracking and improved awareness logic
+ * Improve path prediction with new driving model
+ * Improve lane positioning with wide lanes and exits
+ * Improve lateral control on RAV4
+ * Slow down for turns using model
+ * Open sourced regression test to verify outputs against reference logs
+ * Open sourced regression test to sanity check all car models
+
 Version 0.6.2 (2019-07-29)
 ========================
  * New driving model!
@@ -27,7 +108,7 @@ Version 0.6 (2019-07-01)
  * Panda safety code is MISRA compliant and ships with a signed version on release2
  * New NEOS is 500MB smaller and has a reproducible usr/pipenv
  * Lexus ES Hybrid support thanks to wocsor!
- * Improve tuning for supported Toyota with TSS2
+ * Improve tuning for supported Toyota with TSS 2.0
  * Various other stability improvements
 
 Version 0.5.13 (2019-05-31)

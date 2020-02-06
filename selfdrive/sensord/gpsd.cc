@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <sys/timerfd.h>
 #include <sys/resource.h>
 
 #include <pthread.h>
@@ -17,10 +16,9 @@
 #include <hardware/gps.h>
 #include <utils/Timers.h>
 
-#include <zmq.h>
-
 #include <capnp/serialize.h>
 
+#include "messaging.hpp"
 #include "common/timing.h"
 #include "common/swaglog.h"
 
@@ -28,16 +26,13 @@
 
 #include "rawgps.h"
 
-volatile int do_exit = 0;
+volatile sig_atomic_t do_exit = 0;
 
 namespace {
 
-pthread_t clock_thread_handle;
-
-// zmq output
-void *gps_context;
-void *gps_publisher;
-void *gps_location_publisher;
+Context *gps_context;
+PubSocket *gps_publisher;
+PubSocket *gps_location_publisher;
 
 const GpsInterface* gGpsInterface = NULL;
 const AGpsInterface* gAGpsInterface = NULL;
@@ -63,7 +58,7 @@ void nmea_callback(GpsUtcTime timestamp, const char* nmea, int length) {
   auto words = capnp::messageToFlatArray(msg);
   auto bytes = words.asBytes();
   // printf("gps send %d\n", bytes.size());
-  zmq_send(gps_publisher, bytes.begin(), bytes.size(), 0);
+  gps_publisher->send((char*)bytes.begin(), bytes.size());
 }
 
 void location_callback(GpsLocation* location) {
@@ -87,7 +82,7 @@ void location_callback(GpsLocation* location) {
 
   auto words = capnp::messageToFlatArray(msg);
   auto bytes = words.asBytes();
-  zmq_send(gps_location_publisher, bytes.begin(), bytes.size(), 0);
+  gps_location_publisher->send((char*)bytes.begin(), bytes.size());
 }
 
 pthread_t create_thread_callback(const char* name, void (*start)(void *), void* arg) {
@@ -163,12 +158,12 @@ void gps_init() {
                                    GPS_POSITION_RECURRENCE_PERIODIC,
                                    100, 0, 0);
 
-  gps_context = zmq_ctx_new();
-  gps_publisher = zmq_socket(gps_context, ZMQ_PUB);
-  zmq_bind(gps_publisher, "tcp://*:8004");
+  gps_context = Context::create();
+  gps_publisher = PubSocket::create(gps_context, "gpsNMEA");
+  gps_location_publisher = PubSocket::create(gps_context, "gpsLocation");
 
-  gps_location_publisher = zmq_socket(gps_context, ZMQ_PUB);
-  zmq_bind(gps_location_publisher, "tcp://*:8026");
+  assert(gps_publisher != NULL);
+  assert(gps_location_publisher != NULL);
 }
 
 void gps_destroy() {
@@ -183,61 +178,6 @@ int64_t arm_cntpct() {
   return v;
 }
 
-// TODO: move this out of here
-void* clock_thread(void* args) {
-  int err = 0;
-
-  void* clock_publisher = zmq_socket(gps_context, ZMQ_PUB);
-  zmq_bind(clock_publisher, "tcp://*:8034");
-
-  int timerfd = timerfd_create(CLOCK_BOOTTIME, 0);
-  assert(timerfd >= 0);
-
-  struct itimerspec spec = {0};
-  spec.it_interval.tv_sec = 1;
-  spec.it_interval.tv_nsec = 0;
-  spec.it_value.tv_sec = 1;
-  spec.it_value.tv_nsec = 0;
-
-  err = timerfd_settime(timerfd, 0, &spec, 0);
-  assert(err == 0);
-
-  uint64_t expirations = 0;
-  while ((err = read(timerfd, &expirations, sizeof(expirations)))) {
-    if (err < 0) break;
-
-    if (do_exit) break;
-
-    uint64_t boottime = nanos_since_boot();
-    uint64_t monotonic = nanos_monotonic();
-    uint64_t monotonic_raw = nanos_monotonic_raw();
-    uint64_t wall_time = nanos_since_epoch();
-
-    uint64_t modem_uptime_v = arm_cntpct() / 19200ULL; // 19.2 mhz clock
-
-    capnp::MallocMessageBuilder msg;
-    cereal::Event::Builder event = msg.initRoot<cereal::Event>();
-    event.setLogMonoTime(boottime);
-    auto clocks = event.initClocks();
-  
-    clocks.setBootTimeNanos(boottime);
-    clocks.setMonotonicNanos(monotonic);
-    clocks.setMonotonicRawNanos(monotonic_raw);
-    clocks.setWallTimeNanos(wall_time);
-    clocks.setModemUptimeMillis(modem_uptime_v);
-
-    auto words = capnp::messageToFlatArray(msg);
-    auto bytes = words.asBytes();
-    zmq_send(clock_publisher, bytes.begin(), bytes.size(), 0);
-  }
-
-  close(timerfd);
-  zmq_close(clock_publisher);
-
-  return NULL;
-}
-
-
 }
 
 int main() {
@@ -248,17 +188,10 @@ int main() {
   signal(SIGTERM, (sighandler_t)set_do_exit);
 
   gps_init();
-  
+
   rawgps_init();
 
-  err = pthread_create(&clock_thread_handle, NULL,
-                       clock_thread, NULL);
-  assert(err == 0);
-
   while(!do_exit) pause();
-
-  err = pthread_join(clock_thread_handle, NULL);
-  assert(err == 0);
 
   rawgps_destroy();
 

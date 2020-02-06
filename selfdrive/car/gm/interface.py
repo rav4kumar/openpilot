@@ -1,23 +1,24 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from cereal import car
-from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
 from selfdrive.controls.lib.vehicle_model import VehicleModel
-from selfdrive.car.gm.values import DBC, CAR, STOCK_CONTROL_MSGS, AUDIO_HUD, \
-                                    SUPERCRUISE_CARS, AccState
+from selfdrive.car.gm.values import DBC, CAR, Ecu, ECU_FINGERPRINT, \
+                                    SUPERCRUISE_CARS, AccState, FINGERPRINTS
 from selfdrive.car.gm.carstate import CarState, CruiseButtons, get_powertrain_can_parser
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness
+from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
+from selfdrive.car.interfaces import CarInterfaceBase
 
+ButtonType = car.CarState.ButtonEvent.Type
 
-class CanBus(object):
+class CanBus(CarInterfaceBase):
   def __init__(self):
     self.powertrain = 0
     self.obstacle = 1
     self.chassis = 2
     self.sw_gmlan = 3
 
-class CarInterface(object):
+class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController):
     self.CP = CP
 
@@ -42,24 +43,24 @@ class CarInterface(object):
     return float(accel) / 4.0
 
   @staticmethod
-  def calc_accel_override(a_ego, a_target, v_ego, v_target):
-    return 1.0
-
-  @staticmethod
-  def get_params(candidate, fingerprint, vin="", is_panda_black=False):
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
     ret = car.CarParams.new_message()
 
     ret.carName = "gm"
     ret.carFingerprint = candidate
-    ret.carVin = vin
-    ret.isPandaBlack = is_panda_black
+    ret.isPandaBlack = has_relay
 
     ret.enableCruise = False
+    # GM port is considered a community feature, since it disables AEB;
+    # TODO: make a port that uses a car harness and it only intercepts the camera
+    ret.communityFeature = True
 
     # Presence of a camera on the object bus is ok.
     # Have to go to read_only if ASCM is online (ACC-enabled cars),
     # or camera is on powertrain bus (LKA cars without ACC).
-    ret.enableCamera = not any(x for x in STOCK_CONTROL_MSGS[candidate] if x in fingerprint) or is_panda_black
+    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or \
+                       has_relay or \
+                       candidate == CAR.CADILLAC_CT6
     ret.openpilotLongitudinalControl = ret.enableCamera
     tire_stiffness_factor = 0.444  # not optimized yet
 
@@ -159,20 +160,20 @@ class CarInterface(object):
     ret.longitudinalTuning.deadzoneBP = [0.]
     ret.longitudinalTuning.deadzoneV = [0.]
 
-    ret.steerLimitAlert = True
-
     ret.stoppingControl = True
     ret.startAccel = 0.8
 
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerRateCost = 1.0
+    ret.steerLimitTimer = 0.4
+    ret.radarTimeStep = 0.0667  # GM radar runs at 15Hz instead of standard 20Hz
     ret.steerControlType = car.CarParams.SteerControlType.torque
 
     return ret
 
   # returns a car.CarState
   def update(self, c, can_strings):
-    self.pt_cp.update_strings(int(sec_since_boot() * 1e9), can_strings)
+    self.pt_cp.update_strings(can_strings)
 
     self.CS.update(self.pt_cp)
 
@@ -207,6 +208,7 @@ class CarInterface(object):
     # timer resets when the user uses the steering wheel.
     ret.steeringPressed = self.CS.steer_override
     ret.steeringTorque = self.CS.steer_torque_driver
+    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # cruise state
     ret.cruiseState.available = bool(self.CS.main_on)
@@ -225,19 +227,19 @@ class CarInterface(object):
     # blinkers
     if self.CS.left_blinker_on != self.CS.prev_left_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'leftBlinker'
+      be.type = ButtonType.leftBlinker
       be.pressed = self.CS.left_blinker_on
       buttonEvents.append(be)
 
     if self.CS.right_blinker_on != self.CS.prev_right_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'rightBlinker'
+      be.type = ButtonType.rightBlinker
       be.pressed = self.CS.right_blinker_on
       buttonEvents.append(be)
 
     if self.CS.cruise_buttons != self.CS.prev_cruise_buttons:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'unknown'
+      be.type = ButtonType.unknown
       if self.CS.cruise_buttons != CruiseButtons.UNPRESS:
         be.pressed = True
         but = self.CS.cruise_buttons
@@ -246,13 +248,13 @@ class CarInterface(object):
         but = self.CS.prev_cruise_buttons
       if but == CruiseButtons.RES_ACCEL:
         if not (cruiseEnabled and self.CS.standstill):
-          be.type = 'accelCruise' # Suppress resume button if we're resuming from stop so we don't adjust speed.
+          be.type = ButtonType.accelCruise # Suppress resume button if we're resuming from stop so we don't adjust speed.
       elif but == CruiseButtons.DECEL_SET:
-        be.type = 'decelCruise'
+        be.type = ButtonType.decelCruise
       elif but == CruiseButtons.CANCEL:
-        be.type = 'cancel'
+        be.type = ButtonType.cancel
       elif but == CruiseButtons.MAIN:
-        be.type = 'altButton3'
+        be.type = ButtonType.altButton3
       buttonEvents.append(be)
 
     ret.buttonEvents = buttonEvents
@@ -302,10 +304,10 @@ class CarInterface(object):
       # handle button presses
       for b in ret.buttonEvents:
         # do enable on both accel and decel buttons
-        if b.type in ["accelCruise", "decelCruise"] and not b.pressed:
+        if b.type in [ButtonType.accelCruise, ButtonType.decelCruise] and not b.pressed:
           events.append(create_event('buttonEnable', [ET.ENABLE]))
         # do disable on button down
-        if b.type == "cancel" and b.pressed:
+        if b.type == ButtonType.cancel and b.pressed:
           events.append(create_event('buttonCancel', [ET.USER_DISABLE]))
 
     ret.events = events
@@ -325,8 +327,6 @@ class CarInterface(object):
     if hud_v_cruise > 70:
       hud_v_cruise = 0
 
-    chime, chime_count = AUDIO_HUD[c.hudControl.audibleAlert.raw]
-
     # For Openpilot, "enabled" includes pre-enable.
     # In GM, PCM faults out if ACC command overlaps user gas.
     enabled = c.enabled and not self.CS.user_gas_pressed
@@ -334,8 +334,7 @@ class CarInterface(object):
     can_sends = self.CC.update(enabled, self.CS, self.frame, \
                                c.actuators,
                                hud_v_cruise, c.hudControl.lanesVisible, \
-                               c.hudControl.leadVisible, \
-                               chime, chime_count, c.hudControl.visualAlert)
+                               c.hudControl.leadVisible, c.hudControl.visualAlert)
 
     self.frame += 1
     return can_sends

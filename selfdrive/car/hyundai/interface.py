@@ -1,15 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from cereal import car
-from common.realtime import sec_since_boot
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.car.hyundai.carstate import CarState, get_can_parser, get_camera_parser
-from selfdrive.car.hyundai.values import CAMERA_MSGS, CAR, get_hud_alerts, FEATURES
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness
+from selfdrive.car.hyundai.values import Ecu, ECU_FINGERPRINT, CAR, get_hud_alerts, FEATURES, FINGERPRINTS
+from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
+from selfdrive.car.interfaces import CarInterfaceBase
 
+GearShifter = car.CarState.GearShifter
+ButtonType = car.CarState.ButtonEvent.Type
 
-class CarInterface(object):
+class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController):
     self.CP = CP
     self.VM = VehicleModel(CP)
@@ -36,24 +38,20 @@ class CarInterface(object):
     return float(accel) / 3.0
 
   @staticmethod
-  def calc_accel_override(a_ego, a_target, v_ego, v_target):
-    return 1.0
-
-  @staticmethod
-  def get_params(candidate, fingerprint, vin="", is_panda_black=False):
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
 
     ret = car.CarParams.new_message()
 
     ret.carName = "hyundai"
     ret.carFingerprint = candidate
-    ret.carVin = vin
-    ret.isPandaBlack = is_panda_black
+    ret.isPandaBlack = has_relay
     ret.radarOffCan = True
     ret.safetyModel = car.CarParams.SafetyModel.hyundai
     ret.enableCruise = True  # stock acc
 
     ret.steerActuatorDelay = 0.1  # Default delay
     ret.steerRateCost = 0.5
+    ret.steerLimitTimer = 0.4
     tire_stiffness_factor = 1.
 
     if candidate == CAR.SANTA_FE:
@@ -142,10 +140,9 @@ class CarInterface(object):
     ret.brakeMaxBP = [0.]
     ret.brakeMaxV = [1.]
 
-    ret.enableCamera = not any(x for x in CAMERA_MSGS if x in fingerprint) or is_panda_black
+    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
     ret.openpilotLongitudinalControl = False
 
-    ret.steerLimitAlert = False
     ret.stoppingControl = False
     ret.startAccel = 0.0
 
@@ -154,14 +151,14 @@ class CarInterface(object):
   # returns a car.CarState
   def update(self, c, can_strings):
     # ******************* do can recv *******************
-    self.cp.update_strings(int(sec_since_boot() * 1e9), can_strings)
-    self.cp_cam.update_strings(int(sec_since_boot() * 1e9), can_strings)
+    self.cp.update_strings(can_strings)
+    self.cp_cam.update_strings(can_strings)
 
     self.CS.update(self.cp, self.cp_cam)
     # create message
     ret = car.CarState.new_message()
 
-    ret.canValid = self.cp.can_valid  # TODO: check cp_cam validity
+    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
 
     # speeds
     ret.vEgo = self.CS.v_ego
@@ -212,13 +209,13 @@ class CarInterface(object):
 
     if self.CS.left_blinker_on != self.CS.prev_left_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'leftBlinker'
+      be.type = ButtonType.leftBlinker
       be.pressed = self.CS.left_blinker_on != 0
       buttonEvents.append(be)
 
     if self.CS.right_blinker_on != self.CS.prev_right_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'rightBlinker'
+      be.type = ButtonType.rightBlinker
       be.pressed = self.CS.right_blinker_on != 0
       buttonEvents.append(be)
 
@@ -236,7 +233,7 @@ class CarInterface(object):
       self.low_speed_alert = False
 
     events = []
-    if not ret.gearShifter == 'drive':
+    if not ret.gearShifter == GearShifter.drive:
       events.append(create_event('wrongGear', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if ret.doorOpen:
       events.append(create_event('doorOpen', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
@@ -246,12 +243,11 @@ class CarInterface(object):
       events.append(create_event('espDisabled', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if not self.CS.main_on:
       events.append(create_event('wrongCarMode', [ET.NO_ENTRY, ET.USER_DISABLE]))
-    if ret.gearShifter == 'reverse':
+    if ret.gearShifter == GearShifter.reverse:
       events.append(create_event('reverseGear', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     if self.CS.steer_error:
       events.append(create_event('steerTempUnavailable', [ET.NO_ENTRY, ET.WARNING]))
 
-    # enable request in prius is simple, as we activate when Toyota is active (rising edge)
     if ret.cruiseState.enabled and not self.cruise_enabled_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
     elif not ret.cruiseState.enabled:
@@ -278,7 +274,7 @@ class CarInterface(object):
 
   def apply(self, c):
 
-    hud_alert = get_hud_alerts(c.hudControl.visualAlert, c.hudControl.audibleAlert)
+    hud_alert = get_hud_alerts(c.hudControl.visualAlert)
 
     can_sends = self.CC.update(c.enabled, self.CS, c.actuators,
                                c.cruiseControl.cancel, hud_alert)

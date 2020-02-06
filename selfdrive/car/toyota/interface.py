@@ -1,15 +1,18 @@
-#!/usr/bin/env python
-from common.realtime import sec_since_boot
+#!/usr/bin/env python3
 from cereal import car
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.car.toyota.carstate import CarState, get_can_parser, get_cam_can_parser
-from selfdrive.car.toyota.values import ECU, check_ecu_msgs, CAR, NO_STOP_TIMER_CAR
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness
+from selfdrive.car.toyota.values import Ecu, ECU_FINGERPRINT, CAR, NO_STOP_TIMER_CAR, TSS2_CAR, FINGERPRINTS
+from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.swaglog import cloudlog
+from selfdrive.car.interfaces import CarInterfaceBase
 
-class CarInterface(object):
+ButtonType = car.CarState.ButtonEvent.Type
+GearShifter = car.CarState.GearShifter
+
+class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController):
     self.CP = CP
     self.VM = VehicleModel(CP)
@@ -25,8 +28,6 @@ class CarInterface(object):
     self.cp = get_can_parser(CP)
     self.cp_cam = get_cam_can_parser(CP)
 
-    self.forwarding_camera = False
-
     self.CC = None
     if CarController is not None:
       self.CC = CarController(self.cp.dbc_name, CP.carFingerprint, CP.enableCamera, CP.enableDsu, CP.enableApgs)
@@ -36,26 +37,22 @@ class CarInterface(object):
     return float(accel) / 3.0
 
   @staticmethod
-  def calc_accel_override(a_ego, a_target, v_ego, v_target):
-    return 1.0
-
-  @staticmethod
-  def get_params(candidate, fingerprint, vin="", is_panda_black=False):
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
 
     ret = car.CarParams.new_message()
 
     ret.carName = "toyota"
     ret.carFingerprint = candidate
-    ret.carVin = vin
-    ret.isPandaBlack = is_panda_black
+    ret.isPandaBlack = has_relay
 
     ret.safetyModel = car.CarParams.SafetyModel.toyota
 
-    # pedal
-    ret.enableCruise = not ret.enableGasInterceptor
+    ret.enableCruise = True
 
     ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
-    if candidate != CAR.PRIUS:
+    ret.steerLimitTimer = 0.4
+
+    if candidate not in [CAR.PRIUS, CAR.RAV4, CAR.RAV4H]: # These cars use LQR/INDI
       ret.lateralTuning.init('pid')
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
 
@@ -73,6 +70,18 @@ class CarInterface(object):
       ret.lateralTuning.indi.timeConstant = 1.0
       ret.lateralTuning.indi.actuatorEffectiveness = 1.0
 
+      # TODO: Determine if this is better than INDI
+      # ret.lateralTuning.init('lqr')
+      # ret.lateralTuning.lqr.scale = 1500.0
+      # ret.lateralTuning.lqr.ki = 0.01
+
+      # ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      # ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      # ret.lateralTuning.lqr.c = [1., 0.]
+      # ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+      # ret.lateralTuning.lqr.l = [0.03233671, 0.03185757]
+      # ret.lateralTuning.lqr.dcGain = 0.002237852961363602
+
       ret.steerActuatorDelay = 0.5
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
@@ -82,8 +91,17 @@ class CarInterface(object):
       ret.steerRatio = 16.88   # 14.5 is spec end-to-end
       tire_stiffness_factor = 0.5533
       ret.mass = 3650. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.05]]
-      ret.lateralTuning.pid.kf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
+      ret.lateralTuning.init('lqr')
+
+      ret.lateralTuning.lqr.scale = 1500.0
+      ret.lateralTuning.lqr.ki = 0.05
+
+      ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      ret.lateralTuning.lqr.c = [1., 0.]
+      ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+      ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
+      ret.lateralTuning.lqr.dcGain = 0.002237852961363602
 
     elif candidate == CAR.COROLLA:
       stop_and_go = False
@@ -95,6 +113,16 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.2], [0.05]]
       ret.lateralTuning.pid.kf = 0.00003   # full torque for 20 deg at 80mph means 0.00007818594
 
+    elif candidate == CAR.LEXUS_RX:
+      stop_and_go = True
+      ret.safetyParam = 73
+      ret.wheelbase = 2.79
+      ret.steerRatio = 14.8
+      tire_stiffness_factor = 0.5533
+      ret.mass = 4387. * CV.LB_TO_KG + STD_CARGO_KG
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.05]]
+      ret.lateralTuning.pid.kf = 0.00006
+
     elif candidate == CAR.LEXUS_RXH:
       stop_and_go = True
       ret.safetyParam = 73
@@ -104,6 +132,16 @@ class CarInterface(object):
       ret.mass = 4481. * CV.LB_TO_KG + STD_CARGO_KG  # mean between min and max
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
       ret.lateralTuning.pid.kf = 0.00006   # full torque for 10 deg at 80mph means 0.00007818594
+
+    elif candidate == CAR.LEXUS_RX_TSS2:
+      stop_and_go = True
+      ret.safetyParam = 73
+      ret.wheelbase = 2.79
+      ret.steerRatio = 14.8
+      tire_stiffness_factor = 0.5533  # not optimized yet
+      ret.mass = 4387. * CV.LB_TO_KG + STD_CARGO_KG
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
+      ret.lateralTuning.pid.kf = 0.00007818594
 
     elif candidate in [CAR.CHR, CAR.CHRH]:
       stop_and_go = True
@@ -154,8 +192,18 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
       ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.pid.kf = 0.00007818594
+      
+    elif candidate == CAR.RAV4H_TSS2:
+      stop_and_go = True
+      ret.safetyParam = 73
+      ret.wheelbase = 2.68986
+      ret.steerRatio = 14.3
+      tire_stiffness_factor = 0.7933
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
+      ret.mass = 3800. * CV.LB_TO_KG + STD_CARGO_KG
+      ret.lateralTuning.pid.kf = 0.00007818594
 
-    elif candidate == CAR.COROLLA_TSS2:
+    elif candidate in [CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2]:
       stop_and_go = True
       ret.safetyParam = 73
       ret.wheelbase = 2.63906
@@ -165,7 +213,7 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
       ret.lateralTuning.pid.kf = 0.00007818594
 
-    elif candidate == CAR.LEXUS_ESH_TSS2:
+    elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
       ret.safetyParam = 73
       ret.wheelbase = 2.8702
@@ -185,15 +233,28 @@ class CarInterface(object):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.05]]
       ret.lateralTuning.pid.kf = 0.00007818594
 
+    elif candidate == CAR.LEXUS_IS:
+      stop_and_go = False
+      ret.safetyParam = 77
+      ret.wheelbase = 2.79908
+      ret.steerRatio = 13.3
+      tire_stiffness_factor = 0.444
+      ret.mass = 3736.8 * CV.LB_TO_KG + STD_CARGO_KG
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.05]]
+      ret.lateralTuning.pid.kf = 0.00006
+
+    elif candidate == CAR.LEXUS_CTH:
+      stop_and_go = True
+      ret.safetyParam = 100
+      ret.wheelbase = 2.60
+      ret.steerRatio = 18.6
+      tire_stiffness_factor = 0.517
+      ret.mass = 3108 * CV.LB_TO_KG + STD_CARGO_KG  # mean between min and max
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3], [0.05]]
+      ret.lateralTuning.pid.kf = 0.00007
+
     ret.steerRateCost = 1.
     ret.centerToFront = ret.wheelbase * 0.44
-
-    #detect the Pedal address
-    ret.enableGasInterceptor = 0x201 in fingerprint
-
-    # min speed to enable ACC. if car can do stop and go, then set enabling speed
-    # to a negative value, so it won't matter.
-    ret.minEnableSpeed = -1. if (stop_and_go or ret.enableGasInterceptor) else 19. * CV.MPH_TO_MS
 
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase
@@ -214,16 +275,23 @@ class CarInterface(object):
     ret.brakeMaxBP = [0.]
     ret.brakeMaxV = [1.]
 
-    ret.enableCamera = not check_ecu_msgs(fingerprint, ECU.CAM) or is_panda_black
-    ret.enableDsu = not check_ecu_msgs(fingerprint, ECU.DSU)
-    ret.enableApgs = False #not check_ecu_msgs(fingerprint, ECU.APGS)
-    ret.openpilotLongitudinalControl = ret.enableCamera and ret.enableDsu
-    cloudlog.warn("ECU Camera Simulated: %r", ret.enableCamera)
-    cloudlog.warn("ECU DSU Simulated: %r", ret.enableDsu)
-    cloudlog.warn("ECU APGS Simulated: %r", ret.enableApgs)
-    cloudlog.warn("ECU Gas Interceptor: %r", ret.enableGasInterceptor)
+    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
+    # In TSS2 cars the camera does long control
+    ret.enableDsu = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.dsu) and candidate not in TSS2_CAR
+    ret.enableApgs = False  # is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.apgs)
+    ret.enableGasInterceptor = 0x201 in fingerprint[0]
+    ret.openpilotLongitudinalControl = ret.enableCamera and (ret.enableDsu or candidate in TSS2_CAR)
+    cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
+    cloudlog.warning("ECU DSU Simulated: %r", ret.enableDsu)
+    cloudlog.warning("ECU APGS Simulated: %r", ret.enableApgs)
+    cloudlog.warning("ECU Gas Interceptor: %r", ret.enableGasInterceptor)
 
-    ret.steerLimitAlert = False
+    # min speed to enable ACC. if car can do stop and go, then set enabling speed
+    # to a negative value, so it won't matter.
+    ret.minEnableSpeed = -1. if (stop_and_go or ret.enableGasInterceptor) else 19. * CV.MPH_TO_MS
+
+    # removing the DSU disables AEB and it's considered a community maintained feature
+    ret.communityFeature = ret.enableGasInterceptor or ret.enableDsu
 
     ret.longitudinalTuning.deadzoneBP = [0., 9.]
     ret.longitudinalTuning.deadzoneV = [0., .15]
@@ -248,18 +316,15 @@ class CarInterface(object):
   # returns a car.CarState
   def update(self, c, can_strings):
     # ******************* do can recv *******************
-    self.cp.update_strings(int(sec_since_boot() * 1e9), can_strings)
+    self.cp.update_strings(can_strings)
+    self.cp_cam.update_strings(can_strings)
 
-    # run the cam can update for 10s as we just need to know if the camera is alive
-    if self.frame < 1000:
-      self.cp_cam.update_strings(int(sec_since_boot() * 1e9), can_strings)
-
-    self.CS.update(self.cp)
+    self.CS.update(self.cp, self.cp_cam)
 
     # create message
     ret = car.CarState.new_message()
 
-    ret.canValid = self.cp.can_valid
+    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
 
     # speeds
     ret.vEgo = self.CS.v_ego
@@ -293,7 +358,9 @@ class CarInterface(object):
     ret.steeringRate = self.CS.angle_steers_rate
 
     ret.steeringTorque = self.CS.steer_torque_driver
+    ret.steeringTorqueEps = self.CS.steer_torque_motor
     ret.steeringPressed = self.CS.steer_override
+    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # cruise state
     ret.cruiseState.enabled = self.CS.pcm_acc_active
@@ -312,13 +379,13 @@ class CarInterface(object):
     buttonEvents = []
     if self.CS.left_blinker_on != self.CS.prev_left_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'leftBlinker'
+      be.type = ButtonType.leftBlinker
       be.pressed = self.CS.left_blinker_on != 0
       buttonEvents.append(be)
 
     if self.CS.right_blinker_on != self.CS.prev_right_blinker_on:
       be = car.CarState.ButtonEvent.new_message()
-      be.type = 'rightBlinker'
+      be.type = ButtonType.rightBlinker
       be.pressed = self.CS.right_blinker_on != 0
       buttonEvents.append(be)
 
@@ -330,29 +397,30 @@ class CarInterface(object):
     ret.seatbeltUnlatched = not self.CS.seatbelt
 
     ret.genericToggle = self.CS.generic_toggle
+    ret.stockAeb = self.CS.stock_aeb
 
     # events
     events = []
-    if self.cp_cam.can_valid:
-      self.forwarding_camera = True
 
-    if not ret.gearShifter == 'drive' and self.CP.enableDsu:
+    if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera:
+      events.append(create_event('invalidGiraffeToyota', [ET.PERMANENT]))
+    if not ret.gearShifter == GearShifter.drive and self.CP.openpilotLongitudinalControl:
       events.append(create_event('wrongGear', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if ret.doorOpen:
       events.append(create_event('doorOpen', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if ret.seatbeltUnlatched:
       events.append(create_event('seatbeltNotLatched', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
-    if self.CS.esp_disabled and self.CP.enableDsu:
+    if self.CS.esp_disabled and self.CP.openpilotLongitudinalControl:
       events.append(create_event('espDisabled', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
-    if not self.CS.main_on and self.CP.enableDsu:
+    if not self.CS.main_on and self.CP.openpilotLongitudinalControl:
       events.append(create_event('wrongCarMode', [ET.NO_ENTRY, ET.USER_DISABLE]))
-    if ret.gearShifter == 'reverse' and self.CP.enableDsu:
+    if ret.gearShifter == GearShifter.reverse and self.CP.openpilotLongitudinalControl:
       events.append(create_event('reverseGear', [ET.NO_ENTRY, ET.IMMEDIATE_DISABLE]))
     if self.CS.steer_error:
       events.append(create_event('steerTempUnavailable', [ET.NO_ENTRY, ET.WARNING]))
-    if self.CS.low_speed_lockout and self.CP.enableDsu:
+    if self.CS.low_speed_lockout and self.CP.openpilotLongitudinalControl:
       events.append(create_event('lowSpeedLockout', [ET.NO_ENTRY, ET.PERMANENT]))
-    if ret.vEgo < self.CP.minEnableSpeed and self.CP.enableDsu:
+    if ret.vEgo < self.CP.minEnableSpeed and self.CP.openpilotLongitudinalControl:
       events.append(create_event('speedTooLow', [ET.NO_ENTRY]))
       if c.actuators.gas > 0.1:
         # some margin on the actuator to not false trigger cancellation while stopping
@@ -388,9 +456,9 @@ class CarInterface(object):
   def apply(self, c):
 
     can_sends = self.CC.update(c.enabled, self.CS, self.frame,
-                               c.actuators, c.cruiseControl.cancel, c.hudControl.visualAlert,
-                               c.hudControl.audibleAlert, self.forwarding_camera,
-                               c.hudControl.leftLaneVisible, c.hudControl.rightLaneVisible, c.hudControl.leadVisible,
+                               c.actuators, c.cruiseControl.cancel,
+                               c.hudControl.visualAlert, c.hudControl.leftLaneVisible,
+                               c.hudControl.rightLaneVisible, c.hudControl.leadVisible,
                                c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
 
     self.frame += 1

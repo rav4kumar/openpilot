@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import psutil
 import time
 import os
@@ -30,7 +30,7 @@ SLEEP_INTERVAL = 0.2
 
 monitored_proc_names = [
   'ubloxd', 'thermald', 'uploader', 'deleter', 'controlsd', 'plannerd', 'radard', 'mapd', 'loggerd' , 'logmessaged', 'tombstoned',
-  'logcatd', 'proclogd', 'boardd', 'pandad', './ui', 'calibrationd', 'params_learner', 'visiond', 'sensord', 'updated', 'gpsd', 'athena']
+  'logcatd', 'proclogd', 'boardd', 'pandad', './ui', 'ui',  'calibrationd', 'params_learner', 'modeld', 'dmonitoringmodeld', 'camerad', 'sensord', 'updated', 'gpsd', 'athena']
 cpu_time_names = ['user', 'system', 'children_user', 'children_system']
 
 timer = getattr(time, 'monotonic', time.time)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
       for k, stat in stats.items():
         if len(stat['cpu_samples']) <= 0:
           continue
-        for name, samples in stat['cpu_samples'].iteritems():
+        for name, samples in stat['cpu_samples'].items():
           samples = np.array(samples)
           avg = samples.mean()
           c = samples.size

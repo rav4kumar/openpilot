@@ -1,27 +1,26 @@
 import os
 import time
 import threading
+import unittest
 from collections import namedtuple
 
 import selfdrive.loggerd.deleter as deleter
 from common.timeout import Timeout, TimeoutException
 
-from loggerd_tests_common import UploaderTestCase
+from selfdrive.loggerd.tests.loggerd_tests_common import UploaderTestCase
 
-Stats = namedtuple("Stats", ['f_bavail', 'f_blocks'])
-
-fake_stats = Stats(f_bavail=0, f_blocks=10)
-
-
-def fake_statvfs(d):
-  return fake_stats
+Stats = namedtuple("Stats", ['f_bavail', 'f_blocks', 'f_frsize'])
 
 
 class TestDeleter(UploaderTestCase):
+  def fake_statvfs(self, d):
+    return self.fake_stats
+
   def setUp(self):
     self.f_type = "fcamera.hevc"
     super(TestDeleter, self).setUp()
-    deleter.os.statvfs = fake_statvfs
+    self.fake_stats = Stats(f_bavail=0, f_blocks=10, f_frsize=4096)
+    deleter.os.statvfs = self.fake_statvfs
     deleter.ROOT = self.root
 
   def tearDown(self):
@@ -69,10 +68,11 @@ class TestDeleter(UploaderTestCase):
     self.assertTrue(os.path.exists(f_path_2), "Newer file deleted before older file")
 
   def test_no_delete_when_available_space(self):
-    global fake_stats
     f_path = self.make_file_with_data(self.seg_dir, self.f_type)
 
-    fake_stats = Stats(f_bavail=10, f_blocks=10)
+    block_size = 4096
+    available = (10 * 1024 * 1024 * 1024) / block_size  # 10GB free
+    self.fake_stats = Stats(f_bavail=available, f_blocks=10, f_frsize=block_size)
 
     self.start_thread()
 
@@ -102,3 +102,7 @@ class TestDeleter(UploaderTestCase):
       self.join_thread()
 
     self.assertTrue(os.path.exists(f_path), "File deleted when locked")
+
+
+if __name__ == "__main__":
+  unittest.main()

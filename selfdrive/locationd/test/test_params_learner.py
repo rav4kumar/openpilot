@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import unittest
@@ -6,13 +6,13 @@ import unittest
 from selfdrive.car.honda.interface import CarInterface
 from selfdrive.car.honda.values import CAR
 from selfdrive.controls.lib.vehicle_model import VehicleModel
-from selfdrive.locationd.liblocationd_py import liblocationd  # pylint: disable=no-name-in-module, import-error
+from selfdrive.locationd.liblocationd_py import liblocationd # pylint: disable=no-name-in-module, import-error
 
 
 class TestParamsLearner(unittest.TestCase):
   def setUp(self):
 
-    self.CP = CarInterface.get_params(CAR.CIVIC, {})
+    self.CP = CarInterface.get_params(CAR.CIVIC)
     bts = self.CP.to_bytes()
 
     self.params_learner = liblocationd.params_learner_init(len(bts), bts, 0.0, 1.0, self.CP.steerRatio, 1.0)

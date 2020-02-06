@@ -1,33 +1,3 @@
-import struct
-
-
-# *** Toyota specific ***
-
-def fix(msg, addr):
-  checksum = 0
-  idh = (addr & 0xff00) >> 8
-  idl = (addr & 0xff)
-
-  checksum = idh + idl + len(msg) + 1
-  for d_byte in msg:
-    checksum += ord(d_byte)
-
-  #return msg + chr(checksum & 0xFF)
-  return msg + struct.pack("B", checksum & 0xFF)
-
-
-def make_can_msg(addr, dat, alt, cks=False):
-  if cks:
-    dat = fix(dat, addr)
-  return [addr, 0, dat, alt]
-
-
-def create_video_target(frame, addr):
-  counter = frame & 0xff
-  msg = struct.pack("!BBBBBBB", counter, 0x03, 0xff, 0x00, 0x00, 0x00, 0x00)
-  return make_can_msg(addr, msg, 1, True)
-
-
 def create_ipas_steer_command(packer, steer, enabled, apgs_enabled):
   """Creates a CAN message for the Toyota Steer Command."""
   if steer < 0:
@@ -95,6 +65,18 @@ def create_accel_command(packer, accel, pcm_cancel, standstill_req, lead):
   return packer.make_can_msg("ACC_CONTROL", 0, values)
 
 
+def create_acc_cancel_command(packer):
+  values = {
+    "GAS_RELEASED": 0,
+    "CRUISE_ACTIVE": 0,
+    "STANDSTILL_ON": 0,
+    "ACCEL_NET": 0,
+    "CRUISE_STATE": 0,
+    "CANCEL_REQ": 1,
+  }
+  return packer.make_can_msg("PCM_CRUISE", 0, values)
+
+
 def create_fcw_command(packer, fcw):
   values = {
     "FCW": fcw,
@@ -105,7 +87,7 @@ def create_fcw_command(packer, fcw):
   return packer.make_can_msg("ACC_HUD", 0, values)
 
 
-def create_ui_command(packer, steer, sound1, sound2, left_line, right_line, left_lane_depart, right_lane_depart):
+def create_ui_command(packer, steer, chime, left_line, right_line, left_lane_depart, right_lane_depart):
   values = {
     "RIGHT_LINE": 3 if right_lane_depart else 1 if right_line else 2,
     "LEFT_LINE": 3 if left_lane_depart else 1 if left_line else 2,
@@ -116,8 +98,8 @@ def create_ui_command(packer, steer, sound1, sound2, left_line, right_line, left
     "SET_ME_X02": 0x02,
     "SET_ME_X01": 1,
     "SET_ME_X01_2": 1,
-    "REPEATED_BEEPS": sound1,
-    "TWO_BEEPS": sound2,
+    "REPEATED_BEEPS": 0,
+    "TWO_BEEPS": chime,
     "LDA_ALERT": steer,
   }
   return packer.make_can_msg("LKAS_HUD", 0, values)
