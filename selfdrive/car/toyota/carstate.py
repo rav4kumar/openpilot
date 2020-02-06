@@ -13,14 +13,9 @@ from common.travis_checker import travis
 
 GearShifter = car.CarState.GearShifter
 
-def parse_gear_shifter(gear, vals):
-
-  val_to_capnp = {'P': GearShifter.park, 'R': GearShifter.reverse, 'N': GearShifter.neutral,
-                  'D': GearShifter.drive, 'B': GearShifter.brake}
-  try:
-    return val_to_capnp[vals[gear]]
-  except KeyError:
-    return GearShifter.unknown
+def parse_gear_shifter(gear):
+  return {'P': GearShifter.park, 'R': GearShifter.reverse, 'N': GearShifter.neutral,
+              'D': GearShifter.drive, 'B': GearShifter.brake}.get(gear, GearShifter.unknown)
 
 
 def get_can_parser(CP):
@@ -199,6 +194,7 @@ class CarState():
       self.angle_steers = cp.vl["STEER_ANGLE_SENSOR"]['STEER_ANGLE'] + cp.vl["STEER_ANGLE_SENSOR"]['STEER_FRACTION']
     self.angle_steers_rate = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
     can_gear = int(cp.vl["GEAR_PACKET"]['GEAR'])
+
     self.gear_shifter = parse_gear_shifter(can_gear, self.shifter_values)
     try:
       self.econ_on = cp.vl["GEAR_PACKET"]['ECON_ON']
@@ -219,6 +215,9 @@ class CarState():
     msg.arne182Status.gasbuttonstatus = self.gasbuttonstatus
     if not travis:
       self.arne_pm.send('arne182Status', msg)
+
+    #self.gear_shifter = parse_gear_shifter(self.shifter_values.get(can_gear, None))
+
     if self.CP.carFingerprint == CAR.LEXUS_IS:
       self.main_on = cp.vl["DSU_CRUISE"]['MAIN_ON']
     else:
