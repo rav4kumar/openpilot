@@ -130,6 +130,9 @@ struct VisionState {
   PubSocket *frame_sock;
   PubSocket *front_frame_sock;
   PubSocket *thumbnail_sock;
+#ifdef IMGSOCK
+  PubSocket *image_sock;
+#endif
 
   pthread_mutex_t clients_lock;
   VisionClientState clients[MAX_CLIENTS];
@@ -440,6 +443,20 @@ void* processing_thread(void *arg) {
 
 #ifndef QCOM
       framed.setImage(kj::arrayPtr((const uint8_t*)s->yuv_ion[yuv_idx].addr, s->yuv_buf_size));
+#endif
+
+#ifdef IMGSOCK
+      // send rgb image to image_socket
+      if (s->image_sock != NULL) {
+        // despite the name, the thumbnail structure is suitable for holding the data
+        auto imaged = event.initThumbnail();
+        imaged.setFrameId(frame_data.frame_id);
+        imaged.setThumbnail(kj::arrayPtr(bgr_ptr, s->rgb_buf_size));
+
+        auto words = capnp::messageToFlatArray(msg);
+        auto bytes = words.asBytes();
+        s->image_sock->send((char*)bytes.begin(), bytes.size());
+      }
 #endif
 
       kj::ArrayPtr<const float> transform_vs(&s->yuv_transform.v[0], 9);
@@ -1116,6 +1133,11 @@ int main(int argc, char *argv[]) {
   assert(s->thumbnail_sock != NULL);
 #endif
 
+#ifdef IMGSOCK
+  s->image_sock = PubSocket::create(s->msg_context, "image");
+  assert(s->image_sock != NULL);
+#endif
+
   cameras_open(&s->cameras, &s->camera_bufs[0], &s->focus_bufs[0], &s->stats_bufs[0], &s->front_camera_bufs[0]);
 
   party(s);
@@ -1125,6 +1147,10 @@ int main(int argc, char *argv[]) {
   delete s->front_frame_sock;
   delete s->thumbnail_sock;
   delete s->msg_context;
+#endif
+
+#ifdef IMGSOCK
+  delete s->image_sock;
 #endif
 
   free_buffers(s);
