@@ -215,6 +215,7 @@ typedef struct UIState {
 
   UIScene scene;
   bool awake;
+  bool display_on;
 
   // timeouts
   int awake_timeout;

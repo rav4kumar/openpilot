@@ -35,7 +35,11 @@ static void set_awake(UIState *s, bool awake) {
 #ifdef QCOM
   if (awake) {
     // 30 second timeout at 30 fps
-    s->awake_timeout = 30*30;
+    if (s->display_on) {
+      s->awake_timeout = 30*30;
+    } else {
+      s->awake_timeout = 3*30;
+    }
   }
   if (s->awake != awake) {
     s->awake = awake;
@@ -142,6 +146,7 @@ static void ui_init(UIState *s) {
   assert(s->fb);
 
   set_awake(s, true);
+  s->display_on = true;
 
   s->model_changed = false;
   s->livempc_or_radarstate_changed = false;
@@ -250,6 +255,7 @@ static ModelData read_model(cereal_ModelData_ptr modelp) {
 static void update_status(UIState *s, int status) {
   if (s->status != status) {
     s->status = status;
+    set_awake(s, true);
     // wake up bg thread to change
     pthread_cond_signal(&s->bg_cond);
   }
@@ -852,6 +858,8 @@ int main(int argc, char* argv[]) {
     if (smooth_brightness > 255) smooth_brightness = 255;
     set_brightness(s, (int)smooth_brightness);
 
+    int touch_x = -1, touch_y = -1, touched = 0;
+
     if (!s->vision_connected) {
       // Car is not started, keep in idle state and awake on touch events
       zmq_pollitem_t polls[1] = {{0}};
@@ -863,11 +871,7 @@ int main(int argc, char* argv[]) {
         LOGW("poll failed (%d)", ret);
       } else if (ret > 0) {
         // awake on any touch
-        int touch_x = -1, touch_y = -1;
-        int touched = touch_read(&touch, &touch_x, &touch_y);
-        if (touched == 1) {
-          set_awake(s, true);
-        }
+        touched = touch_read(&touch, &touch_x, &touch_y);
       }
       if (s->status != STATUS_STOPPED) {
         update_status(s, STATUS_STOPPED);
@@ -876,6 +880,8 @@ int main(int argc, char* argv[]) {
       if (s->status == STATUS_STOPPED) {
         update_status(s, STATUS_DISENGAGED);
       }
+      // poll touch when vision is connected
+      touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 2 : 500);
       // Car started, fetch a new rgb image from ipc and peek for zmq events.
       ui_update(s);
       if(!s->vision_connected) {
@@ -884,6 +890,9 @@ int main(int argc, char* argv[]) {
         glFinish();
         should_swap = true;
       }
+    }
+    if (touched == 1) {
+      set_awake(s, true);
     }
 
     // manage wakefulness
@@ -958,7 +967,10 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  set_awake(s, true);
+  // if the display toggle is on or if the display is touched, force the display on
+  if (s->display_on) {
+    set_awake(s, true);
+  }
   ui_sound_destroy();
 
   // wake up bg thread to exit
