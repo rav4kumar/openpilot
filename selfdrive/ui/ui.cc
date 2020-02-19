@@ -892,6 +892,10 @@ int main(int argc, char* argv[]) {
       }
     }
     if (touched == 1) {
+      if ((touch_x >= 1700)&&
+          (touch_y >= 830)) {
+        s->display_on = s->display_on ? false : true;
+      }
       set_awake(s, true);
     }
 
