@@ -412,6 +412,21 @@ static void ui_draw_world(UIState *s) {
     draw_chevron(s, scene->lead_d_rel+2.7, scene->lead_y_rel, 25,
                   nvgRGBA(201, 34, 49, fillAlpha), nvgRGBA(218, 202, 37, 255));
   }
+  if (scene->lead_status2) {
+    // Draw lead2 car indicator
+    float fillAlpha = 0;
+    float speedBuff = 10.;
+    float leadBuff = 40.;
+    if (scene->lead_d_rel2 < leadBuff) {
+      fillAlpha = 255*(1.0-(scene->lead_d_rel2/leadBuff));
+      if (scene->lead_v_rel2 < 0) {
+        fillAlpha += 255*(-1*(scene->lead_v_rel2/speedBuff));
+      }
+      fillAlpha = (int)(fmin(fillAlpha, 255));
+    }
+    draw_chevron(s, scene->lead_d_rel2+2.7, scene->lead_y_rel2, 25,
+                  nvgRGBA(201, 34, 49, fillAlpha), nvgRGBA(218, 202, 37, 255));
+  }
 }
 
 static void ui_draw_vision_maxspeed(UIState *s) {
@@ -428,13 +443,11 @@ static void ui_draw_vision_maxspeed(UIState *s) {
   int maxspeed_calc = maxspeed * 0.6225 + 0.5;
   float speedlimit = s->scene.speedlimit;
   int speedlim_calc = speedlimit * 2.2369363 + 0.5;
-  int speed_lim_off = s->speed_lim_off * 2.2369363 + 0.5;
   if (s->is_metric) {
     maxspeed_calc = maxspeed + 0.5;
     speedlim_calc = speedlimit * 3.6 + 0.5;
-    speed_lim_off = s->speed_lim_off * 3.6 + 0.5;
   }
-
+  int speed_lim_off = speedlim_calc * (s->speed_lim_off / 100.0);
   bool is_cruise_set = (maxspeed != 0 && maxspeed != SET_SPEED_NA);
   bool is_speedlim_valid = s->scene.speedlimit_valid;
   bool is_set_over_limit = is_speedlim_valid && s->scene.engaged &&
@@ -522,7 +535,7 @@ static void ui_draw_vision_speedlimit(UIState *s) {
   if (s->is_ego_over_limit) {
     hysteresis_offset = 0.0;
   }
-  s->is_ego_over_limit = is_speedlim_valid && s->scene.v_ego > (speedlimit + s->speed_lim_off + hysteresis_offset);
+  s->is_ego_over_limit = is_speedlim_valid && s->scene.v_ego > (speedlimit + hysteresis_offset);
 
   int viz_speedlim_w = 180;
   int viz_speedlim_h = 202;
@@ -788,29 +801,6 @@ static void ui_draw_vision_brake(UIState *s) {
   nvgFill(s->vg);
 }
 
-static void ui_draw_dashcam_button(UIState *s) {
-  int btn_w = 150;
-  int btn_h = 150;
-  int btn_x = 1920 - btn_w;
-  int btn_y = 1080 - btn_h - 50;
-  nvgBeginPath(s->vg);
-  nvgRoundedRect(s->vg, btn_x-110, btn_y-45, btn_w, btn_h, 100);
-  nvgStrokeColor(s->vg, nvgRGBA(255,255,255,80));
-  nvgStrokeWidth(s->vg, 6);
-  nvgStroke(s->vg);
-
-  nvgFontSize(s->vg, 70);
-
-  if (s->scene.recording) {
-    NVGcolor fillColor = nvgRGBA(255,0,0,150);
-    nvgFillColor(s->vg, fillColor);
-    nvgFill(s->vg);
-    nvgFillColor(s->vg, nvgRGBA(255,255,255,200));
-  } else {
-    nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 200));
-  }
-  nvgText(s->vg,btn_x-38,btn_y+50,"REC",NULL);
-}
 
 static void ui_draw_vision_header(UIState *s) {
   const UIScene *scene = &s->scene;
@@ -928,15 +918,15 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
   }
 
   //add grey panda GPS accuracy
-  /*if (true) {
+  if (true) {
     char val_str[16];
     char uom_str[3];
     NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
     //show red/orange if gps accuracy is high
-      if(scene->gpsAccuracy > 0.59) {
+      if(scene->gpsAccuracy > 1.0) {
          val_color = nvgRGBA(255, 188, 3, 200);
       }
-      if(scene->gpsAccuracy > 0.8) {
+      if(scene->gpsAccuracy > 2.0) {
          val_color = nvgRGBA(255, 0, 0, 200);
       }
     // gps accuracy is always in meters
@@ -947,7 +937,7 @@ static void bb_ui_draw_measures_left(UIState *s, int bb_x, int bb_y, int bb_w ) 
         val_color, lab_color, uom_color,
         value_fontSize, label_fontSize, uom_fontSize );
     bb_ry = bb_y + bb_h;
-  }*/
+  }
 
   //add free space - from bthaler1
   if (true) {
@@ -1144,7 +1134,6 @@ static void ui_draw_vision_footer(UIState *s) {
 
   ui_draw_vision_face(s);
   ui_draw_vision_brake(s);
-  ui_draw_dashcam_button(s);
 
 #ifdef SHOW_SPEEDLIMIT
   ui_draw_vision_map(s);

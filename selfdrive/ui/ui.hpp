@@ -105,6 +105,12 @@ typedef struct UIScene {
   bool speedlimitahead_valid;
   bool speedlimit_valid;
   bool map_valid;
+  bool rightblindspot;
+  float rightblindspotD1;
+  float rightblindspotD2;
+  bool leftblindspot;
+  float leftblindspotD1;
+  float leftblindspotD2;
 
   float curvature;
   int engaged;
@@ -119,10 +125,13 @@ typedef struct UIScene {
   int ui_viz_ro;
 
   int lead_status;
+  int lead_status2;
   float lead_d_rel, lead_y_rel, lead_v_rel;
-
+  float lead_d_rel2, lead_y_rel2, lead_v_rel2;
+  
   int front_box_x, front_box_y, front_box_width, front_box_height;
-
+  
+   
   uint64_t alert_ts;
   char alert_text1[1024];
   char alert_text2[1024];
@@ -203,6 +212,8 @@ typedef struct UIState {
   SubSocket *livempc_sock;
   SubSocket *map_data_sock;
   SubSocket *uilayout_sock;
+  SubSocket *gps_sock;
+  SubSocket *arne182_sock;
   Poller * poller;
   Poller * pollerarne182;
 

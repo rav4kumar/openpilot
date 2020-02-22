@@ -17,6 +17,73 @@ def parse_gear_shifter(gear):
   return {'P': GearShifter.park, 'R': GearShifter.reverse, 'N': GearShifter.neutral,
               'D': GearShifter.drive, 'B': GearShifter.brake}.get(gear, GearShifter.unknown)
 
+def get_can_parser_init(CP):
+
+  signals = [
+    # sig_name, sig_address, default
+    ("STEER_ANGLE", "STEER_ANGLE_SENSOR", 0),
+    ("GEAR", "GEAR_PACKET", 0),
+    ("SPORT_ON", "GEAR_PACKET", 0),
+    ("ECON_ON", "GEAR_PACKET", 0),
+    ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
+    ("GAS_PEDAL", "GAS_PEDAL", 0),
+    ("WHEEL_SPEED_FL", "WHEEL_SPEEDS", 0),
+    ("WHEEL_SPEED_FR", "WHEEL_SPEEDS", 0),
+    ("WHEEL_SPEED_RL", "WHEEL_SPEEDS", 0),
+    ("WHEEL_SPEED_RR", "WHEEL_SPEEDS", 0),
+    ("DOOR_OPEN_FL", "SEATS_DOORS", 1),
+    ("DOOR_OPEN_FR", "SEATS_DOORS", 1),
+    ("DOOR_OPEN_RL", "SEATS_DOORS", 1),
+    ("DOOR_OPEN_RR", "SEATS_DOORS", 1),
+    ("SEATBELT_DRIVER_UNLATCHED", "SEATS_DOORS", 1),
+    ("TC_DISABLED", "ESP_CONTROL", 1),
+    ("STEER_FRACTION", "STEER_ANGLE_SENSOR", 0),
+    ("STEER_RATE", "STEER_ANGLE_SENSOR", 0),
+    ("CRUISE_ACTIVE", "PCM_CRUISE", 0),
+    ("CRUISE_STATE", "PCM_CRUISE", 0),
+    ("STEER_TORQUE_DRIVER", "STEER_TORQUE_SENSOR", 0),
+    ("STEER_TORQUE_EPS", "STEER_TORQUE_SENSOR", 0),
+    ("TURN_SIGNALS", "STEERING_LEVERS", 3),   # 3 is no blinkers
+    ("LKA_STATE", "EPS_STATUS", 0),
+    ("IPAS_STATE", "EPS_STATUS", 1),
+    ("BRAKE_LIGHTS_ACC", "ESP_CONTROL", 0),
+    ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
+  ]
+
+  checks = [
+    ("BRAKE_MODULE", 40),
+    ("GAS_PEDAL", 33),
+    ("WHEEL_SPEEDS", 80),
+    ("STEER_ANGLE_SENSOR", 80),
+    ("PCM_CRUISE", 33),
+    ("STEER_TORQUE_SENSOR", 50),
+    ("EPS_STATUS", 25),
+  ]
+
+  if CP.carFingerprint == CAR.LEXUS_IS:
+    signals.append(("MAIN_ON", "DSU_CRUISE", 0))
+    signals.append(("SET_SPEED", "DSU_CRUISE", 0))
+    checks.append(("DSU_CRUISE", 5))
+  else:
+    signals.append(("MAIN_ON", "PCM_CRUISE_2", 0))
+    signals.append(("SET_SPEED", "PCM_CRUISE_2", 0))
+    signals.append(("LOW_SPEED_LOCKOUT", "PCM_CRUISE_2", 0))
+    checks.append(("PCM_CRUISE_2", 33))
+
+  if CP.carFingerprint in NO_DSU_CAR:
+    signals += [("STEER_ANGLE", "STEER_TORQUE_SENSOR", 0)]
+
+  if CP.carFingerprint == CAR.PRIUS:
+    signals += [("STATE", "AUTOPARK_STATUS", 0)]
+
+  # add gas interceptor reading if we are using it
+  if CP.enableGasInterceptor:
+    signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR", 0))
+    signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR", 0))
+    checks.append(("GAS_SENSOR", 50))
+
+  return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
+
 
 def get_can_parser(CP):
 
@@ -128,11 +195,19 @@ class CarState():
     self.left_blinker_on = 0
     self.right_blinker_on = 0
     self.angle_offset = 0.
-    self.pcm_acc_status = False
+    self.pcm_acc_active = False
     self.init_angle_offset = False
     self.v_cruise_pcmlast = 41.0
     self.setspeedoffset = 34.0
     self.setspeedcounter = 0
+    self.leftblindspot = False
+    self.leftblindspotD1 = 0
+    self.leftblindspotD2 = 0
+    self.rightblindspot = False
+    self.rightblindspotD1 = 0
+    self.rightblindspotD2 = 0
+    self.rightblindspotcounter = 0
+    self.leftblindspotcounter = 0
     self.Angles = np.zeros(250)
     #self.Angles_later = np.zeros(250)
     self.Angle_counter = 0
@@ -154,7 +229,7 @@ class CarState():
                          K=[[0.12287673], [0.29666309]])
     self.v_ego = 0.0
 
-  def update(self, cp, cp_cam):
+  def update(self, cp, cp_cam, frame):
     # update prevs, update must run once per loop
     self.prev_left_blinker_on = self.left_blinker_on
     self.prev_right_blinker_on = self.right_blinker_on
@@ -219,19 +294,38 @@ class CarState():
       self.gasbuttonstatus = 0
     msg = messaging_arne.new_message()
     msg.init('arne182Status')
-    if cp.vl["DEBUG"]['BLINDSPOTSIDE']==65: #Left
-      if (cp.vl["DEBUG"]['BLINDSPOTD1'] > 10) or (cp.vl["DEBUG"]['BLINDSPOTD1'] > 10):
-        msg.arne182Status.leftBlindspot = bool(1)
-        print("Left Blindspot Detected")
-      else:
-        msg.arne182Status.leftBlindspot = bool(0)
-    elif  cp.vl["DEBUG"]['BLINDSPOTSIDE']==66: #Right
-      if (cp.vl["DEBUG"]['BLINDSPOTD1'] > 10) or (cp.vl["DEBUG"]['BLINDSPOTD1'] > 10):
-        msg.arne182Status.rightBlindspot = bool(1)
-        print("Right Blindspot Detected")
-      else:
-        msg.arne182Status.rightBlindspot = bool(0)
-
+    if frame > 999:
+      if cp.vl["DEBUG"]['BLINDSPOTSIDE']==65: #Left
+        self.leftblindspotcounter = 21
+        self.leftblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+        self.leftblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+        if (self.leftblindspotD1 > 10) or (self.leftblindspotD2 > 10):
+          self.leftblindspot = bool(1)
+          print("Left Blindspot Detected")
+      elif  cp.vl["DEBUG"]['BLINDSPOTSIDE']==66: #Right
+        self.rightblindspotcounter = 21
+        self.rightblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+        self.rightblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+        if (self.rightblindspotD1 > 10) or (self.rightblindspotD2 > 10):
+          self.rightblindspot = bool(1)
+          print("Right Blindspot Detected")
+      self.rightblindspotcounter = self.rightblindspotcounter -1 if self.rightblindspotcounter > 0 else 0
+      self.leftblindspotcounter = self.leftblindspotcounter -1 if self.leftblindspotcounter > 0 else 0
+      if self.leftblindspotcounter == 0:
+        self.leftblindspot = False
+        self.leftblindspotD1 = 0
+        self.leftblindspotD2 = 0
+      if self.rightblindspotcounter == 0:
+        self.rightblindspot = False
+        self.rightblindspotD1 = 0
+        self.rightblindspotD2 = 0
+        
+    msg.arne182Status.leftBlindspot = self.leftblindspot
+    msg.arne182Status.rightBlindspot = self.rightblindspot
+    msg.arne182Status.rightBlindspotD1 = self.rightblindspotD1
+    msg.arne182Status.rightBlindspotD2 = self.rightblindspotD2
+    msg.arne182Status.leftBlindspotD1 = self.leftblindspotD1
+    msg.arne182Status.leftBlindspotD2 = self.leftblindspotD2
     msg.arne182Status.gasbuttonstatus = self.gasbuttonstatus
     if not travis:
       self.arne_pm.send('arne182Status', msg)
@@ -265,7 +359,7 @@ class CarState():
       minimum_set_speed = 44.0
     else:
       minimum_set_speed = 41.0
-    if cp.vl["PCM_CRUISE"]['CRUISE_STATE'] and not self.pcm_acc_status:
+    if bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE']) and not self.pcm_acc_active:
       if self.v_ego < 12.5:
         self.setspeedoffset = max(min(int(minimum_set_speed-self.v_ego*3.6),(minimum_set_speed-7.0)),0.0)
         self.v_cruise_pcmlast = self.v_cruise_pcm
@@ -299,7 +393,13 @@ class CarState():
     if not self.left_blinker_on and not self.right_blinker_on:
       self.Angles[self.Angle_counter] = abs(self.angle_steers)
       #self.Angles_later[self.Angle_counter] = abs(angle_later)
-      self.v_cruise_pcm = int(min(self.v_cruise_pcm, interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
+      if self.gasbuttonstatus ==1:
+        factor = 1.6
+      elif self.gasbuttonstatus == 2:
+        factor = 1.0
+      else:
+        factor = 1.3
+      self.v_cruise_pcm = int(min(self.v_cruise_pcm, factor * interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
       #self.v_cruise_pcm = int(min(self.v_cruise_pcm, self.brakefactor * interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
     else:
       self.Angles[self.Angle_counter] = 0

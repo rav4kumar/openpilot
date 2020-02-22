@@ -19,6 +19,7 @@
 
 #include "ui.hpp"
 #include "sound.hpp"
+#include "dashcam.h"
 
 
 static int last_brightness = -1;
@@ -116,7 +117,9 @@ static void ui_init(UIState *s) {
   s->radarstate_sock = SubSocket::create(s->ctx, "radarState");
   s->carstate_sock = SubSocket::create(s->ctx, "carState");
   s->livempc_sock = SubSocket::create(s->ctx, "liveMpc");
+  s->gps_sock = SubSocket::create(s->ctx, "gpsLocationExternal");
   s->thermal_sock = SubSocket::create(s->ctxarne182, "thermalonline");
+  s->arne182_sock = SubSocket::create(s->ctxarne182, "arne182Status");
 
   assert(s->model_sock != NULL);
   assert(s->controlsstate_sock != NULL);
@@ -125,7 +128,9 @@ static void ui_init(UIState *s) {
   assert(s->radarstate_sock != NULL);
   assert(s->carstate_sock != NULL);
   assert(s->livempc_sock != NULL);
+  assert(s->gps_sock != NULL);
   assert(s->thermal_sock != NULL);
+  assert(s->arne182_sock != NULL);
 
   s->poller = Poller::create({
                               s->model_sock,
@@ -134,10 +139,12 @@ static void ui_init(UIState *s) {
                               s->livecalibration_sock,
                               s->radarstate_sock,
                               s->carstate_sock,
-                              s->livempc_sock
+                              s->livempc_sock,
+                              s->gps_sock
                              });
   s->pollerarne182 = Poller::create({
-                              s->thermal_sock
+                              s->thermal_sock,
+                              s->arne182_sock
                              });
 
 #ifdef SHOW_SPEEDLIMIT
@@ -217,56 +224,6 @@ static void ui_init_vision(UIState *s, const VisionStreamBufs back_bufs,
   s->limit_set_speed_timeout = UI_FREQ;
 }
 
-struct tm get_time_struct() {
-  time_t t = time(NULL);
-  struct tm tm = *localtime(&t);
-  return tm;
-}
-
-bool dashcam_button_clicked(int touch_x, int touch_y) {
-  if (touch_x >= 1660 && touch_x <= 1810) {
-    if (touch_y >= 885 && touch_y <= 1035) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
-void toggle_dashcam_start() {
-  const char *dashcam_root = "/data/media/0/dashcam/";
-  char *env_dashcam_root = getenv("DASHCAM_ROOT");
-  dashcam_root = env_dashcam_root ? env_dashcam_root : dashcam_root;
-
-  // NOTE: make sure dashcam_root folder exists on the device!
-  struct stat st = {0};
-  if (stat(dashcam_root, &st) == -1) {
-    umask(0);
-    mkdir(dashcam_root, 0777);
-  }
-
-  char cmd[128];
-  char filename[64];
-  struct tm tm = get_time_struct();
-  snprintf(filename, sizeof(filename), "%04d%02d%02d_%02d%02d%02d.mp4", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
-  snprintf(cmd, sizeof(cmd), "/data/openpilot/selfdrive/ui/screenrecord --bit-rate 2560000 %s%s&", dashcam_root, filename);
-
-  system(cmd);
-}
-
-void toggle_dashcam_stop() {
-  system("killall -SIGINT screenrecord");
-}
-
-void toggle_dashcam(UIState *s) {
-  if (s->scene.recording) {
-    toggle_dashcam_stop();
-    s->scene.recording = false;
-  } else {
-    toggle_dashcam_start();
-    s->scene.recording = true;
-  }
-}
 
 static PathData read_path(cereal_ModelData_PathData_ptr pathp) {
   PathData ret = {0};
@@ -439,11 +396,17 @@ void handle_message(UIState *s, Message * msg) {
     struct cereal_RadarState datad;
     cereal_read_RadarState(&datad, eventd.radarState);
     struct cereal_RadarState_LeadData leaddatad;
+    struct cereal_RadarState_LeadData leaddatae;
     cereal_read_RadarState_LeadData(&leaddatad, datad.leadOne);
+    cereal_read_RadarState_LeadData(&leaddatae, datad.leadTwo);
     s->scene.lead_status = leaddatad.status;
     s->scene.lead_d_rel = leaddatad.dRel;
     s->scene.lead_y_rel = leaddatad.yRel;
     s->scene.lead_v_rel = leaddatad.vRel;
+    s->scene.lead_status2 = leaddatae.status;
+    s->scene.lead_d_rel2 = leaddatae.dRel;
+    s->scene.lead_y_rel2 = leaddatae.yRel;
+    s->scene.lead_v_rel2 = leaddatae.vRel;
     s->livempc_or_radarstate_changed = true;
   } else if (eventd.which == cereal_Event_liveCalibration) {
     s->scene.world_objects_visible = true;
@@ -511,6 +474,18 @@ void handle_message(UIState *s, Message * msg) {
       s->scene.blinker_blinkingrate = 100;
     s->scene.leftBlinker = datad.leftBlinker;
     s->scene.rightBlinker = datad.rightBlinker;
+  } else if (eventd.which == cereal_Event_gpsLocationExternal) {
+    struct cereal_GpsLocationData datad;
+    cereal_read_GpsLocationData(&datad, eventd.gpsLocationExternal);
+    s->scene.gpsAccuracy = datad.accuracy;
+    if (s->scene.gpsAccuracy > 100)
+    {
+      s->scene.gpsAccuracy = 99.99;
+    }
+    else if (s->scene.gpsAccuracy == 0)
+    {
+      s->scene.gpsAccuracy = 99.8;
+    }
   }
   capn_free(&ctx);
 }
@@ -530,6 +505,15 @@ void handle_message_arne182(UIState *s, Message * msg) {
 
     s->scene.pa0 = datad.pa0;
     s->scene.freeSpace = datad.freeSpace;
+  } else if (eventarne182d.which == cereal_EventArne182_arne182Status) {
+    struct cereal_Arne182Status datad;
+    cereal_read_Arne182Status(&datad, eventarne182d.arne182Status);
+    s->scene.leftblindspot = datad.leftBlindspot;
+    s->scene.leftblindspotD1 = datad.leftBlindspotD1;
+    s->scene.leftblindspotD2 = datad.leftBlindspotD2;
+    s->scene.rightblindspot = datad.rightBlindspot;
+    s->scene.rightblindspotD1 = datad.rightBlindspotD1;
+    s->scene.rightblindspotD2 = datad.rightBlindspotD2;
   }
   capn_free(&ctxarne182);
 }
@@ -1012,13 +996,20 @@ int main(int argc, char* argv[]) {
       ui_update(s);
       if(!s->vision_connected) {
         // Visiond process is just stopped, force a redraw to make screen blank again.
-        toggle_dashcam_stop();
         ui_draw(s);
         glFinish();
         should_swap = true;
       }
     }
+    
+    //awake on any touch
+    int touch_x = -1, touch_y = -1;
+    int touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 0 : 100);
+    if (touched == 1) {
+      set_awake(s, true);
+    }
 
+    
     // manage wakefulness
     if (s->awake_timeout > 0) {
       s->awake_timeout--;
@@ -1026,22 +1017,10 @@ int main(int argc, char* argv[]) {
       set_awake(s, false);
     }
 
-    //dashcam process manage
-    if (s->awake && s->vision_connected && s->active_app == cereal_UiLayoutState_App_home && s->status != STATUS_STOPPED) {
-      //dashcam button
-      //ui_draw_dashcam_button(s);
-      //dashcam button clicked
-      if (s->active_app == cereal_UiLayoutState_App_home && s->status != STATUS_STOPPED) {
-        int touch_x = -1, touch_y = -1;
-        int touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 0 : 100);
-        if (dashcam_button_clicked(touch_x, touch_y)) {
-          toggle_dashcam(s);
-        }
-      }
-    }
 
     // Don't waste resources on drawing in case screen is off or car is not started.
     if (s->awake && s->vision_connected) {
+      dashcam(s, touch_x, touch_y);
       ui_draw(s);
       glFinish();
       should_swap = true;
