@@ -962,7 +962,9 @@ int main(int argc, char* argv[]) {
 
         s->alert_sound = cereal_CarControl_HUDControl_AudibleAlert_chimeWarningRepeat;
         play_alert_sound(s->alert_sound);
-        s->display_on = true;
+        // wake up and set timeout for 30 seconds
+        set_awake(s, true);
+        s->awake_timeout = 30*30;
       }
       s->alert_sound_timeout--;
       s->controls_seen = false;
