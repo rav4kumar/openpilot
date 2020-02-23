@@ -295,11 +295,13 @@ void handle_message(UIState *s, Message * msg) {
 
     s->scene.decel_for_model = datad.decelForModel;
 
+    bool resetAwake = false;
     if (datad.alertSound != cereal_CarControl_HUDControl_AudibleAlert_none && datad.alertSound != s->alert_sound) {
       if (s->alert_sound != cereal_CarControl_HUDControl_AudibleAlert_none) {
         stop_alert_sound(s->alert_sound);
       }
       play_alert_sound(datad.alertSound);
+      resetAwake = true;
 
       s->alert_sound = datad.alertSound;
       snprintf(s->alert_type, sizeof(s->alert_type), "%s", datad.alertType.str);
@@ -320,6 +322,10 @@ void handle_message(UIState *s, Message * msg) {
     } else {
       s->scene.alert_text2[0] = '\0';
     }
+    if ((s->scene.alert_text1[0] != '\0')&&
+        (s->scene.alert_text1[0] != '\0')) {
+      resetAwake = true;
+    }
     s->scene.awareness_status = datad.awarenessStatus;
 
     s->scene.alert_ts = eventd.logMonoTime;
@@ -333,6 +339,10 @@ void handle_message(UIState *s, Message * msg) {
       s->alert_size = ALERTSIZE_MID;
     } else if (datad.alertSize == cereal_ControlsState_AlertSize_full) {
       s->alert_size = ALERTSIZE_FULL;
+    }
+
+    if (resetAwake) {
+      set_awake(s, true);
     }
 
     if (s->status != STATUS_STOPPED) {
@@ -599,7 +609,7 @@ static void ui_update(UIState *s) {
       zmq_pollitem_t polls[1] = {{0}};
       polls[0].fd = s->touch_fd;
       polls[0].events = ZMQ_POLLIN;
-      int ret = zmq_poll(polls, 1, 1);
+      int ret = zmq_poll(polls, 1, 0);
       if (ret < 0){
         if (errno == EINTR) continue;
         LOGW("poll failed (%d)", ret);
@@ -686,6 +696,8 @@ static void* vision_connect_thread(void *args) {
 
     s->vision_connected = true;
     s->vision_connect_firstrun = true;
+    set_awake(s, true);
+    s->awake_timeout = 30*30;
 
     // Drain sockets
     while (true){
@@ -877,16 +889,7 @@ int main(int argc, char* argv[]) {
 
     if (!s->vision_connected) {
       // Car is not started, keep in idle state and awake on touch events
-      zmq_pollitem_t polls[1] = {{0}};
-      polls[0].fd = s->touch_fd;
-      polls[0].events = ZMQ_POLLIN;
-      int ret = zmq_poll(polls, 1, 0);
-      if (ret < 0){
-        if (errno == EINTR) continue;
-        LOGW("poll failed (%d)", ret);
-      } else {
-        touched = touch_read(&touch, &touch_x, &touch_y);
-      }
+      touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 2 : 500);
       if (s->status != STATUS_STOPPED) {
         update_status(s, STATUS_STOPPED);
       }
@@ -916,11 +919,9 @@ int main(int argc, char* argv[]) {
     }
 
     // manage wakefulness
-    if ((s->awake_timeout > 0)&&
-        (s->status != STATUS_WARNING)&&
-        (s->status != STATUS_ALERT)) {
+    if (s->awake_timeout > 0) {
       s->awake_timeout--;
-    } else if (s->awake_timeout <= 0) {
+    } else {
       set_awake(s, false);
     }
 
