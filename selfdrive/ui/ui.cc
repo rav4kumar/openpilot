@@ -609,7 +609,7 @@ static void ui_update(UIState *s) {
       zmq_pollitem_t polls[1] = {{0}};
       polls[0].fd = s->touch_fd;
       polls[0].events = ZMQ_POLLIN;
-      int ret = zmq_poll(polls, 1, 0);
+      int ret = zmq_poll(polls, 1, 1);
       if (ret < 0){
         if (errno == EINTR) continue;
         LOGW("poll failed (%d)", ret);
