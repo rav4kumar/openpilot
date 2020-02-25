@@ -47,7 +47,7 @@ class opParams:
                            'force_pedal': {'default': False, 'allowed_types': [bool], 'description': "If openpilot isn't recognizing your comma pedal, set this to True", 'live': False},
                            'following_distance': {'default': None, 'allowed_types': [type(None), float], 'description': 'None has no effect, while setting this to a float will let you change the TR', 'live': False},
                            'keep_openpilot_engaged': {'default': True, 'allowed_types': [bool], 'description': 'True is stock behavior in this fork. False lets you use the brake and cruise control stalk to disengage as usual', 'live': False},
-                           'speed_offset': {'default': 0, 'allowed_types': [float, int], 'description': 'Speed limit offset', 'live': False}}
+                           'speed_offset': {'default': 0, 'allowed_types': [float, int], 'description': 'Speed limit offset in m/s', 'live': True}}
 
     self.params = {}
     self.params_file = "/data/op_params.json"

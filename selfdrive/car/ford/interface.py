@@ -148,10 +148,6 @@ class CarInterface(CarInterfaceBase):
 
     return ret.as_reader(), ret_arne182.as_reader()
 
-    #self.CS.out = ret.as_reader()
-
-    return self.CS.out
-
   # pass in a car.CarControl
   # to be called @ 100hz
   def apply(self, c):

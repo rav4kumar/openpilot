@@ -26,7 +26,7 @@ More info about how to install this fork can be found [here](https://medium.com/
 
 `release4`: this is the default branch that is most up to date with the openpilot 0.7 release branch. Normally you should use this branch.
 
-`072-clean`: this is my default testing branch. When I finishing testing/adding new structure, I'll merge this into the
+`073-clean`: this is my default testing branch. When I finishing testing/adding new structure, I'll merge this into the
 `release4` branch.
 
 `release3`: this is my old branch, that is compatible with openpilot 0.6.
@@ -74,7 +74,8 @@ More info about how to install this fork can be found [here](https://medium.com/
 - Ability to change the SpeedLimit Offset directly from APK. It is based in percentages. For Example, if -1% at 60mph, it will be  approx. 59.4mph, -10% is roughly 54mph etc. (Thank you eFini for the help)
 - Dashcam recording button added to the ui. ( it will save video's to the `/data/media/0/video`)
 - GPS Accurecy on the Dev UI.
-
+- Live speedlimit_offset in op_tune.py
+- If the model detect's cut in it will draw two different chevron to show the user that it see's both of the car.
 # Licensing
 
 openpilot is released under the MIT license. Some parts of the software are released under other licenses as specified.

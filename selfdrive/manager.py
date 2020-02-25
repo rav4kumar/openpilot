@@ -211,7 +211,7 @@ car_started_processes = [
   'proclogd',
   'ubloxd',
   'mapd',
-  'thermalonlined'
+  'thermalonlined',
   'locationd',
 ]
 if ANDROID:

@@ -358,7 +358,7 @@ def main(gctx=None):
           overlay_init_done = True
 
         if params.get("IsOffroad") == b"1":
-          attempt_update()
+          need_reboot = attempt_update(time_offroad, need_reboot)
           update_failed_count = 0
         else:
           time_offroad = time.time()

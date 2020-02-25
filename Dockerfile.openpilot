@@ -83,6 +83,7 @@ COPY ./pyextra /tmp/openpilot/pyextra
 COPY ./panda /tmp/openpilot/panda
 COPY ./external /tmp/openpilot/external
 COPY ./tools /tmp/openpilot/tools
+COPY ./laika /tmp/openpilot/laika
 
 COPY SConstruct /tmp/openpilot/SConstruct
 

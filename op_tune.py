@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from common.op_params import opParams
 import ast
 import time
