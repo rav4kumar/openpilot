@@ -8,23 +8,19 @@ For a demo of this version of openpilot check the video below:
 # Installation
 `cd /data; rm -rf openpilot; git clone https://github.com/arne182/openpilot; cd openpilot; git checkout release4; reboot`
 
+still have trouble ?? More info about how to install this fork can be found [here](https://medium.com/@jfrux/comma-eon-installing-a-fork-of-openpilot-5c2b5c134b4b).
+
 ## Panda flashing
 
-To get this branch to work, it is required to flash your Panda because:
-- changing acceleration limits and
-- adapting lane departure warning where it gives you a slight push back into the middle of the lane without needing to be engaged
+This is done automatically otherwise run (pkill -f boardd; cd /data/openpilot/panda/board; make; reboot) to change the following:
+- allowing no disengage on brake and gas for Toyota
+- changing acceleration limits for Toyota and
+- adapting lane departure warning where it gives you a slight push back into the middle of the lane without needing to be engaged (not yet complete)
 - The Panda version is also changed and checked.
-- Run this command `cd /data/openpilot/panda/board; make; reboot` to manually flash the panda.
-
-More info about Panda flashing can be found [here](https://community.comma.ai/wiki/index.php/Panda_Flashing).
-
-## Installating this fork
-
-More info about how to install this fork can be found [here](https://medium.com/@jfrux/comma-eon-installing-a-fork-of-openpilot-5c2b5c134b4b).
 
 ## Branches
 
-`release4`: this is the default branch that is most up to date with the openpilot 0.7 release branch. Normally you should use this branch.
+`release4`: this is the default branch that is most up to date with the openpilot 0.7 release branch. Normally you should use this branch because it has been tested and verified that it is fully working without any issues.
 
 `073-clean`: this is my default testing branch. When I finishing testing/adding new structure, I'll merge this into the
 `release4` branch.
@@ -35,19 +31,17 @@ More info about how to install this fork can be found [here](https://medium.com/
 
 # Configuration
 
-- You can turn on or off some of the feature by editing `op_edit.py`. run the following command `cd /data/openpilto; python op_edit.py`
+- You can turn on or off some of the feature by editing `op_edit.py`. run the following command `python /data/openpilot/op_edit.py`
+
+- You can also use live tuner to edit some of the feature live. `op_tune.py` Run the following command `python /data/openpilot/op_tune.py`
 
 # Todo
 
-- [ ] Auto Lane change from Boggyver on release2 and release3 branch.
+- [ ] Auto Lane change from Boggyver on release2 and release3 branch. (only used in released 3 and below)
 
 - [ ] Traffic light detection from Littlemountainman
 
-- [ ] Phantom: control open pilot via app like summon
-
-- [ ] Control 3 gas profiles with sport eco and normal buttons on car
-
-- [ ] Dynamic gas and distance profiles.
+- [ ] Phantom: control open pilot via app like summon ( only on release 3 and below.)
 
 # Features
 
@@ -76,6 +70,23 @@ More info about how to install this fork can be found [here](https://medium.com/
 - GPS Accurecy on the Dev UI.
 - Live speedlimit_offset in op_tune.py
 - If the model detect's cut in it will draw two different chevron to show the user that it see's both of the car.
+- Control 3 gas profiles with sport eco and normal buttons on car ( only for toyota).
+- [Dynamic distance profiles](https://github.com/ShaneSmiskol/openpilot/tree/stock_additions-devel#dynamic-follow-3-profiles) from Shane (In other word three different dynamic profiles: `traffic`, `relaxed`, `roadtrip`). Profile can be adjusted from either `python /data/openpilot/op_edit.py` or use live tuner to change the profile live (can take up to 4 sec to for new profile to be adjusted) `python /data/openpilot/op_tune.py`.
+- Dynamic Follow Button: Now you can change the Dynamic Follow Distance just by tapping the blue button on the bottom right.
+- [Dynamic Gas:](https://github.com/ShaneSmiskol/openpilot/tree/stock_additions-devel#dynamic-gas)
+        
+        - Currently supported vehicles (w/ comma pedal only):
+        
+        2017 Toyota Corolla (non-TSS2)
+        Toyota RAV4 (non-TSS2)
+        2019 Honda Pilot
+        2016 Honda Civic
+        TODO: Need to factor in distance, as it will not accelerate to get closer to the stopped lead if you engage at ~0mph far back from the lead. Also need to add support for vehicles not yet tuned for dynamic gas.
+
+        This aims to provide a smoother driving experience in stop and go traffic (under 20 mph) by modifying the maximum gas that can be applied based on your current velocity and the relative velocity of the lead car. It'll also of course increase the maximum gas when the lead is accelerating to help you get up to speed quicker than stock. And smoother; this eliminates the jerking you get from stock openpilot with comma pedal. It tries to coast if the lead is only moving slowly, it doesn't use maximum gas as soon as the lead inches forward :). When you are above 20 mph, relative velocity and the following distance is taken into consideration.
+- ALC w/ BSM : (Automatic Lane Change with Blind spot monitoring) you can now change lane automataclly. It will wait 1 sec before applying ALC. If the BSM detacts objects it will stop the lane change and will take you back in your original lane. Also, it will notify the user on the eon. 
+
+
 # Licensing
 
 openpilot is released under the MIT license. Some parts of the software are released under other licenses as specified.

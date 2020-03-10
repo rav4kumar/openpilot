@@ -25,6 +25,15 @@ struct ALCAState {
   alcaDirection @6 :Int8;
 }
 
+struct LongitudinalPIDTuningCruise {
+  kpBP @0 :List(Float32);
+  kpV @1 :List(Float32);
+  kiBP @2 :List(Float32);
+  kiV @3 :List(Float32);
+  deadzoneBP @4 :List(Float32);
+  deadzoneV @5 :List(Float32);
+  }
+  
 struct ThermalOnlineData {
   cpu0 @0 :UInt16;
   cpu1 @1 :UInt16;
@@ -80,6 +89,10 @@ struct CarEventArne182 @0x9b1657f34caf3ad4 {
     reverseGearArne @2;
     waitingMode @3;
     wrongGearArne @4;
+    rightALCbsm @5;
+    leftALCbsm @6;
+    preventALC @7;
+    dfButtonAlert @8;
   }
 }
 
@@ -126,6 +139,14 @@ struct ManagerData {
   runningProcesses @0 :List(Text);
 }
 
+struct SmiskolData {
+  mpcTR @0 :Float32;
+}
+
+struct DynamicFollowButton {
+  status @0 :UInt16;
+}
+
 struct EventArne182 {
   # in nanoseconds?
   logMonoTime @0 :UInt64;
@@ -138,5 +159,7 @@ struct EventArne182 {
     phantomData @4:PhantomData;
     managerData @5:ManagerData;
     thermalonline @7:ThermalOnlineData;
+    smiskolData @8 :SmiskolData;
+    dynamicFollowButton @9 :DynamicFollowButton;
   }
 }

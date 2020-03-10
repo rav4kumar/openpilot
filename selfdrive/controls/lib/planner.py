@@ -19,6 +19,7 @@ from common.travis_checker import travis
 from common.op_params import opParams
 op_params = opParams()
 osm = op_params.get('osm', True)
+offset_limit = op_params.get('offset_limit', default=0.0)
 
 if not travis:
   curvature_factor = opParams().get('curvature_factor', default=1.0)
@@ -34,15 +35,15 @@ AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distract
 
 # lookup tables VS speed to determine min and max accels in cruise
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MIN_V_ECO = [-1.0, -1.5, -1.0, -0.3, -0.1]
-_A_CRUISE_MIN_V_SPORT = [-3.0, -3.5, -4.0, -4.0, -4.0]
-_A_CRUISE_MIN_V_FOLLOWING = [-4.0, -3.5, -3.0, -2.5, -2.0]
-_A_CRUISE_MIN_V = [-1.6, -0.7, -0.6, -0.5, -0.3]
+_A_CRUISE_MIN_V_ECO = [-1.0, -0.7, -0.6, -0.5, -0.3]
+_A_CRUISE_MIN_V_SPORT = [-3.0, -2.6, -2.3, -2.0, -1.0]
+_A_CRUISE_MIN_V_FOLLOWING = [-4.0, -4.0, -3.5, -2.5, -2.0]
+_A_CRUISE_MIN_V = [-2.0, -1.5, -1.0, -0.7, -0.5]
 _A_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
 
 # need fast accel at very low speed for stop and go
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MAX_V = [3.0, 3.0, 1.5, .5, .3]
+_A_CRUISE_MAX_V = [2.0, 2.0, 1.5, .5, .3]
 _A_CRUISE_MAX_V_ECO = [1.0, 1.5, 1.0, 0.3, 0.1]
 _A_CRUISE_MAX_V_SPORT = [3.0, 3.5, 4.0, 4.0, 4.0]
 _A_CRUISE_MAX_V_FOLLOWING = [1.3, 1.6, 1.2, .7, .3]
@@ -171,6 +172,7 @@ class Planner():
   def update(self, sm, pm, CP, VM, PP, arne_sm):
     """Gets called when new radarState is available"""
     cur_time = sec_since_boot()
+    
     # we read offset value every 5 seconds
     fixed_offset = 0.0
     if not travis:
@@ -178,7 +180,7 @@ class Planner():
       if self.last_time > 5:
         try:
           self.offset = int(self.params.get("SpeedLimitOffset", encoding='utf8'))
-        except ValueError:
+        except (TypeError,ValueError):
           self.params.delete("SpeedLimitOffset")
           self.offset = 0
         self.osm = self.params.get("LimitSetSpeed", encoding='utf8') == "1"
@@ -207,7 +209,7 @@ class Planner():
     lead_2 = sm['radarState'].leadTwo
 
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
-    following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
+    following = self.mpc1.prev_lead_status
 
     if len(sm['model'].path.poly):
       path = list(sm['model'].path.poly)
@@ -218,7 +220,7 @@ class Planner():
       # TODO: compute max speed without using a list of points and without numpy
       y_p = 3 * path[0] * self.path_x**2 + 2 * path[1] * self.path_x + path[2]
       y_pp = 6 * path[0] * self.path_x + 2 * path[1]
-      curv = y_pp / (1. + y_p**2)**1.5
+      curv = y_pp / (1. + y_p**2)**1.5 / np.sqrt(curvature_factor)
 
       a_y_max = 2.975 - v_ego * 0.0375  # ~1.85 @ 75mph, ~2.6 @ 25mph
       v_curvature = np.sqrt(a_y_max / np.clip(np.abs(curv), 1e-4, None))
@@ -240,8 +242,10 @@ class Planner():
       if sm['liveMapData'].speedLimitValid and osm and self.osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
         speed_limit = sm['liveMapData'].speedLimit
         if speed_limit is not None:
+          v_speedlimit = speed_limit
           # offset is in percentage,.
-          v_speedlimit = speed_limit * (1. + self.offset/100.0)
+          if v_ego > offset_limit:
+            v_speedlimit = v_speedlimit * (1. + self.offset/100.0)
           if v_speedlimit > fixed_offset:
             v_speedlimit = v_speedlimit + fixed_offset
       else:
@@ -261,7 +265,9 @@ class Planner():
         else:
           speed_limit_ahead = sm['liveMapData'].speedLimitAhead
         if speed_limit_ahead is not None:
-          v_speedlimit_ahead = speed_limit_ahead * (1. + self.offset/100.0)
+          v_speedlimit_ahead = speed_limit_ahead
+          if v_ego > offset_limit:
+            v_speedlimit_ahead = v_speedlimit_ahead * (1. + self.offset/100.0)
           if v_speedlimit_ahead > fixed_offset:
             v_speedlimit_ahead = v_speedlimit_ahead + fixed_offset
       if sm['liveMapData'].curvatureValid and osm and self.osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
@@ -298,11 +304,11 @@ class Planner():
         accel_limits_turns[1] = min(accel_limits_turns[1], AWARENESS_DECEL)
         accel_limits_turns[0] = min(accel_limits_turns[0], accel_limits_turns[1])
 
-      if decel_for_turn and sm['liveMapData'].distToTurn < speed_ahead_distance:
+      if decel_for_turn and sm['liveMapData'].distToTurn < speed_ahead_distance and not following:
         time_to_turn = max(1.0, sm['liveMapData'].distToTurn / max((v_ego + v_curvature_map)/2, 1.))
         required_decel = min(0, (v_curvature_map - v_ego) / time_to_turn)
         accel_limits[0] = max(accel_limits[0], required_decel)
-      if v_speedlimit_ahead < v_speedlimit and self.longitudinalPlanSource =='cruise' and v_ego > v_speedlimit_ahead and sm['liveMapData'].speedLimitAheadDistance > 0.10:
+      if v_speedlimit_ahead < v_speedlimit and v_ego > v_speedlimit_ahead and sm['liveMapData'].speedLimitAheadDistance > 0.10 and not following:
         required_decel = min(0, (v_speedlimit_ahead*v_speedlimit_ahead - v_ego*v_ego)/(sm['liveMapData'].speedLimitAheadDistance*2))
         required_decel = max(required_decel, -3.0)
         accel_limits[0] = required_decel

@@ -262,6 +262,121 @@ const UIScene *scene = &s->scene;
   nvgRestore(s->vg);
 }
 
+static void ui_draw_track_right(UIState *s, bool is_mpc, track_vertices_data *pvd) {
+const UIScene *scene = &s->scene;
+  const PathData path = scene->model.path;
+  const float *mpc_x_coords = &scene->mpc_x[0];
+  const float *mpc_y_coords = &scene->mpc_y[0];
+
+  nvgSave(s->vg);
+  nvgTranslate(s->vg, 240.0f, 0.0); // rgb-box space
+  nvgTranslate(s->vg, -1440.0f / 2, -1080.0f / 2); // zoom 2x
+  nvgScale(s->vg, 2.0, 2.0);
+  nvgScale(s->vg, 1440.0f / s->rgb_width, 1080.0f / s->rgb_height);
+  nvgBeginPath(s->vg);
+
+  bool started = false;
+  float off = is_mpc?0.3:0.5;
+  float lead_d = scene->lead_d_rel*2.;
+  float path_height = is_mpc?(lead_d>5.)?fmin(lead_d, 25.)-fmin(lead_d*0.35, 10.):20.
+                            :(lead_d>0.)?fmin(lead_d, 50.)-fmin(lead_d*0.35, 10.):49.;
+  int vi = 0;
+  for(int i = 0;i < pvd->cnt;i++) {
+    if (pvd->v[i].x + 100 < 0 || pvd->v[i].y < 0) {
+      continue;
+    }
+    float offset = 0;
+    if (!started) {
+      nvgMoveTo(s->vg, pvd->v[i].x + offset, pvd->v[i].y);
+      started = true;
+    } else {
+      if (pvd->v[i].y < pvd->v[i-1].y) offset = 100;
+      nvgLineTo(s->vg, pvd->v[i].x + offset, pvd->v[i].y);
+    }
+  }
+
+  nvgClosePath(s->vg);
+
+  NVGpaint track_bg;
+  if (is_mpc) {
+    // Draw colored MPC track
+    if (scene->steerOverride) {
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+        nvgRGBA(155, 0, 0, 255), nvgRGBA(55, 0, 0, 50));
+    } else {
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+        nvgRGBA(255,0, 0, 255),
+        nvgRGBA(155, 0, 0, 50));
+    }
+  } else {
+    // Draw white vision track
+    track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+      nvgRGBA(255, 255, 255, 200), nvgRGBA(255, 255, 255, 50));
+  }
+
+  nvgFillPaint(s->vg, track_bg);
+  nvgFill(s->vg);
+  nvgRestore(s->vg);
+}
+
+static void ui_draw_track_left(UIState *s, bool is_mpc, track_vertices_data *pvd) {
+const UIScene *scene = &s->scene;
+  const PathData path = scene->model.path;
+  const float *mpc_x_coords = &scene->mpc_x[0];
+  const float *mpc_y_coords = &scene->mpc_y[0];
+
+  nvgSave(s->vg);
+  nvgTranslate(s->vg, 240.0f, 0.0); // rgb-box space
+  nvgTranslate(s->vg, -1440.0f / 2, -1080.0f / 2); // zoom 2x
+  nvgScale(s->vg, 2.0, 2.0);
+  nvgScale(s->vg, 1440.0f / s->rgb_width, 1080.0f / s->rgb_height);
+  nvgBeginPath(s->vg);
+
+  bool started = false;
+  float off = is_mpc?0.3:0.5;
+  float lead_d = scene->lead_d_rel*2.;
+  float path_height = is_mpc?(lead_d>5.)?fmin(lead_d, 25.)-fmin(lead_d*0.35, 10.):20.
+                            :(lead_d>0.)?fmin(lead_d, 50.)-fmin(lead_d*0.35, 10.):49.;
+  int vi = 0;
+  for(int i = 0;i < pvd->cnt;i++) {
+    if (pvd->v[i].x - 100 < 0 || pvd->v[i].y < 0) {
+      continue;
+    }
+    float offset = -100;
+    if (!started) {
+      nvgMoveTo(s->vg, pvd->v[i].x + offset , pvd->v[i].y);
+      started = true;
+    } else {
+      if (pvd->v[i].y < pvd->v[i-1].y) offset = 0;
+      nvgLineTo(s->vg, pvd->v[i].x + offset , pvd->v[i].y);
+    }
+  }
+
+  nvgClosePath(s->vg);
+
+  NVGpaint track_bg;
+  if (is_mpc) {
+    // Draw colored MPC track
+    if (scene->steerOverride) {
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+        nvgRGBA(155, 0, 0, 255), nvgRGBA(55, 0, 0, 50));
+    } else {
+      track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+	
+        nvgRGBA(255,0, 0, 255),
+        nvgRGBA(155, 0, 0, 50));
+    }
+  } else {
+    // Draw white vision track
+    track_bg = nvgLinearGradient(s->vg, vwp_w, vwp_h, vwp_w, vwp_h*.4,
+      nvgRGBA(255, 255, 255, 200), nvgRGBA(255, 255, 255, 50));
+  }
+
+  nvgFillPaint(s->vg, track_bg);
+  nvgFill(s->vg);
+  nvgRestore(s->vg);
+}
+
 static void draw_steering(UIState *s, float curvature) {
   float points[50];
   for (int i = 0; i < 50; i++) {
@@ -383,6 +498,12 @@ static void ui_draw_vision_lanes(UIState *s) {
   ui_draw_track(s, false, &s->track_vertices[0]);
   if (scene->engaged) {
     // Draw MPC path when engaged
+    if (scene->rightblindspot){
+      ui_draw_track_right(s, true, &s->track_vertices[1]);
+    }
+    if (scene->leftblindspot){
+      ui_draw_track_left(s, true, &s->track_vertices[1]);
+    }
     ui_draw_track(s, true, &s->track_vertices[1]);
   }
 }
@@ -671,7 +792,19 @@ static void ui_draw_vision_event(UIState *s) {
   const int viz_event_x = ((ui_viz_rx + ui_viz_rw) - (viz_event_w + (bdr_s*2)));
   const int viz_event_y = (box_y + (bdr_s*1.5));
   const int viz_event_h = (header_h - (bdr_s*1.5));
-  if (s->scene.decel_for_model && s->scene.engaged) {
+  if (s->scene.speedlimitahead_valid && s->scene.speedlimitaheaddistance < 300 && s->scene.engaged && s->limit_set_speed) {
+    // draw speed sign
+    const int img_turn_size = 160;
+    const int img_turn_x = viz_event_x-(img_turn_size/4)+80;
+    const int img_turn_y = viz_event_y+bdr_s-25;
+    float img_turn_alpha = 1.0f;
+    nvgBeginPath(s->vg);
+    NVGpaint imgPaint = nvgImagePattern(s->vg, img_turn_x, img_turn_y,
+      img_turn_size, img_turn_size, 0, s->img_speed, img_turn_alpha);
+    nvgRect(s->vg, img_turn_x, img_turn_y, img_turn_size, img_turn_size);
+    nvgFillPaint(s->vg, imgPaint);
+    nvgFill(s->vg);
+  } else if (s->scene.decel_for_model && s->scene.engaged) {
     // draw winding road sign
     const int img_turn_size = 160;
     const int img_turn_x = viz_event_x-(img_turn_size/4)+80;
@@ -801,6 +934,26 @@ static void ui_draw_vision_brake(UIState *s) {
   nvgFill(s->vg);
 }
 
+static void ui_draw_dynamic_follow_button(UIState *s) {
+  int btn_w = 150;
+  int btn_h = 150;
+  int btn_x = 1920 - btn_w - 188;
+  int btn_y = 1080 - btn_h;
+
+  nvgBeginPath(s->vg);
+  nvgRoundedRect(s->vg, btn_x-110, btn_y-45, btn_w, btn_h, 100);
+  nvgStrokeColor(s->vg, nvgRGBA(12, 79, 130, 255));
+  nvgStrokeWidth(s->vg, 11);
+  nvgStroke(s->vg);
+
+  nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 255));
+  nvgFontSize(s->vg, 80);
+  nvgText(s->vg, btn_x - 38, btn_y + 30, "DF", NULL);
+
+  nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 255));
+  nvgFontSize(s->vg, 45);
+  nvgText(s->vg, btn_x - 34, btn_y + 50 + 15, "profile", NULL);
+}
 
 static void ui_draw_vision_header(UIState *s) {
   const UIScene *scene = &s->scene;
@@ -1134,6 +1287,7 @@ static void ui_draw_vision_footer(UIState *s) {
 
   ui_draw_vision_face(s);
   ui_draw_vision_brake(s);
+  ui_draw_dynamic_follow_button(s);
 
 #ifdef SHOW_SPEEDLIMIT
   ui_draw_vision_map(s);
@@ -1363,6 +1517,9 @@ void ui_nvg_init(UIState *s) {
   assert(s->img_brake >= 0);
   s->img_brake = nvgCreateImage(s->vg, "../assets/img_brake_disc.png", 1);
 
+  assert(s->img_speed >= 0);
+  s->img_speed = nvgCreateImage(s->vg, "../assets/img_trafficSign_speedahead.png", 1);
+	
   // init gl
   s->frame_program = load_program(frame_vertex_shader, frame_fragment_shader);
   assert(s->frame_program);

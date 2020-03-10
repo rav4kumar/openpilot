@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from cereal import car, arne182
+from cereal import car, arne182, log
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import EventTypes as ET, create_event, create_event_arne
 from selfdrive.controls.lib.vehicle_model import VehicleModel
@@ -8,9 +8,13 @@ from selfdrive.car.toyota.values import Ecu, ECU_FINGERPRINT, CAR, NO_STOP_TIMER
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.swaglog import cloudlog
 from selfdrive.car.interfaces import CarInterfaceBase
+from common.op_params import opParams
+import cereal.messaging as messaging
 
 ButtonType = car.CarState.ButtonEvent.Type
 GearShifter = car.CarState.GearShifter
+
+LaneChangeState = log.PathPlan.LaneChangeState
 
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController):
@@ -22,9 +26,11 @@ class CarInterface(CarInterfaceBase):
     self.brake_pressed_prev = False
     self.cruise_enabled_prev = False
     self.keep_openpilot_engaged = True
+    self.sm = messaging.SubMaster(['pathPlan'])
     # *** init the major players ***
     self.CS = CarState(CP)
-
+    self.op_params = opParams()
+    self.alca_min_speed = self.op_params.get('alca_min_speed', default=20.0)
     self.cp = get_can_parser(CP)
     self.cp_init = get_can_parser_init(CP)
     self.cp_cam = get_cam_can_parser(CP)
@@ -345,21 +351,22 @@ class CarInterface(CarInterfaceBase):
     ret.stoppingControl = False
     ret.startAccel = 0.0
 
-    if ret.enableGasInterceptor:
-      ret.gasMaxBP = [0., 9., 55]
-      ret.gasMaxV = [0.2, 0.5, 0.7]
-      ret.longitudinalTuning.kpV = [1.0, 0.75, 0.3]  # braking tune
-      ret.longitudinalTuning.kiV = [0.15, 0.1]
-    else:
-      ret.gasMaxBP = [0., 9., 55]
-      ret.gasMaxV = [0.2, 0.5, 0.7]
-      ret.longitudinalTuning.kpV = [2.5, 1.5, 0.325]  # braking tune from rav4h
-      ret.longitudinalTuning.kiV = [0.3, 0.10]
+    #if ret.enableGasInterceptor:
+    #  ret.gasMaxBP = [0., 9., 55]
+    #  ret.gasMaxV = [0.2, 0.5, 0.7]
+    #  ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune
+    #  ret.longitudinalTuning.kiV = [0.135, 0.1]
+    #else:
+    ret.gasMaxBP = [0., 9., 55]
+    ret.gasMaxV = [0.2, 0.5, 0.7]
+    ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]  # braking tune from rav4h
+    ret.longitudinalTuning.kiV = [0.1, 0.10]
 
     return ret
 
   # returns a car.CarState
   def update(self, c, can_strings):
+    self.sm.update(0)
     # ******************* do can recv *******************
     self.cp_cam.update_strings(can_strings)
     if self.frame < 1000:
@@ -526,7 +533,10 @@ class CarInterface(CarInterfaceBase):
 
     if ret.gasPressed and disengage_event:
       events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
-
+    if ret.rightBlinker and self.CS.rightblindspot and ret.vEgo > self.alca_min_speed and self.sm['pathPlan'].laneChangeState  == LaneChangeState.preLaneChange:
+      eventsArne182.append(create_event_arne('rightALCbsm', [ET.WARNING]))
+    if ret.leftBlinker and self.CS.leftblindspot and ret.vEgo > self.alca_min_speed and self.sm['pathPlan'].laneChangeState  == LaneChangeState.preLaneChange:
+      eventsArne182.append(create_event_arne('leftALCbsm', [ET.WARNING]))
     ret.events = events
     ret_arne182.events = eventsArne182
 

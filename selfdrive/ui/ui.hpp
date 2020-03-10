@@ -140,6 +140,8 @@ typedef struct UIScene {
 
   float awareness_status;
 
+  int dfButtonStatus;
+
   bool recording;
 
   // gernby pathcoloring
@@ -196,6 +198,7 @@ typedef struct UIState {
   int font_sans_semibold;
   int font_sans_bold;
   int img_wheel;
+  int img_speed;
   int img_turn;
   int img_face;
   int img_map;
@@ -214,6 +217,7 @@ typedef struct UIState {
   SubSocket *uilayout_sock;
   SubSocket *gps_sock;
   SubSocket *arne182_sock;
+  PubSocket *dynamicfollowbutton_sock;
   Poller * poller;
   Poller * pollerarne182;
 

@@ -274,7 +274,34 @@ ALERTS = [
       "Vision Model Output Uncertain",
       AlertStatus.userPrompt, AlertSize.mid,
       Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., 3.),
+  
+  Alert(
+      "rightALCbsm",
+      "Vehicle in Right Lane",
+      "Waiting for Lane to be clear",
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.none, 0., 0.4, .3),
 
+  Alert(
+      "leftALCbsm",
+      "Vehicle in Left Lane",
+      "Waiting for Lane to be clear",
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.none, 0., 0.4, .3),
+
+  Alert(
+      "preventALC",
+      "TAKE CONTROL",
+      "Lane Change Cancelled, Lane Unsafe",
+      AlertStatus.critical, AlertSize.full,
+      Priority.HIGH, VisualAlert.none, AudibleAlert.chimeWarningRepeat, .4, 3., 3.,),
+
+  Alert("dfButtonAlert",
+        "Using profile: ",
+        "",
+        AlertStatus.normal, AlertSize.mid,
+        Priority.LOW_LOWEST, VisualAlert.none, AudibleAlert.chimeWarning1, 0.2, 0., 2.),
+  
   # Non-entry only alerts
   Alert(
       "wrongCarModeNoEntry",

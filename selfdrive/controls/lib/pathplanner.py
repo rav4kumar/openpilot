@@ -7,6 +7,7 @@ from selfdrive.controls.lib.lane_planner import LanePlanner
 from selfdrive.config import Conversions as CV
 from common.params import Params
 import cereal.messaging as messaging
+import cereal.messaging_arne as messaging_arne
 from cereal import log
 from common.op_params import opParams
 #from common.travis_checker import travis
@@ -47,7 +48,7 @@ def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_
 class PathPlanner():
   def __init__(self, CP):
     self.LP = LanePlanner()
-
+    self.arne_sm = messaging_arne.SubMaster(['arne182Status'])
     self.last_cloudlog_t = 0
     self.steer_rate_cost = CP.steerRateCost
 
@@ -58,7 +59,8 @@ class PathPlanner():
     self.lane_change_direction = LaneChangeDirection.none
     self.lane_change_timer = 0.0
     self.prev_one_blinker = False
-
+    self.blindspotTrueCounterleft = 0
+    self.blindspotTrueCounterright = 0
     self.op_params = opParams()
     self.alca_nudge_required = self.op_params.get('alca_nudge_required', default=True)
     self.alca_min_speed = self.op_params.get('alca_min_speed', default=20.0)
@@ -80,6 +82,15 @@ class PathPlanner():
     self.angle_steers_des_time = 0.0
 
   def update(self, sm, pm, CP, VM):
+    self.arne_sm.update(0)
+    if self.arne_sm['arne182Status'].rightBlindspot:
+      self.blindspotTrueCounterright = 0
+    else:
+      self.blindspotTrueCounterright = self.blindspotTrueCounterright + 1
+    if self.arne_sm['arne182Status'].leftBlindspot:
+      self.blindspotTrueCounterleft = 0
+    else:
+      self.blindspotTrueCounterleft = self.blindspotTrueCounterleft + 1
     v_ego = sm['carState'].vEgo
     angle_steers = sm['carState'].steeringAngle
     active = sm['controlsState'].active
@@ -102,7 +113,7 @@ class PathPlanner():
     elif sm['carState'].rightBlinker:
       self.lane_change_direction = LaneChangeDirection.right
 
-    if (not active) or (self.lane_change_timer > LANE_CHANGE_TIME_MAX) or (not one_blinker) or (not self.lane_change_enabled):
+    if (not active) or (self.lane_change_timer > LANE_CHANGE_TIME_MAX) or (not one_blinker) or (not self.lane_change_enabled) or (sm['carState'].steeringPressed and ((sm['carState'].steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.right) or (sm['carState'].steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.left))):
       self.lane_change_state = LaneChangeState.off
       self.lane_change_direction = LaneChangeDirection.none
     else:
@@ -111,37 +122,52 @@ class PathPlanner():
       elif sm['carState'].rightBlinker:
         lane_change_direction = LaneChangeDirection.right
 
-      if self.alca_nudge_required:
-        torque_applied = sm['carState'].steeringPressed and \
-                         ((sm['carState'].steeringTorque > 0 and lane_change_direction == LaneChangeDirection.left) or \
-                          (sm['carState'].steeringTorque < 0 and lane_change_direction == LaneChangeDirection.right))
-      else:
-        torque_applied = True
+      #if self.alca_nudge_required:
+      torque_applied = (sm['carState'].steeringPressed and \
+                       ((sm['carState'].steeringTorque > 0 and lane_change_direction == LaneChangeDirection.left and not self.arne_sm['arne182Status'].leftBlindspot) or \
+                        (sm['carState'].steeringTorque < 0 and lane_change_direction == LaneChangeDirection.right and not self.arne_sm['arne182Status'].rightBlindspot))) or \
+                       (not self.alca_nudge_required and self.blindspotTrueCounterleft > 30 and lane_change_direction == LaneChangeDirection.left) or \
+                       (not self.alca_nudge_required and self.blindspotTrueCounterright > 30 and lane_change_direction == LaneChangeDirection.right)
+      #else:
+      #  torque_applied = True
 
       lane_change_prob = self.LP.l_lane_change_prob + self.LP.r_lane_change_prob
 
       # State transitions
       # off
       if self.lane_change_state == LaneChangeState.off and one_blinker and not self.prev_one_blinker and not below_lane_change_speed:
+        self.blindspotTrueCounterleft = 0
+        self.blindspotTrueCounterright = 0
         self.lane_change_state = LaneChangeState.preLaneChange
 
       # pre
       elif self.lane_change_state == LaneChangeState.preLaneChange:
         if not one_blinker or below_lane_change_speed:
           self.lane_change_state = LaneChangeState.off
+          self.blindspotTrueCounterleft = 0
+          self.blindspotTrueCounterright = 0
         elif torque_applied:
           self.lane_change_state = LaneChangeState.laneChangeStarting
 
       # starting
-      elif self.lane_change_state == LaneChangeState.laneChangeStarting and lane_change_prob > 0.5:
-        self.lane_change_state = LaneChangeState.laneChangeFinishing
+      elif self.lane_change_state == LaneChangeState.laneChangeStarting: 
+        if lane_change_prob > 0.5:
+          self.lane_change_state = LaneChangeState.laneChangeFinishing
+        if (self.arne_sm['arne182Status'].rightBlindspot and lane_change_direction == LaneChangeDirection.right) or (self.arne_sm['arne182Status'].leftBlindspot and lane_change_direction == LaneChangeDirection.left):
+          self.lane_change_state = LaneChangeState.preLaneChange
+          self.blindspotTrueCounterleft = 0
+          self.blindspotTrueCounterright = 0
 
       # finishing
       elif self.lane_change_state == LaneChangeState.laneChangeFinishing and lane_change_prob < 0.2:
         if one_blinker:
           self.lane_change_state = LaneChangeState.preLaneChange
+          self.blindspotTrueCounterleft = 0
+          self.blindspotTrueCounterright = 0
         else:
           self.lane_change_state = LaneChangeState.off
+          self.blindspotTrueCounterright = 0
+          self.blindspotTrueCounterleft = 0
 
     if self.lane_change_state in [LaneChangeState.off, LaneChangeState.preLaneChange]:
       self.lane_change_timer = 0.0

@@ -4,7 +4,7 @@ from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_command, 
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
                                            create_ipas_steer_command, create_accel_command, \
                                            create_acc_cancel_command, create_fcw_command
-from selfdrive.car.toyota.values import Ecu, CAR, STATIC_MSGS, SteerLimitParams
+from selfdrive.car.toyota.values import Ecu, CAR, STATIC_MSGS, SteerLimitParams, TSS2_CAR
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -282,7 +282,7 @@ class CarController():
         can_sends.append(make_can_msg(addr, vl, bus))
 
     # Enable blindspot debug mode once
-    if frame > 1000: # 10 seconds after start
+    if frame > 1000 and not (CS.CP.carFingerprint in TSS2_CAR or CS.CP.carFingerprint == CAR.CAMRY): # 10 seconds after start and not a tss2 car
       if BLINDSPOTALWAYSON:
         self.blindspot_blink_counter_left += 1
         self.blindspot_blink_counter_right += 1

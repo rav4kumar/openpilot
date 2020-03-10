@@ -157,7 +157,10 @@ def get_can_parser(CP):
     signals.append(("INTERCEPTOR_GAS", "GAS_SENSOR", 0))
     signals.append(("INTERCEPTOR_GAS2", "GAS_SENSOR", 0))
     checks.append(("GAS_SENSOR", 50))
-
+  if CP.carFingerprint in TSS2_CAR:
+    signals += [("L_ADJACENT", "BSM", 0)]
+    signals += [("R_ADJACENT", "BSM", 0)]
+    
   return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 0)
 
 
@@ -282,18 +285,24 @@ class CarState(CarStateBase):
       self.gasbuttonstatus = 0
     msg = messaging_arne.new_message()
     msg.init('arne182Status')
-    if frame > 999:
+    if frame > 999 and not (self.CP.carFingerprint in TSS2_CAR):
       if cp.vl["DEBUG"]['BLINDSPOTSIDE']==65: #Left
-        self.leftblindspotcounter = 21
-        self.leftblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
-        self.leftblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+        if cp.vl["DEBUG"]['BLINDSPOTD1'] != self.leftblindspotD1:
+          self.leftblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+          self.leftblindspotcounter = 21
+        if cp.vl["DEBUG"]['BLINDSPOTD2'] != self.leftblindspotD2:
+          self.leftblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+          self.leftblindspotcounter = 21
         if (self.leftblindspotD1 > 10) or (self.leftblindspotD2 > 10):
           self.leftblindspot = bool(1)
           print("Left Blindspot Detected")
       elif  cp.vl["DEBUG"]['BLINDSPOTSIDE']==66: #Right
-        self.rightblindspotcounter = 21
-        self.rightblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
-        self.rightblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+        if cp.vl["DEBUG"]['BLINDSPOTD1'] != self.rightblindspotD1:
+          self.rightblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+          self.rightblindspotcounter = 21
+        if cp.vl["DEBUG"]['BLINDSPOTD2'] != self.rightblindspotD2:
+          self.rightblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+          self.rightblindspotcounter = 21
         if (self.rightblindspotD1 > 10) or (self.rightblindspotD2 > 10):
           self.rightblindspot = bool(1)
           print("Right Blindspot Detected")
@@ -307,7 +316,14 @@ class CarState(CarStateBase):
         self.rightblindspot = False
         self.rightblindspotD1 = 0
         self.rightblindspotD2 = 0
-
+    elif frame > 999 and self.CP.carFingerprint in TSS2_CAR:
+      self.leftblindspot = cp.vl["BSM"]['L_ADJACENT'] == 1
+      self.leftblindspotD1 = 10.1
+      self.leftblindspotD2 = 10.1
+      self.rightblindspot = cp.vl["BSM"]['R_ADJACENT'] == 1
+      self.rightblindspotD1 = 10.1
+      self.rightblindspotD2 = 10.1
+   
     msg.arne182Status.leftBlindspot = self.leftblindspot
     msg.arne182Status.rightBlindspot = self.rightblindspot
     msg.arne182Status.rightBlindspotD1 = self.rightblindspotD1

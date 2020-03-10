@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import json
 import time
@@ -24,6 +25,13 @@ def read_params(params_file, default_params):
     return params, False
 
 
+class KeyInfo:
+  has_allowed_types = False
+  live = False
+  has_default = False
+  has_description = False
+
+
 class opParams:
   def __init__(self):
     """
@@ -45,9 +53,16 @@ class opParams:
                            'use_car_caching': {'default': True, 'allowed_types': [bool], 'description': 'Whether to use fingerprint caching', 'live': False},
                            'osm': {'default': True, 'allowed_types': [bool], 'description': 'Whether to use OSM for drives', 'live': False},
                            'force_pedal': {'default': False, 'allowed_types': [bool], 'description': "If openpilot isn't recognizing your comma pedal, set this to True", 'live': False},
-                           'following_distance': {'default': None, 'allowed_types': [type(None), float], 'description': 'None has no effect, while setting this to a float will let you change the TR', 'live': False},
-                           'keep_openpilot_engaged': {'default': True, 'allowed_types': [bool], 'description': 'True is stock behavior in this fork. False lets you use the brake and cruise control stalk to disengage as usual', 'live': False},
-                           'speed_offset': {'default': 0, 'allowed_types': [float, int], 'description': 'Speed limit offset in m/s', 'live': True}}
+                           'alca_nudge_required': {'default': False, 'allowed_types': [bool], 'description': "Require nudge to start ALC", 'live': False},
+                           'keep_openpilot_engaged': {'default': True, 'allowed_types': [bool],
+                                                      'description': 'True is stock behavior in this fork. False lets you use the brake and cruise control stalk to disengage as usual', 'live': False},
+                           'speed_offset': {'default': 0, 'allowed_types': [float, int], 'description': 'Speed limit offset in m/s', 'live': True},
+                           'alca_min_speed': {'default': 20, 'allowed_types': [float, int], 'description': 'Speed limit to start ALC in m/s', 'live': False},
+                           'offset_limit': {'default': 0, 'allowed_types': [float, int], 'description': 'Speed at which apk percent offset will work in m/s', 'live': False},
+                           'dynamic_follow': {'default': 'relaxed', 'allowed_types': [str],
+                                              'description': "Can be: ('traffic', 'relaxed', 'roadtrip'): Left to right increases in following distance.\n"
+                                                             "All profiles support dynamic follow so you'll get your preferred distance while\n"
+                                                             "retaining the smoothness and safety of dynamic follow!", 'live': True}}
 
     self.params = {}
     self.params_file = "/data/op_params.json"
@@ -55,7 +70,7 @@ class opParams:
     self.last_read_time = time.time()
     self.read_frequency = 5.0  # max frequency to read with self.get(...) (sec)
     self.force_update = False  # replaces values with default params if True, not just add add missing key/value pairs
-    self.to_delete = []
+    self.to_delete = ['dynamic_lane_speed', 'longkiV', 'following_distance', 'static_steer_ratio']
     self.run_init()  # restores, reads, and updates params
 
   def create_id(self):  # creates unique identifier to send with sentry errors. please update uniqueID with op_edit.py to your username!
@@ -125,10 +140,53 @@ class opParams:
     self.update_params(key, force_update)
     if key is None:
       return self.params
-    return self.params[key] if key in self.params else default
+
+    if key in self.params:
+      key_info = self.get_key_info(key)
+      if key_info.has_allowed_types:
+        value = self.params[key]
+        allowed_types = self.default_params[key]['allowed_types']
+        valid_type = type(value) in allowed_types
+        if not valid_type:
+          if key_info.has_default:  # if value in op_params.json is not correct type, use default
+            value = self.default_params[key]['default']
+          else:  # else use a standard value based on type (last resort to keep openpilot running)
+            value = self.value_from_types(allowed_types)
+      else:
+        value = self.params[key]
+    else:
+      value = default
+
+    return value
+
+  def get_key_info(self, key):
+    key_info = KeyInfo()
+    if key in self.default_params:
+      if 'allowed_types' in self.default_params[key]:
+        allowed_types = self.default_params[key]['allowed_types']
+        if isinstance(allowed_types, list) and len(allowed_types) > 0:
+          key_info.has_allowed_types = True
+      if 'live' in self.default_params[key] and self.default_params[key]['live'] is True:
+        key_info.live = True
+      if 'default' in self.default_params[key]:
+        key_info.has_default = True
+      if 'description' in self.default_params[key]:
+        key_info.has_description = True
+    return key_info
+
+  def value_from_types(self, allowed_types):
+    if list in allowed_types:
+      return []
+    elif float in allowed_types or int in allowed_types:
+      return 0
+    elif type(None) in allowed_types:
+      return None
+    elif str in allowed_types:
+      return ''
+    return None  # unknown type
 
   def update_params(self, key, force_update):
-    if force_update or (key in self.default_params and 'live' in self.default_params[key] and self.default_params[key]['live']):  # if is a live param, we want to get updates while openpilot is running
+    if force_update or self.get_key_info(key).live:  # if is a live param, we want to get updates while openpilot is running
       if not travis and time.time() - self.last_read_time >= self.read_frequency:  # make sure we aren't reading file too often
         self.params, read_status = read_params(self.params_file, self.format_default_params())
         if not read_status:

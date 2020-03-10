@@ -89,8 +89,12 @@ phantomData: [8211, false, 20.]
 thermalonline: [8212, false, 1., 1]
 
 #alca Events
-alcaStatus: [8212, false, 0.]
-alcaState: [8213, false, 0.]
+alcaStatus: [8213, false, 0.]
+alcaState: [8214, false, 0.]
+
+# smiskolData
+smiskolData: [8215, false, 20.]
+dynamicFollowButton: [8216, false, 0.]
 
 # 8080 is reserved for slave testing daemon
 # 8762 is reserved for logserver

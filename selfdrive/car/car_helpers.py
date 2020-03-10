@@ -1,6 +1,7 @@
 import os
 import threading
 import json
+import requests
 from common.params import Params
 from common.basedir import BASEDIR
 from selfdrive.car.fingerprints import eliminate_incompatible_cars, all_known_cars
@@ -175,18 +176,32 @@ def fingerprint(logcan, sendcan, has_relay):
   params.put("CachedFingerprint", json.dumps([car_fingerprint, source, {int(key): value for key, value in finger[0].items()}]))
   return car_fingerprint, finger, vin, car_fw, source
 
+def is_connected_to_internet(timeout=5):
+    try:
+        requests.get("https://sentry.io", timeout=timeout)
+        return True
+    except:
+        return False 
+      
 def crash_log(candidate):
-  crash.capture_warning("fingerprinted %s" % candidate)
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("fingerprinted %s" % candidate)
+      break
 
-def crash_log2(fingerprints):
-  crash.capture_warning("car doesn't match any fingerprints: %s" % fingerprints)
+def crash_log2(fingerprints, fw):
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("car doesn't match any fingerprints: %s" % fingerprints)
+      crash.capture_warning("car doesn't match any fw: %s" % fw)
+      break
 
 def get_car(logcan, sendcan, has_relay=False):
   candidate, fingerprints, vin, car_fw, source = fingerprint(logcan, sendcan, has_relay)
 
   if candidate is None:
     if not travis:
-      y = threading.Thread(target=crash_log2, args=(fingerprints,))
+      y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
       y.start()
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
