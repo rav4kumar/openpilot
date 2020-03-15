@@ -6,7 +6,8 @@ For a demo of this version of openpilot check the video below:
 [![demo of openpilot with this branch](https://img.youtube.com/vi/WKwSq8TPdpo/0.jpg)](https://www.youtube.com/playlist?list=PL3CGUyxys8DuTE1JTkdZwY93ejSfAGxyV)
 
 # Installation
-`cd /data; rm -rf openpilot; git clone https://github.com/arne182/openpilot; cd openpilot; git checkout release4; reboot`
+`cd /data; rm -rf openpilot; git clone -b Release4 --single-branch https://github.com/arne182/openpilot; reboot`
+- Fast cloning has been added to `Release4` branch. Thank you @ShaneSmisko
 
 still have trouble ?? More info about how to install this fork can be found [here](https://medium.com/@jfrux/comma-eon-installing-a-fork-of-openpilot-5c2b5c134b4b).
 
@@ -20,7 +21,7 @@ This is done automatically otherwise run (pkill -f boardd; cd /data/openpilot/pa
 
 ## Branches
 
-`release4`: this is the default branch that is most up to date with the openpilot 0.7 release branch. Normally you should use this branch because it has been tested and verified that it is fully working without any issues.
+`Release4`: this is the default branch that is most up to date with the openpilot 0.7 release branch. Normally you should use this branch because it has been tested and verified that it is fully working without any issues. This branch is roughly about 400MB use the command above to install this fork with in couple of secounds!
 
 `073-clean`: this is my default testing branch. When I finishing testing/adding new structure, I'll merge this into the
 `release4` branch.
