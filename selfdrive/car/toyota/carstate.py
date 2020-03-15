@@ -357,6 +357,7 @@ class CarState(CarStateBase):
     else:
       self.v_cruise_pcm = cp.vl["PCM_CRUISE_2"]['SET_SPEED']
       self.low_speed_lockout = cp.vl["PCM_CRUISE_2"]['LOW_SPEED_LOCKOUT'] == 2
+    v_cruise_pcm_max = self.v_cruise_pcm
     if self.CP.carFingerprint in TSS2_CAR:
       minimum_set_speed = 27.0
     elif self.CP.carFingerprint == CAR.RAV4:
@@ -392,7 +393,7 @@ class CarState(CarStateBase):
       self.setspeedoffset = int(self.v_cruise_pcm) - 169
 
 
-    self.v_cruise_pcm = min(max(7, int(self.v_cruise_pcm) - self.setspeedoffset),169)
+    self.v_cruise_pcm = min(max(7, int(self.v_cruise_pcm) - self.setspeedoffset),v_cruise_pcm_max)
 
     if not self.left_blinker_on and not self.right_blinker_on:
       self.Angles[self.Angle_counter] = abs(self.angle_steers)

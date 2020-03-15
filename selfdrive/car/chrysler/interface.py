@@ -103,10 +103,11 @@ class CarInterface(CarInterfaceBase):
     ret.longitudinalTuning.deadzoneBP = [0., 9.]
     ret.longitudinalTuning.deadzoneV = [0., .15]
     ret.longitudinalTuning.kpBP = [0., 5., 35.]
-    ret.longitudinalTuning.kpV = [3.6, 2.4, 1.5]
+    #ret.longitudinalTuning.kpV = [3.6, 2.4, 1.5]
     ret.longitudinalTuning.kiBP = [0., 35.]
-    ret.longitudinalTuning.kiV = [0.54, 0.36]
-
+    #ret.longitudinalTuning.kiV = [0.54, 0.36]
+    ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]  # braking tune from rav4h
+    ret.longitudinalTuning.kiV = [0.15, 0.10]
     return ret
 
   # returns a car.CarState
@@ -115,10 +116,7 @@ class CarInterface(CarInterfaceBase):
     self.cp.update_strings(can_strings)
     self.cp_cam.update_strings(can_strings)
 
-    self.CS.update(self.cp, self.cp_cam)
-
-    # create message
-    ret = car.CarState.new_message()
+    ret = self.CS.update(self.cp, self.cp_cam)
     ret_arne182 = arne182.CarStateArne182.new_message()
 
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
@@ -129,6 +127,7 @@ class CarInterface(CarInterfaceBase):
 
     # TODO: button presses
     buttonEvents = []
+    eventsArne182 = []
 
     if ret.leftBlinker != self.left_blinker_prev:
       be = car.CarState.ButtonEvent.new_message()
@@ -148,7 +147,6 @@ class CarInterface(CarInterfaceBase):
 
     # events
     events = []
-    eventsArne182 = []
     if not (ret.gearShifter in (GearShifter.drive, GearShifter.low)):
       events.append(create_event('wrongGear', [ET.NO_ENTRY, ET.SOFT_DISABLE]))
     if ret.doorOpen:
@@ -188,11 +186,8 @@ class CarInterface(CarInterfaceBase):
 
     # copy back carState packet to CS
     self.CS.out = ret.as_reader()
-
-
-    return ret.as_reader(), ret_arne182.as_reader()
-
-    #return self.CS.out
+    
+    return self.CS.out, ret_arne182.as_reader()
 
 
   # pass in a car.CarControl

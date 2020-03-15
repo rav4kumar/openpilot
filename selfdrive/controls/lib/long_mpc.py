@@ -79,11 +79,24 @@ class LongitudinalMpc():
     if not self.lead_data['status'] or travis:
       TR = 1.8
     elif CS.vEgo < 5.0:
-      TRs = [2.5, 2.0, 1.8, 1.75, 1.6]
-      vEgos = [1.0, 2.0, 3.0, 4.0, 5.0]
+      TRs = [2.0, 1.8, 1.75, 1.6]
+      vEgos = [2.0, 3.0, 4.0, 5.0]
       #TRs = [1.8, 1.6]
       #vEgos =[4.0, 5.0]
       TR = interp(CS.vEgo, vEgos, TRs)
+      p_mod_pos = 1.0
+      p_mod_neg = 1.0
+      TR_mod = []
+      x = [-20.0383, -15.6978, -11.2053, -7.8781, -5.0407, -3.2167, -1.6122, 0.0]  # relative velocity values
+      y = [0.641, 0.506, 0.418, 0.334, 0.24, 0.115, 0.055, 0.01]  # modification values
+      TR_mod.append(interp(self.lead_data['v_lead'] - self.car_data['v_ego'], x, y))
+
+      x = [-4.4795, -2.8122, -1.5727, -1.1129, -0.6611, -0.2692, 0.0]  # lead acceleration values
+      y = [0.265, 0.187, 0.096, 0.057, 0.033, 0.024, 0.0]  # modification values
+      TR_mod.append(interp(self.calculate_lead_accel(), x, y))
+      
+      self.TR_Mod = sum([mod * p_mod_neg if mod < 0 else mod * p_mod_pos for mod in TR_mod]) # calculate TR_Mod so that the cost function works correctly
+      
     else:
       self.store_df_data()
       TR = self.dynamic_follow(CS)
@@ -108,7 +121,7 @@ class LongitudinalMpc():
       cost = 0.1
       cost = cost * min(max(1.0 , (6.0 - vEgo)),5.0) 
     if self.TR_Mod > 0:
-      cost = cost + self.TR_Mod/10.0
+      cost = cost + self.TR_Mod/2.0
     if self.last_cost != cost:
       self.libmpc.change_tr(MPC_COST_LONG.TTC, cost, MPC_COST_LONG.ACCELERATION, MPC_COST_LONG.JERK)
       self.last_cost = cost

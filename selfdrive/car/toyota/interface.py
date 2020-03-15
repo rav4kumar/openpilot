@@ -58,7 +58,18 @@ class CarInterface(CarInterfaceBase):
 
     ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
     ret.steerLimitTimer = 0.4
-
+    
+    #if ret.enableGasInterceptor:
+    #  ret.gasMaxBP = [0., 9., 55]
+    #  ret.gasMaxV = [0.2, 0.5, 0.7]
+    #  ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune
+    #  ret.longitudinalTuning.kiV = [0.135, 0.1]
+    #else:
+    ret.gasMaxBP = [0., 9., 55]
+    ret.gasMaxV = [0.2, 0.5, 0.7]
+    ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]  # braking tune from rav4h
+    ret.longitudinalTuning.kiV = [0.15, 0.10]
+    
     if candidate not in [CAR.PRIUS, CAR.RAV4, CAR.RAV4H]: # These cars use LQR/INDI
       ret.lateralTuning.init('pid')
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
@@ -91,7 +102,7 @@ class CarInterface(CarInterfaceBase):
 
       ret.steerActuatorDelay = 0.5
 
-    elif candidate in [CAR.RAV4, CAR.RAV4H]:
+    elif candidate in [CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
       ret.safetyParam = 73
       ret.wheelbase = 2.65
@@ -103,6 +114,26 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.scale = 1500.0
       ret.lateralTuning.lqr.ki = 0.06
 
+      ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      ret.lateralTuning.lqr.c = [1., 0.]
+      ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+      ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
+      ret.lateralTuning.lqr.dcGain = 0.002237852961363602
+      
+    elif candidate in [CAR.RAV4]:
+      stop_and_go = True if (candidate in CAR.RAV4H) else False
+      ret.safetyParam = 73
+      ret.wheelbase = 2.65
+      ret.steerRatio = 16.88   # 14.5 is spec end-to-end
+      tire_stiffness_factor = 0.5533
+      ret.mass = 3650. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
+      ret.lateralTuning.init('lqr')
+
+      ret.lateralTuning.lqr.scale = 1500.0
+      ret.lateralTuning.lqr.ki = 0.06
+      ret.longitudinalTuning.kpV = [0.1, 0.3, 0.3]  # braking tune
+      ret.longitudinalTuning.kiV = [0.1, 0.1]
       ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
       ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
       ret.lateralTuning.lqr.c = [1., 0.]
@@ -346,21 +377,10 @@ class CarInterface(CarInterfaceBase):
 
     ret.longitudinalTuning.deadzoneBP = [0., 9.]
     ret.longitudinalTuning.deadzoneV = [0., .15]
-    ret.longitudinalTuning.kpBP = [0., 5., 35.]
-    ret.longitudinalTuning.kiBP = [0., 35.]
+    ret.longitudinalTuning.kpBP = [0., 5., 55.]
+    ret.longitudinalTuning.kiBP = [0., 55.]
     ret.stoppingControl = False
     ret.startAccel = 0.0
-
-    #if ret.enableGasInterceptor:
-    #  ret.gasMaxBP = [0., 9., 55]
-    #  ret.gasMaxV = [0.2, 0.5, 0.7]
-    #  ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune
-    #  ret.longitudinalTuning.kiV = [0.135, 0.1]
-    #else:
-    ret.gasMaxBP = [0., 9., 55]
-    ret.gasMaxV = [0.2, 0.5, 0.7]
-    ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]  # braking tune from rav4h
-    ret.longitudinalTuning.kiV = [0.1, 0.10]
 
     return ret
 

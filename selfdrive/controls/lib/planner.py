@@ -209,7 +209,9 @@ class Planner():
     lead_2 = sm['radarState'].leadTwo
 
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
-    following = self.mpc1.prev_lead_status
+    
+    following = False if self.longitudinalPlanSource=='cruise' else (lead_1.status and lead_1.dRel < 40.0)
+     
 
     if len(sm['model'].path.poly):
       path = list(sm['model'].path.poly)
@@ -311,6 +313,7 @@ class Planner():
       if v_speedlimit_ahead < v_speedlimit and v_ego > v_speedlimit_ahead and sm['liveMapData'].speedLimitAheadDistance > 0.10 and not following:
         required_decel = min(0, (v_speedlimit_ahead*v_speedlimit_ahead - v_ego*v_ego)/(sm['liveMapData'].speedLimitAheadDistance*2))
         required_decel = max(required_decel, -3.0)
+        decel_for_turn = True
         accel_limits[0] = required_decel
         accel_limits[1] = required_decel
         self.a_acc_start = required_decel
@@ -390,7 +393,7 @@ class Planner():
     plan_send.plan.longitudinalPlanSource = self.longitudinalPlanSource
 
     plan_send.plan.vCurvature = float(v_curvature_map)
-    plan_send.plan.decelForTurn = bool(decel_for_turn or v_speedlimit_ahead < min([v_speedlimit, v_ego + 1.]))
+    plan_send.plan.decelForTurn = bool(decel_for_turn)
     plan_send.plan.mapValid = True
 
     radar_valid = not (radar_dead or radar_fault)

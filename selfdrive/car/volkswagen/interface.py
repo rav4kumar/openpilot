@@ -121,6 +121,7 @@ class CarInterface(CarInterfaceBase):
     eventsArne182 = []
     buttonEvents = []
     params = Params()
+    
     ret = car.CarState.new_message()
     ret_arne182 = arne182.CarStateArne182.new_message()
 

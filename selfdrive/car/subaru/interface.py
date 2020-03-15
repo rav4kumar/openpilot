@@ -97,7 +97,6 @@ class CarInterface(CarInterfaceBase):
   def update(self, c, can_strings):
     self.pt_cp.update_strings(can_strings)
     self.cam_cp.update_strings(can_strings)
-
     self.CS.update(self.pt_cp, self.cam_cp)
 
     # create message
