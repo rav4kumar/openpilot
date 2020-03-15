@@ -898,7 +898,7 @@ int main(int argc, char* argv[]) {
         update_status(s, STATUS_DISENGAGED);
       }
       // Car started, fetch a new rgb image from ipc and peek for zmq events.
-      touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 2 : 500);
+      touched = touch_poll(&touch, &touch_x, &touch_y, 1);
       ui_update(s);
       if(!s->vision_connected) {
         // Visiond process is just stopped, force a redraw to make screen blank again.
