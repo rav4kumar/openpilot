@@ -154,9 +154,9 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
       ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
       ret.lateralTuning.lqr.dcGain = 0.002237852961363602
-      if ret.enableGasInterceptor:
-        ret.longitudinalTuning.kpV = [(1.2 * 0.9) + (3.6 * 0.1), (0.8 * 0.5) + (2.4 * 0.5), (0.5 * 0.24) + (1.5 * 0.76)]
-        ret.longitudinalTuning.kiV = [(0.18 * 0.9) + (0.54 * 0.1), (0.12 * 0.2125) + (0.36 * 0.7875)]
+      #if ret.enableGasInterceptor:
+        #ret.longitudinalTuning.kpV = [(1.2 * 0.9) + (3.6 * 0.1), (0.8 * 0.5) + (2.4 * 0.5), (0.5 * 0.24) + (1.5 * 0.76)]
+        #ret.longitudinalTuning.kiV = [(0.18 * 0.9) + (0.54 * 0.1), (0.12 * 0.2125) + (0.36 * 0.7875)]
 
     elif candidate == CAR.COROLLA:
       stop_and_go = False
