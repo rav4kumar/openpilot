@@ -103,13 +103,15 @@ class LongControl():
     self.last_v_target = v_target
     self.v_ego = v_ego
     # Actuation limits
-     if not travis:
+
+    gas_max = interp(v_ego, CP.gasMaxBP, CP.gasMaxV)
+    brake_max = interp(v_ego, CP.brakeMaxBP, CP.brakeMaxV)
+
+    if not travis:
       self.handle_passable(passable, v_ego)
-      gas_max = self.dynamic_gas.update(v_ego, self.lead_data, self.mpc_TR)
+      if self.enable_dg:
+        gas_max = self.dynamic_gas.update(v_ego, self.lead_data, self.mpc_TR, self.blinker_status)
       # v_target, v_target_future, a_target = self.dynamic_lane_speed.update(v_target, v_target_future, v_cruise, a_target, v_ego, self.track_data, self.lead_data)
-    else:
-      gas_max = interp(v_ego, CP.gasMaxBP, CP.gasMaxV)
-      brake_max = interp(v_ego, CP.brakeMaxBP, CP.brakeMaxV)
 
     # Update state machine
     output_gb = self.last_output_gb
