@@ -196,7 +196,7 @@ static void ui_init(UIState *s) {
                               s->thermal_sock,
                               s->arne182_sock
                               //s->thermal_sock,
-                              s->health_sock,
+                              //s->health_sock,
                               s->ubloxgnss_sock
                              });
 
