@@ -52,6 +52,20 @@ static void ui_draw_sidebar_network_strength(UIState *s, bool hasSidebar) {
   nvgFill(s->vg);
 }
 
+static void ui_draw_sidebar_ip_addr(UIState *s, bool hasSidebar) {
+  const int network_ip_w = 176;
+  const int network_ip_x = hasSidebar ? 58 : -(sbr_w);
+  const int network_ip_y = 255;
+
+  char network_ip_str[20];
+  snprintf(network_ip_str, sizeof(network_ip_str), "%s", s->scene.ipAddr);
+  nvgFillColor(s->vg, COLOR_WHITE);
+  nvgFontSize(s->vg, 32);
+  nvgFontFace(s->vg, "sans-regular");
+  nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+  nvgTextBox(s->vg, network_ip_x, network_ip_y, network_ip_w, network_ip_str, NULL);
+}
+
 static void ui_draw_sidebar_battery_icon(UIState *s, bool hasSidebar) {
   const int battery_img_h = 36;
   const int battery_img_w = 76;
@@ -77,7 +91,7 @@ static void ui_draw_sidebar_battery_icon(UIState *s, bool hasSidebar) {
 
 static void ui_draw_sidebar_network_type(UIState *s, bool hasSidebar) {
   const int network_x = hasSidebar ? 50 : -(sbr_w);
-  const int network_y = 273;
+  const int network_y = 303;
   const int network_w = 100;
   const int network_h = 100;
   const char *network_types[6] = {"--", "WiFi", "2G", "3G", "4G", "5G"};
@@ -200,20 +214,21 @@ static void ui_draw_sidebar_panda_metric(UIState *s, bool hasSidebar) {
     snprintf(panda_message_str, sizeof(panda_message_str), "%s", "NO PANDA");
   } else if (s->scene.hwType == cereal_HealthData_HwType_whitePanda) {
     panda_severity = 0;
-    snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA ACTIVE");
+    snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA\nACTIVE");
   } else if (
       (s->scene.hwType == cereal_HealthData_HwType_greyPanda) ||
       (s->scene.hwType == cereal_HealthData_HwType_blackPanda) ||
       (s->scene.hwType == cereal_HealthData_HwType_uno)) {
       if (s->scene.satelliteCount == -1) {
         panda_severity = 0;
-        snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA ACTIVE");
-      } else if (s->scene.satelliteCount < 6) {
-        panda_severity = 1;
-        snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA\nNO GPS");
-      } else if (s->scene.satelliteCount >= 6) {
-        panda_severity = 0;
-        snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA GOOD GPS");
+        snprintf(panda_message_str, sizeof(panda_message_str), "%s", "PANDA\nACTIVE");
+      } else {
+        if (s->scene.satelliteCount < 6) {
+          panda_severity = 1;
+        } else if (s->scene.satelliteCount >= 6) {
+          panda_severity = 0;
+        }
+        snprintf(panda_message_str, sizeof(panda_message_str), "%s %d", "PANDA\nGPS:", s->scene.satelliteCount);
       }
   }
 
@@ -227,6 +242,7 @@ void ui_draw_sidebar(UIState *s) {
   ui_draw_sidebar_home_button(s, hasSidebar);
   ui_draw_sidebar_network_strength(s, hasSidebar);
   ui_draw_sidebar_battery_icon(s, hasSidebar);
+  ui_draw_sidebar_ip_addr(s, hasSidebar);
   ui_draw_sidebar_network_type(s, hasSidebar);
   ui_draw_sidebar_storage_metric(s, hasSidebar);
   ui_draw_sidebar_temp_metric(s, hasSidebar);

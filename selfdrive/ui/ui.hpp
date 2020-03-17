@@ -44,6 +44,7 @@
 #define COLOR_WHITE_ALPHA nvgRGBA(255, 255, 255, 85)
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
+#define COLOR_GREEN nvgRGBA(34, 201, 49, 255)
 
 #ifndef QCOM
   #define UI_60FPS
@@ -115,6 +116,7 @@ typedef struct UIScene {
   float gpsAccuracy;
   float speedlimit;
   float angleSteers;
+  char ipAddr[20];
   float speedlimitaheaddistance;
   bool speedlimitahead_valid;
   bool speedlimit_valid;
