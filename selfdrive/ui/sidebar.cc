@@ -52,6 +52,7 @@ static void ui_draw_sidebar_network_strength(UIState *s, bool hasSidebar) {
   nvgFill(s->vg);
 }
 
+// Thank @eFini
 static void ui_draw_sidebar_ip_addr(UIState *s, bool hasSidebar) {
   const int network_ip_w = 176;
   const int network_ip_x = hasSidebar ? 58 : -(sbr_w);
