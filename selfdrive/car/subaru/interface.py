@@ -2,33 +2,11 @@
 from cereal import car, arne182
 from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.drive_helpers import create_event, EventTypes as ET
-from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.car.subaru.values import CAR
-from selfdrive.car.subaru.carstate import CarState, get_powertrain_can_parser, get_camera_can_parser
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
 from selfdrive.car.interfaces import CarInterfaceBase
 
-ButtonType = car.CarState.ButtonEvent.Type
-
 class CarInterface(CarInterfaceBase):
-  def __init__(self, CP, CarController):
-    self.CP = CP
-
-    self.frame = 0
-    self.acc_active_prev = 0
-    self.gas_pressed_prev = False
-
-    # *** init the major players ***
-    self.CS = CarState(CP)
-    self.VM = VehicleModel(CP)
-    self.pt_cp = get_powertrain_can_parser(CP)
-    self.cam_cp = get_camera_can_parser(CP)
-
-    self.gas_pressed_prev = False
-
-    self.CC = None
-    if CarController is not None:
-      self.CC = CarController(CP.carFingerprint)
 
   @staticmethod
   def compute_gb(accel, speed):
@@ -36,15 +14,11 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
-    ret = car.CarParams.new_message()
+    ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
     ret.carName = "subaru"
     ret.radarOffCan = True
-    ret.carFingerprint = candidate
-    ret.isPandaBlack = has_relay
     ret.safetyModel = car.CarParams.SafetyModel.subaru
-
-    ret.enableCruise = True
 
     # force openpilot to fake the stock camera, since car harness is not supported yet and old style giraffe (with switches)
     # was never released
@@ -62,26 +36,6 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kf = 0.00005
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0., 20.], [0., 20.]]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.2, 0.3], [0.02, 0.03]]
-      ret.steerMaxBP = [0.] # m/s
-      ret.steerMaxV = [1.]
-
-    ret.steerControlType = car.CarParams.SteerControlType.torque
-    ret.steerRatioRear = 0.
-    # testing tuning
-
-    # No long control in subaru
-    ret.gasMaxBP = [0.]
-    ret.gasMaxV = [0.]
-    ret.brakeMaxBP = [0.]
-    ret.brakeMaxV = [0.]
-    ret.longitudinalTuning.deadzoneBP = [0.]
-    ret.longitudinalTuning.deadzoneV = [0.]
-    ret.longitudinalTuning.kpBP = [0.]
-    ret.longitudinalTuning.kpV = [0.]
-    ret.longitudinalTuning.kiBP = [0.]
-    ret.longitudinalTuning.kiV = [0.]
-
-    # end from gm
 
     # TODO: get actual value, for now starting with reasonable value for
     # civic and scaling by mass and wheelbase
@@ -102,7 +56,7 @@ class CarInterface(CarInterfaceBase):
     # create message
     ret = car.CarState.new_message()
     ret_arne182 = arne182.CarStateArne182.new_message()
-    
+
     ret.canValid = self.pt_cp.can_valid and self.cam_cp.can_valid
 
     # speeds
@@ -128,36 +82,18 @@ class CarInterface(CarInterfaceBase):
     ret.gas = self.CS.pedal_gas / 255.
     ret.gasPressed = self.CS.user_gas_pressed
 
-    # cruise state
-    ret.cruiseState.enabled = bool(self.CS.acc_active)
-    ret.cruiseState.speed = self.CS.v_cruise_pcm * CV.KPH_TO_MS
-    ret.cruiseState.available = bool(self.CS.main_on)
-    ret.cruiseState.speedOffset = 0.
+    ret = self.CS.update(self.cp, self.cp_cam)
 
-    ret.leftBlinker = self.CS.left_blinker_on
-    ret.rightBlinker = self.CS.right_blinker_on
-    ret.seatbeltUnlatched = self.CS.seatbelt_unlatched
-    ret.doorOpen = self.CS.door_open
+    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
+    ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
+    ret.yawRate = self.VM.yaw_rate(ret.steeringAngle * CV.DEG_TO_RAD, ret.vEgo)
 
     buttonEvents = []
-
-    # blinkers
-    if self.CS.left_blinker_on != self.CS.prev_left_blinker_on:
-      be = car.CarState.ButtonEvent.new_message()
-      be.type = ButtonType.leftBlinker
-      be.pressed = self.CS.left_blinker_on
-      buttonEvents.append(be)
-
-    if self.CS.right_blinker_on != self.CS.prev_right_blinker_on:
-      be = car.CarState.ButtonEvent.new_message()
-      be.type = ButtonType.rightBlinker
-      be.pressed = self.CS.right_blinker_on
-      buttonEvents.append(be)
-
     be = car.CarState.ButtonEvent.new_message()
-    be.type = ButtonType.accelCruise
+    be.type = car.CarState.ButtonEvent.Type.accelCruise
     buttonEvents.append(be)
 
+    events = self.create_common_events(ret, extra_gears=[car.CarState.GearShifter.unknown])
 
     events = []
     eventsArne182 = []
@@ -169,21 +105,15 @@ class CarInterface(CarInterfaceBase):
 
     if self.CS.acc_active and not self.acc_active_prev:
       events.append(create_event('pcmEnable', [ET.ENABLE]))
-    if not self.CS.acc_active:
+    if not ret.cruiseState.enabled:
       events.append(create_event('pcmDisable', [ET.USER_DISABLE]))
-
-    # disable on gas pedal rising edge
-    if (ret.gasPressed and not self.gas_pressed_prev):
-      events.append(create_event('pedalPressed', [ET.NO_ENTRY, ET.USER_DISABLE]))
-
-    if ret.gasPressed:
-      events.append(create_event('pedalPressed', [ET.PRE_ENABLE]))
 
     ret.events = events
     ret_arne182.events = eventsArne182
     # update previous brake/gas pressed
     self.gas_pressed_prev = ret.gasPressed
-    self.acc_active_prev = self.CS.acc_active
+    self.brake_pressed_prev = ret.brakePressed
+    self.cruise_enabled_prev = ret.cruiseState.enabled
 
     # cast to reader so it can't be modified
     return ret.as_reader(), ret_arne182.as_reader()

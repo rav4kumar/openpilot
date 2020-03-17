@@ -45,20 +45,14 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):
-
-    ret = car.CarParams.new_message()
+    ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
     ret.carName = "toyota"
-    ret.carFingerprint = candidate
-    ret.isPandaBlack = has_relay
-
     ret.safetyModel = car.CarParams.SafetyModel.toyota
-
-    ret.enableCruise = True
 
     ret.steerActuatorDelay = 0.12  # Default delay, Prius has larger delay
     ret.steerLimitTimer = 0.4
-    
+
     #if ret.enableGasInterceptor:
     #  ret.gasMaxBP = [0., 9., 55]
     #  ret.gasMaxV = [0.2, 0.5, 0.7]
@@ -69,7 +63,7 @@ class CarInterface(CarInterfaceBase):
     ret.gasMaxV = [0.2, 0.5, 0.7]
     ret.longitudinalTuning.kpV = [0.325, 0.325, 0.325]  # braking tune from rav4h
     ret.longitudinalTuning.kiV = [0.15, 0.10]
-    
+
     if candidate not in [CAR.PRIUS, CAR.RAV4, CAR.RAV4H]: # These cars use LQR/INDI
       ret.lateralTuning.init('pid')
       ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0.], [0.]]
@@ -87,19 +81,6 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.indi.outerLoopGain = 3.0
       ret.lateralTuning.indi.timeConstant = 1.0
       ret.lateralTuning.indi.actuatorEffectiveness = 1.0
-
-      # TODO: Determine if this is better than INDI
-      # ret.lateralTuning.init('lqr')
-      # ret.lateralTuning.lqr.scale = 1500.0
-      # ret.lateralTuning.lqr.ki = 0.01
-
-      # ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
-      # ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
-      # ret.lateralTuning.lqr.c = [1., 0.]
-      # ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
-      # ret.lateralTuning.lqr.l = [0.03233671, 0.03185757]
-      # ret.lateralTuning.lqr.dcGain = 0.002237852961363602
-
       ret.steerActuatorDelay = 0.5
 
     elif candidate in [CAR.RAV4H]:
@@ -120,7 +101,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
       ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
       ret.lateralTuning.lqr.dcGain = 0.002237852961363602
-      
+
     elif candidate in [CAR.RAV4]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
       ret.safetyParam = 73
@@ -210,7 +191,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 4700. * CV.LB_TO_KG + STD_CARGO_KG  # 4260 + 4-5 people
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.18], [0.015]]  # community tuning
       ret.lateralTuning.pid.kf = 0.00012  # community tuning
-      
+
     elif candidate in [CAR.HIGHLANDER, CAR.HIGHLANDERH]:
       stop_and_go = True
       ret.safetyParam = 73
@@ -358,13 +339,11 @@ class CarInterface(CarInterfaceBase):
     smartDsu = 0x2FF in fingerprint[0]
     # In TSS2 cars the camera does long control
     ret.enableDsu = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.dsu) and candidate not in TSS2_CAR
-    ret.enableApgs = False  # is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.apgs)
     ret.enableGasInterceptor = 0x201 in fingerprint[0]
     # if the smartDSU is detected, openpilot can send ACC_CMD (and the smartDSU will block it from the DSU) or not (the DSU is "connected")
     ret.openpilotLongitudinalControl = ret.enableCamera and (smartDsu or ret.enableDsu or candidate in TSS2_CAR)
     cloudlog.warning("ECU Camera Simulated: %r", ret.enableCamera)
     cloudlog.warning("ECU DSU Simulated: %r", ret.enableDsu)
-    cloudlog.warning("ECU APGS Simulated: %r", ret.enableApgs)
     cloudlog.warning("ECU Gas Interceptor: %r", ret.enableGasInterceptor)
 
     # min speed to enable ACC. if car can do stop and go, then set enabling speed
@@ -401,41 +380,7 @@ class CarInterface(CarInterfaceBase):
     ret_arne182 = arne182.CarStateArne182.new_message()
 
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
-
-    # speeds
-    ret.vEgo = self.CS.v_ego
-    ret.vEgoRaw = self.CS.v_ego_raw
-    ret.aEgo = self.CS.a_ego
-    ret.yawRate = self.VM.yaw_rate(self.CS.angle_steers * CV.DEG_TO_RAD, self.CS.v_ego)
-    ret.standstill = self.CS.standstill
-    ret.wheelSpeeds.fl = self.CS.v_wheel_fl
-    ret.wheelSpeeds.fr = self.CS.v_wheel_fr
-    ret.wheelSpeeds.rl = self.CS.v_wheel_rl
-    ret.wheelSpeeds.rr = self.CS.v_wheel_rr
-
-    # gear shifter
-    ret.gearShifter = self.CS.gear_shifter
-
-    # gas pedal
-    ret.gas = self.CS.pedal_gas
-    if self.CP.enableGasInterceptor:
-    # use interceptor values to disengage on pedal press
-      ret.gasPressed = self.CS.pedal_gas > 15
-    else:
-      ret.gasPressed = self.CS.pedal_gas > 0
-
-    # brake pedal
-    ret.brake = self.CS.user_brake
-    ret.brakePressed = self.CS.brake_pressed != 0
-    ret.brakeLights = self.CS.brake_lights
-
-    # steering wheel
-    ret.steeringAngle = self.CS.angle_steers
-    ret.steeringRate = self.CS.angle_steers_rate
-
-    ret.steeringTorque = self.CS.steer_torque_driver
-    ret.steeringTorqueEps = self.CS.steer_torque_motor
-    ret.steeringPressed = self.CS.steer_override
+    ret.yawRate = self.VM.yaw_rate(ret.steeringAngle * CV.DEG_TO_RAD, ret.vEgo)
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
     eventsArne182 = []
 
@@ -493,7 +438,7 @@ class CarInterface(CarInterfaceBase):
       disengage_event = False
 
     # events
-    events = []
+    events = self.create_common_events(ret)
 
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera:

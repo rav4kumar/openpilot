@@ -403,10 +403,18 @@ void can_health(PubSocket *publisher) {
   bool cdp_mode = health.usb_power_mode == (uint8_t)(cereal::HealthData::UsbPowerMode::CDP);
   bool no_ignition_exp = no_ignition_cnt > NO_IGNITION_CNT_MAX;
   if ((no_ignition_exp || (voltage_f < VBATT_PAUSE_CHARGING)) && cdp_mode && !ignition) {
-    printf("TURN OFF CHARGING!\n");
-    pthread_mutex_lock(&usb_lock);
-    libusb_control_transfer(dev_handle, 0xc0, 0xe6, (uint16_t)(cereal::HealthData::UsbPowerMode::CLIENT), 0, NULL, 0, TIMEOUT);
-    pthread_mutex_unlock(&usb_lock);
+    char *disable_power_down = NULL;
+    size_t disable_power_down_sz = 0;
+    const int result = read_db_value(NULL, "DisablePowerDown", &disable_power_down, &disable_power_down_sz);
+    if (disable_power_down_sz != 1 || disable_power_down[0] != '1') {
+      printf("TURN OFF CHARGING!\n");
+      pthread_mutex_lock(&usb_lock);
+      libusb_control_transfer(dev_handle, 0xc0, 0xe6, (uint16_t)(cereal::HealthData::UsbPowerMode::CLIENT), 0, NULL, 0, TIMEOUT);
+      pthread_mutex_unlock(&usb_lock);
+      printf("POWER DOWN DEVICE\n");
+      system("service call power 17 i32 0 i32 1");
+    }
+    if (disable_power_down) free(disable_power_down);
   }
   if (!no_ignition_exp && (voltage_f > VBATT_START_CHARGING) && !cdp_mode) {
     printf("TURN ON CHARGING!\n");
@@ -801,7 +809,7 @@ void pigeon_init() {
   usleep(100*1000);
 
   // init from ubloxd
-  // To generate this data, run test/ubloxd.py with the print statements enabled in the write function in panda/python/serial.py 
+  // To generate this data, run test/ubloxd.py with the print statements enabled in the write function in panda/python/serial.py
   pigeon_send("\xB5\x62\x06\x00\x14\x00\x03\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x1E\x7F");
   pigeon_send("\xB5\x62\x06\x3E\x00\x00\x44\xD2");
   pigeon_send("\xB5\x62\x06\x00\x14\x00\x00\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x19\x35");

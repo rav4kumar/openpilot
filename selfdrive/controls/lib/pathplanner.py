@@ -39,6 +39,7 @@ DESIRES = {
   },
 }
 
+
 def calc_states_after_delay(states, v_ego, steer_angle, curvature_factor, steer_ratio, delay):
   states[0].x = v_ego * delay
   states[0].psi = v_ego * curvature_factor * math.radians(steer_angle) / steer_ratio * delay
@@ -58,6 +59,7 @@ class PathPlanner():
     self.lane_change_state = LaneChangeState.off
     self.lane_change_direction = LaneChangeDirection.none
     self.lane_change_timer = 0.0
+    self.lane_change_ll_prob = 1.0
     self.prev_one_blinker = False
     self.blindspotTrueCounterleft = 0
     self.blindspotTrueCounterright = 0
@@ -139,6 +141,7 @@ class PathPlanner():
         self.blindspotTrueCounterleft = 0
         self.blindspotTrueCounterright = 0
         self.lane_change_state = LaneChangeState.preLaneChange
+        self.lane_change_ll_prob = 1.0
 
       # pre
       elif self.lane_change_state == LaneChangeState.preLaneChange:
@@ -150,7 +153,7 @@ class PathPlanner():
           self.lane_change_state = LaneChangeState.laneChangeStarting
 
       # starting
-      elif self.lane_change_state == LaneChangeState.laneChangeStarting: 
+      elif self.lane_change_state == LaneChangeState.laneChangeStarting:
         if lane_change_prob > 0.5:
           self.lane_change_state = LaneChangeState.laneChangeFinishing
         if (self.arne_sm['arne182Status'].rightBlindspot and lane_change_direction == LaneChangeDirection.right) or (self.arne_sm['arne182Status'].leftBlindspot and lane_change_direction == LaneChangeDirection.left):
@@ -158,9 +161,20 @@ class PathPlanner():
           self.blindspotTrueCounterleft = 0
           self.blindspotTrueCounterright = 0
 
+        ## commans new lane change method
+      #elif self.lane_change_state == LaneChangeState.laneChangeStarting:
+        # fade out lanelines over 1s
+        #self.lane_change_ll_prob = max(self.lane_change_ll_prob - DT_MDL, 0.0)
+        # 98% certainty
+        #if lane_change_prob < 0.02 and self.lane_change_ll_prob < 0.01:
+        #  self.lane_change_state = LaneChangeState.laneChangeFinishing
+
+
       # finishing
-      elif self.lane_change_state == LaneChangeState.laneChangeFinishing and lane_change_prob < 0.2:
-        if one_blinker:
+      elif self.lane_change_state == LaneChangeState.laneChangeFinishing:
+        # fade in laneline over 1s
+        self.lane_change_ll_prob = min(self.lane_change_ll_prob + DT_MDL, 1.0)
+        if one_blinker and self.lane_change_ll_prob > 0.99:
           self.lane_change_state = LaneChangeState.preLaneChange
           self.blindspotTrueCounterleft = 0
           self.blindspotTrueCounterright = 0
@@ -180,8 +194,8 @@ class PathPlanner():
 
     # Turn off lanes during lane change
     if desire == log.PathPlan.Desire.laneChangeRight or desire == log.PathPlan.Desire.laneChangeLeft:
-      self.LP.l_prob = 0.
-      self.LP.r_prob = 0.
+      self.LP.l_prob *= self.lane_change_ll_prob
+      self.LP.r_prob *= self.lane_change_ll_prob
       self.libmpc.init_weights(MPC_COST_LAT.PATH / 10.0, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
     else:
       self.libmpc.init_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.LANE, MPC_COST_LAT.HEADING, self.steer_rate_cost)
@@ -225,8 +239,7 @@ class PathPlanner():
       self.solution_invalid_cnt = 0
     plan_solution_valid = self.solution_invalid_cnt < 2
 
-    plan_send = messaging.new_message()
-    plan_send.init('pathPlan')
+    plan_send = messaging.new_message('pathPlan')
     plan_send.valid = sm.all_alive_and_valid(service_list=['carState', 'controlsState', 'liveParameters', 'model'])
     plan_send.pathPlan.laneWidth = float(self.LP.lane_width)
     plan_send.pathPlan.dPoly = [float(x) for x in self.LP.d_poly]

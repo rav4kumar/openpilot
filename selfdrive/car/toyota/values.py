@@ -64,20 +64,11 @@ STATIC_MSGS = [
   (0x470, Ecu.dsu, (CAR.PRIUS, CAR.LEXUS_RXH), 1, 100, b'\x00\x00\x02\x7a'),
   (0x470, Ecu.dsu, (CAR.HIGHLANDER, CAR.HIGHLANDERH, CAR.RAV4H, CAR.SIENNA, CAR.LEXUS_CTH), 1,  100, b'\x00\x00\x01\x79'),
   (0x4CB, Ecu.dsu, (CAR.PRIUS, CAR.RAV4H, CAR.LEXUS_RXH, CAR.LEXUS_NXH, CAR.RAV4, CAR.COROLLA, CAR.HIGHLANDERH, CAR.HIGHLANDER, CAR.AVALON, CAR.SIENNA, CAR.LEXUS_CTH, CAR.LEXUS_RX), 0, 100, b'\x0c\x00\x00\x00\x00\x00\x00\x00'),
-
-  (0x292, Ecu.apgs, (CAR.PRIUS), 0,   3, b'\x00\x00\x00\x00\x00\x00\x00\x9e'),
-  (0x32E, Ecu.apgs, (CAR.PRIUS), 0,  20, b'\x00\x00\x00\x00\x00\x00\x00\x00'),
-  (0x396, Ecu.apgs, (CAR.PRIUS), 0, 100, b'\xBD\x00\x00\x00\x60\x0F\x02\x00'),
-  (0x43A, Ecu.apgs, (CAR.PRIUS), 0, 100, b'\x84\x00\x00\x00\x00\x00\x00\x00'),
-  (0x43B, Ecu.apgs, (CAR.PRIUS), 0, 100, b'\x00\x00\x00\x00\x00\x00\x00\x00'),
-  (0x497, Ecu.apgs, (CAR.PRIUS), 0, 100, b'\x00\x00\x00\x00\x00\x00\x00\x00'),
-  (0x4CC, Ecu.apgs, (CAR.PRIUS), 0, 100, b'\x0D\x00\x00\x00\x00\x00\x00\x00'),
 ]
 
 ECU_FINGERPRINT = {
   Ecu.fwdCamera: [0x2e4],   # steer torque cmd
   Ecu.dsu: [0x283],   # accel cmd
-  Ecu.apgs: [0x835],  # angle cmd
 }
 
 
@@ -183,6 +174,7 @@ FW_VERSIONS = {
       b'\x018966333P4400\x00\x00\x00\x00',
       b'\x018966333P4500\x00\x00\x00\x00',
       b'\x018966333P4700\x00\x00\x00\x00',
+      b'\x018966333Q6200\x00\x00\x00\x00',
     ],
     (Ecu.dsu, 0x791, None): [
       b'8821F0607200    ',
@@ -195,7 +187,10 @@ FW_VERSIONS = {
       b'F152606290\x00\x00\x00\x00\x00\x00',
       b'F152633540\x00\x00\x00\x00\x00\x00',
     ],
-    (Ecu.eps, 0x7a1, None): [b'8965B33540\x00\x00\x00\x00\x00\x00'],
+    (Ecu.eps, 0x7a1, None): [
+      b'8965B33540\x00\x00\x00\x00\x00\x00',
+      b'8965B33542\x00\x00\x00\x00\x00\x00',
+    ],
     (Ecu.fwdRadar, 0x750, 0xf): [  # Same as 0x791
       b'8821F0601300    ',
       b'8821F0603300    ',
@@ -205,6 +200,7 @@ FW_VERSIONS = {
       b'8646F0601200    ',
       b'8646F0601300    ',
       b'8646F0603400    ',
+      b'8646F0605000    ',
     ],
   },
   CAR.CAMRYH: {
@@ -237,12 +233,40 @@ FW_VERSIONS = {
     ],
   },
   CAR.CHR: {
-    (Ecu.dsu, 0x791, None): [b'8821FF404100    '],
-    (Ecu.esp, 0x7b0, None): [b'F1526F4122\x00\x00\x00\x00\x00\x00'],
-    (Ecu.eps, 0x7a1, None): [b'8965B10040\x00\x00\x00\x00\x00\x00'],
-    (Ecu.engine, 0x7e0, None): [b'\x033F424000\x00\x00\x00\x00\x00\x00\x00\x00A0202000\x00\x00\x00\x00\x00\x00\x00\x00895231203202\x00\x00\x00\x00'],
-    (Ecu.fwdRadar, 0x750, 0xf): [b'8821FF404100    '],
-    (Ecu.fwdCamera, 0x750, 0x6d): [b'8646FF404000    '],
+    (Ecu.engine, 0x700, None): [
+      b'\x0189663F413100\x00\x00\x00\x00',
+    ],
+    (Ecu.dsu, 0x791, None): [
+      b'8821FF401600    ',
+      b'8821FF404100    ',
+    ],
+    (Ecu.esp, 0x7b0, None): [
+      b'F1526F4073\x00\x00\x00\x00\x00\x00',
+      b'F1526F4122\x00\x00\x00\x00\x00\x00',
+    ],
+    (Ecu.eps, 0x7a1, None): [
+      b'8965B10011\x00\x00\x00\x00\x00\x00',
+      b'8965B10040\x00\x00\x00\x00\x00\x00',
+    ],
+    (Ecu.engine, 0x7e0, None): [
+      b'\x033F424000\x00\x00\x00\x00\x00\x00\x00\x00A0202000\x00\x00\x00\x00\x00\x00\x00\x00895231203202\x00\x00\x00\x00',
+    ],
+    (Ecu.fwdRadar, 0x750, 0xf): [
+      b'8821FF401600    ',
+      b'8821FF404100    ',
+    ],
+    (Ecu.fwdCamera, 0x750, 0x6d): [
+      b'8646FF401800    ',
+      b'8646FF404000    ',
+    ],
+  },
+  CAR.CHRH: {
+    (Ecu.engine, 0x700, None): [b'\x0289663F431000\x00\x00\x00\x008966A4703000\x00\x00\x00\x00'],
+    (Ecu.esp, 0x7b0, None): [b'F152610040\x00\x00\x00\x00\x00\x00'],
+    (Ecu.dsu, 0x791, None): [b'8821FF407100    '],
+    (Ecu.eps, 0x7a1, None): [b'8965B10050\x00\x00\x00\x00\x00\x00'],
+    (Ecu.fwdRadar, 0x750, 0xf): [b'8821FF407100    '],
+    (Ecu.fwdCamera, 0x750, 0x6d): [b'8646FF407000    '],
   },
   CAR.COROLLA: {
     (Ecu.engine, 0x7e0, None): [
@@ -346,9 +370,11 @@ FW_VERSIONS = {
     (Ecu.esp, 0x7b0, None): [
       b'F152612590\x00\x00\x00\x00\x00\x00',
       b'F152612691\x00\x00\x00\x00\x00\x00',
+      b'F152612692\x00\x00\x00\x00\x00\x00',
       b'F152612700\x00\x00\x00\x00\x00\x00',
       b'F152612800\x00\x00\x00\x00\x00\x00',
       b'F152612840\x00\x00\x00\x00\x00\x00',
+      b'F152612A10\x00\x00\x00\x00\x00\x00',
       b'F152642540\x00\x00\x00\x00\x00\x00',
     ],
     (Ecu.fwdRadar, 0x750, 0xf): [
@@ -428,6 +454,7 @@ FW_VERSIONS = {
       b'\x03896634786000\x00\x00\x00\x008966A4703000\x00\x00\x00\x00897CF4710001\x00\x00\x00\x00',
       b'\x03896634789000\x00\x00\x00\x008966A4703000\x00\x00\x00\x00897CF4703002\x00\x00\x00\x00',
       b'\x038966347A3000\x00\x00\x00\x008966A4703000\x00\x00\x00\x00897CF4707001\x00\x00\x00\x00',
+      b'\x038966347B7000\x00\x00\x00\x008966A4703000\x00\x00\x00\x00897CF4710001\x00\x00\x00\x00',
     ],
     (Ecu.eps, 0x7a1, None): [
       b'8965B47021\x00\x00\x00\x00\x00\x00',
@@ -576,12 +603,14 @@ FW_VERSIONS = {
   },
   CAR.RAV4H_TSS2: {
     (Ecu.engine, 0x700, None): [
+      b'\x018966342M5000\x00\x00\x00\x00',
       b'\x018966342X6000\x00\x00\x00\x00',
       b'\x028966342W4001\x00\x00\x00\x00897CF1203001\x00\x00\x00\x00',
       b'\x02896634A23001\x00\x00\x00\x00897CF1203001\x00\x00\x00\x00',
     ],
     (Ecu.esp, 0x7b0, None): [
       b'F152642291\x00\x00\x00\x00\x00\x00',
+      b'F152642330\x00\x00\x00\x00\x00\x00',
       b'F152642531\x00\x00\x00\x00\x00\x00',
       b'F152642532\x00\x00\x00\x00\x00\x00',
     ],
@@ -589,6 +618,7 @@ FW_VERSIONS = {
       b'8965B42170\x00\x00\x00\x00\x00\x00',
       b'8965B42171\x00\x00\x00\x00\x00\x00',
       b'8965B42181\x00\x00\x00\x00\x00\x00',
+      b'\x028965B0R01200\x00\x00\x00\x008965B0R02200\x00\x00\x00\x00',
     ],
     (Ecu.fwdRadar, 0x750, 0xf): [
       b'\x018821F3301200\x00\x00\x00\x00',
@@ -643,6 +673,28 @@ FW_VERSIONS = {
       b'8821F4702300\x00\x00\x00\x00',
     ],
     (Ecu.fwdCamera, 0x750, 0x6d): [b'8646F0801100\x00\x00\x00\x00'],
+  },
+  CAR.LEXUS_ESH_TSS2: {
+    (Ecu.engine, 0x700, None): [
+      b'\x028966333S8000\x00\x00\x00\x00897CF3302002\x00\x00\x00\x00',
+      b'\x028966333V4000\x00\x00\x00\x00897CF3305001\x00\x00\x00\x00',
+    ],
+    (Ecu.esp, 0x7b0, None): [
+      b'F152633423\x00\x00\x00\x00\x00\x00',
+      b'F152633680\x00\x00\x00\x00\x00\x00',
+    ],
+    (Ecu.eps, 0x7a1, None): [
+      b'8965B33252\x00\x00\x00\x00\x00\x00',
+      b'8965B33590\x00\x00\x00\x00\x00\x00',
+    ],
+    (Ecu.fwdRadar, 0x750, 0xf): [
+      b'\x018821F3301100\x00\x00\x00\x00',
+      b'\x018821F3301300\x00\x00\x00\x00',
+    ],
+    (Ecu.fwdCamera, 0x750, 0x6d): [
+      b'\x028646F33030D0\x00\x00\x00\x008646G26011A0\x00\x00\x00\x00',
+      b'\x028646F3304100\x00\x00\x00\x008646G2601200\x00\x00\x00\x00',
+    ],
   },
   CAR.LEXUS_RXH: {
     (Ecu.engine, 0x7e0, None): [
