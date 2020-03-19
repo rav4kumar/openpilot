@@ -10,7 +10,7 @@
 #include <capnp/serialize.h>
 #include "cereal/gen/cpp/arne182.capnp.h"
 
-#include <json.h>
+#include <json.h> // Might not be needed
 #include <czmq.h>
 
 #include "common/util.h"
@@ -160,7 +160,7 @@ static void ui_init(UIState *s) {
   s->carstate_sock = SubSocket::create(s->ctx, "carState");
   s->livempc_sock = SubSocket::create(s->ctx, "liveMpc");
   s->gps_sock = SubSocket::create(s->ctx, "gpsLocationExternal");
-  s->thermal_sock = SubSocket::create(s->ctxarne182, "thermalonline");
+  s->thermalonline_sock = SubSocket::create(s->ctxarne182, "thermalonline");
   s->arne182_sock = SubSocket::create(s->ctxarne182, "arne182Status");
   s->dynamicfollowbutton_sock = PubSocket::create(s->ctxarne182, "dynamicFollowButton");
   s->thermal_sock = SubSocket::create(s->ctx, "thermal");
@@ -176,11 +176,12 @@ static void ui_init(UIState *s) {
   assert(s->livempc_sock != NULL);
   assert(s->gps_sock != NULL);
   assert(s->thermal_sock != NULL);
+  assert(s->thermalonline_sock != NULL);
   assert(s->arne182_sock != NULL);
   assert(s->dynamicfollowbutton_sock != NULL);
-  assert(s->thermal_sock != NULL);
   assert(s->health_sock != NULL);
   assert(s->ubloxgnss_sock != NULL);
+
 
   s->poller = Poller::create({
                               s->model_sock,
@@ -188,16 +189,16 @@ static void ui_init(UIState *s) {
                               s->uilayout_sock,
                               s->livecalibration_sock,
                               s->radarstate_sock,
+                              s->thermal_sock,
+                              s->health_sock,
+                              s->ubloxgnss_sock,
                               s->carstate_sock,
                               s->livempc_sock,
                               s->gps_sock
                              });
   s->pollerarne182 = Poller::create({
-                              s->thermal_sock,
+                              s->thermalonline_sock,
                               s->arne182_sock
-                              //s->thermal_sock,
-                              //s->health_sock,
-                              s->ubloxgnss_sock
                              });
 
 #ifdef SHOW_SPEEDLIMIT
@@ -469,16 +470,15 @@ void handle_message(UIState *s, Message * msg) {
     struct cereal_RadarState_LeadData leaddatad;
     struct cereal_RadarState_LeadData leaddatae;
     cereal_read_RadarState_LeadData(&leaddatad, datad.leadOne);
-    cereal_read_RadarState_LeadData(&leaddatae, datad.leadTwo);
     s->scene.lead_status = leaddatad.status;
     s->scene.lead_d_rel = leaddatad.dRel;
     s->scene.lead_y_rel = leaddatad.yRel;
     s->scene.lead_v_rel = leaddatad.vRel;
-    //cereal_read_RadarState_LeadData(&leaddatad, datad.leadTwo);
-    //s->scene.lead_status2 = leaddatad.status;
-    //s->scene.lead_d_rel2 = leaddatad.dRel;
-    //s->scene.lead_y_rel2 = leaddatad.yRel;
-    //s->scene.lead_v_rel2 = leaddatad.vRel;
+    cereal_read_RadarState_LeadData(&leaddatad, datad.leadTwo);
+    s->scene.lead_status2 = leaddatad.status;
+    s->scene.lead_d_rel2 = leaddatad.dRel;
+    s->scene.lead_y_rel2 = leaddatad.yRel;
+    s->scene.lead_v_rel2 = leaddatad.vRel;
     s->livempc_or_radarstate_changed = true;
   } else if (eventd.which == cereal_Event_liveCalibration) {
     s->scene.world_objects_visible = true;
@@ -556,7 +556,6 @@ void handle_message(UIState *s, Message * msg) {
     s->scene.freeSpace = datad.freeSpace;
     s->scene.thermalStatus = datad.thermalStatus;
     s->scene.paTemp = datad.pa0;
-    snprintf(s->scene.ipAddr, sizeof(s->scene.ipAddr), "%s", datad.ipAddr.str);
   } else if (eventd.which == cereal_Event_ubloxGnss) {
     struct cereal_UbloxGnss datad;
     cereal_read_UbloxGnss(&datad, eventd.ubloxGnss);
@@ -601,6 +600,8 @@ void handle_message_arne182(UIState *s, Message * msg) {
     s->scene.rightblindspotD2 = datad.rightBlindspotD2;
   }
   capn_free(&ctxarne182);
+}
+
 static void check_messages(UIState *s) {
   while(true) {
     auto polls = s->poller->poll(0);
@@ -612,9 +613,28 @@ static void check_messages(UIState *s) {
       Message * msg = sock->receive();
       if (msg == NULL) continue;
 
+      set_awake(s, true);
+
       handle_message(s, msg);
 
       delete msg;
+    }
+  }
+  while(true) {
+    auto pollsarne182 = s->pollerarne182->poll(0);
+
+    if (pollsarne182.size() == 0)
+      return;
+
+    for (auto sock : pollsarne182){
+      Message * msgarne182 = sock->receive();
+      if (msgarne182 == NULL) continue;
+
+      set_awake(s, true);
+
+      handle_message_arne182(s, msgarne182);
+
+      delete msgarne182;
     }
   }
 }
@@ -714,7 +734,7 @@ static void ui_update(UIState *s) {
       int ret = zmq_poll(polls, 1, 1000);
     #endif
     if (ret < 0) {
-      if (errno == EINTR) continue;
+      if (errno == EINTR || errno == EAGAIN) continue;
 
       LOGE("poll failed (%d - %d)", ret, errno);
       close(s->ipc_fd);
@@ -769,40 +789,7 @@ static void ui_update(UIState *s) {
     break;
   }
   // peek and consume all events in the zmq queue, then return.
-  while(true) {
-    auto polls = s->poller->poll(0);
-
-    if (polls.size() == 0)
-      break;
-
-    for (auto sock : polls){
-      Message * msg = sock->receive();
-      if (msg == NULL) continue;
-
-      set_awake(s, true);
-
-      handle_message(s, msg);
-
-      delete msg;
-    }
-  }
-  while(true) {
-    auto pollsarne182 = s->pollerarne182->poll(0);
-
-    if (pollsarne182.size() == 0)
-      return;
-
-    for (auto sock : pollsarne182){
-      Message * msgarne182 = sock->receive();
-      if (msgarne182 == NULL) continue;
-
-      set_awake(s, true);
-
-      handle_message_arne182(s, msgarne182);
-
-      delete msgarne182;
-    }
-  }
+  check_messages(s);
 }
 
 static int vision_subscribe(int fd, VisionPacket *rp, VisionStreamType type) {
@@ -1107,14 +1094,6 @@ int main(int argc, char* argv[]) {
       }
     }
 
-    //awake on any touch
-    int touch_x = -1, touch_y = -1;
-    int touched = touch_poll(&touch, &touch_x, &touch_y, s->awake ? 0 : 100);
-    if (touched == 1) {
-      set_awake(s, true);
-    }
-
-
     // manage wakefulness
     if (s->awake_timeout > 0) {
       s->awake_timeout--;
@@ -1132,10 +1111,6 @@ int main(int argc, char* argv[]) {
         send_df(s, s->scene.dfButtonStatus);
       }
     }
-
-    // Don't waste resources on drawing in case screen is off or car is not started.
-    if (s->awake && s->vision_connected) {
-      dashcam(s, touch_x, touch_y);
     // manage hardware disconnect
     if (s->hardware_timeout > 0) {
       s->hardware_timeout--;
@@ -1143,8 +1118,9 @@ int main(int argc, char* argv[]) {
       s->scene.hwType = cereal_HealthData_HwType_unknown;
     }
 
-    // Don't waste resources on drawing in case screen is off
-    if (s->awake) {
+    // Don't waste resources on drawing in case screen is off or car is not started.
+    if (s->awake && s->vision_connected) {
+      dashcam(s, touch_x, touch_y);
       ui_draw(s);
       glFinish();
       should_swap = true;
