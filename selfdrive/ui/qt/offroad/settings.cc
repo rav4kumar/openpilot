@@ -60,6 +60,12 @@ QWidget * toggles_panel() {
                                            "\U0001f96c Disable use of lanelines (Alpha) \U0001f96c",
                                            "In this mode openpilot will ignore lanelines and just drive how it thinks a human would.",
                                            "../assets/offroad/icon_road.png"));
+  toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("HandsOnWheelMonitoring",
+                                            "Enable Hands on Wheel Monitoring",
+                                            "Monitor and alert when driver is not keeping the hands on the steering wheel.",
+                                            "../assets/offroad/icon_openpilot.png"
+                                            ));
 
   bool record_lock = Params().read_db_bool("RecordFrontLock");
   record_toggle->setEnabled(!record_lock);
