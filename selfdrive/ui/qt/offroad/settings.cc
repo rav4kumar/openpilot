@@ -60,15 +60,20 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
 
   ParamControl *record_toggle = new ParamControl("RecordFront",
                                                  "Record and Upload Driver Camera",
-                                                "Upload data from the driver facing camera and help improve the driver monitoring algorithm.",
-                                                "../assets/offroad/icon_monitoring.png",
-                                                this);
-  toggles.append(record_toggle);
-  toggles.append(new ParamControl("EndToEndToggle",
-                                   "\U0001f96c Disable use of lanelines (Alpha) \U0001f96c",
-                                   "In this mode openpilot will ignore lanelines and just drive how it thinks a human would.",
-                                   "../assets/offroad/icon_road.png",
-                                   this));
+                                                 "Upload data from the driver facing camera and help improve the driver monitoring algorithm.",
+                                                 "../assets/offroad/icon_network.png");
+  toggles_list->addWidget(record_toggle);
+  toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("EndToEndToggle",
+                                           "\U0001f96c Disable use of lanelines (Alpha) \U0001f96c",
+                                           "In this mode openpilot will ignore lanelines and just drive how it thinks a human would.",
+                                           "../assets/offroad/icon_road.png"));
+  toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("HandsOnWheelMonitoring",
+                                            "Enable Hands on Wheel Monitoring",
+                                            "Monitor and alert when driver is not keeping the hands on the steering wheel.",
+                                            "../assets/offroad/icon_openpilot.png"
+                                            ));
 
   if (Hardware::TICI()) {
     toggles.append(new ParamControl("EnableWideCamera",

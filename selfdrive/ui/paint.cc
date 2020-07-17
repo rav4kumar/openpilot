@@ -227,6 +227,17 @@ static void ui_draw_vision_event(UIState *s) {
     const int center_x = s->viz_rect.right() - radius - bdr_s * 2;
     const int center_y = s->viz_rect.y + radius  + (bdr_s * 1.5);
     ui_draw_circle_image(s, center_x, center_y, radius, "wheel", bg_colors[s->status], 1.0f);
+
+    // draw hands on wheel pictogram under wheel pictogram.
+    auto handsOnWheelState = s->scene.dmonitoring_state.getHandsOnWheelState();
+    if (handsOnWheelState >= cereal::DriverMonitoringState::HandsOnWheelState::WARNING) {
+      NVGcolor color = COLOR_RED;
+      if (handsOnWheelState == cereal::DriverMonitoringState::HandsOnWheelState::WARNING) {
+        color = COLOR_YELLOW;
+      } 
+      const int wheel_y = center_y + bdr_s + 2 * radius;
+      ui_draw_circle_image(s, center_x, wheel_y, radius, "hands_on_wheel", color, 1.0f);
+    }
   }
 }
 
@@ -474,6 +485,7 @@ void ui_nvg_init(UIState *s) {
   std::vector<std::pair<const char *, const char *>> images = {
     {"wheel", "../assets/img_chffr_wheel.png"},
     {"driver_face", "../assets/img_driver_face.png"},
+    {"hands_on_wheel", "../assets/img_hands_on_wheel.png"},
   };
   for (auto [name, file] : images) {
     s->images[name] = nvgCreateImage(s->vg, file, 1);
