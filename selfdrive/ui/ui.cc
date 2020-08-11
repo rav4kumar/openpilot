@@ -109,9 +109,9 @@ static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
   //mlButton manager
   if ((s->awake && s->vision_connected && s->status != STATUS_STOPPED)) {
     int padding = 40;
-    int btn_w = 500;
+    int btn_w = 400;
     int btn_h = 138;
-    int xs[2] = {1920 / 2 - btn_w / 2, 1920 / 2 + btn_w / 2};
+    int xs[2] = {1920 / 2 + 75 - btn_w / 2, 1920 / 2 + 75 + btn_w / 2};
     int y_top = 915 - btn_h / 2;
     if (xs[0] <= touch_x + padding && touch_x - padding <= xs[1] && y_top - padding <= touch_y) {
       s->scene.mlButtonEnabled = !s->scene.mlButtonEnabled;
@@ -135,8 +135,8 @@ static void send_df(UIState *s, int status) {
 static bool handle_df_touch(UIState *s, int touch_x, int touch_y) {
   if (s->awake && s->vision_connected && s->status != STATUS_STOPPED) {
     int padding = 40;
-    int btn_x_1 = 1660 - 200;
-    int btn_x_2 = 1660 - 50;
+    int btn_x_1 = 1660 - 200 - 175;
+    int btn_x_2 = 1660 - 50 - 175;
     if ((btn_x_1 - padding <= touch_x) && (touch_x <= btn_x_2 + padding) && (855 - padding <= touch_y)) {
       s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping df button
       s->scene.dfButtonStatus++;
@@ -230,7 +230,7 @@ static void ui_init(UIState *s) {
 
   pthread_mutex_init(&s->lock, NULL);
   s->sm = new SubMaster({"model", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
-                         "health", "ubloxGnss", "driverState", "dMonitoringState", "carState", "gpsLocationExternal"
+                         "health", "ubloxGnss", "driverState", "dMonitoringState", "carState", "gpsLocationExternal", "liveMpc"
 #ifdef SHOW_SPEEDLIMIT
                                     , "liveMapData"
 #endif
@@ -245,6 +245,8 @@ static void ui_init(UIState *s) {
   // init display
   s->fb = framebuffer_init("ui", 0, true, &s->fb_w, &s->fb_h);
   assert(s->fb);
+  
+  s->livempc_or_radarstate_changed = false;
 
   set_awake(s, true);
 
@@ -364,6 +366,10 @@ void handle_message(UIState *s, SubMaster &sm) {
   if (s->started && sm.updated("controlsState")) {
     auto event = sm["controlsState"];
     auto data = event.getControlsState();
+    auto datad = data.getLateralControlState();
+    auto pdata = datad.getPidState();
+    auto qdata = datad.getLqrState();
+    auto rdata = datad.getIndiState();
     scene.controls_state = event.getControlsState();
     s->controls_timeout = 1 * UI_FREQ;
     scene.frontview = scene.controls_state.getRearViewCam();
@@ -408,6 +414,10 @@ void handle_message(UIState *s, SubMaster &sm) {
       }
     }
     scene.steerOverride = data.getSteerOverride();
+    float q = qdata.getOutput();
+    float r = rdata.getOutput();
+    float p = pdata.getOutput();
+    scene.output_scale = q + p + r;
     scene.angleSteers = data.getAngleSteers();
     scene.angleSteersDes = data.getAngleSteersDes();
   }
@@ -434,16 +444,16 @@ void handle_message(UIState *s, SubMaster &sm) {
   if (sm.updated("model")) {
     read_model(scene.model, sm["model"].getModel());
   }
-  // else if (which == cereal::Event::LIVE_MPC) {
-  //   auto data = event.getLiveMpc();
-  //   auto x_list = data.getX();
-  //   auto y_list = data.getY();
-  //   for (int i = 0; i < 50; i++){
-  //     scene.mpc_x[i] = x_list[i];
-  //     scene.mpc_y[i] = y_list[i];
-  //   }
-  //   s->livempc_or_radarstate_changed = true;
-  // }
+  if (sm.updated("liveMpc")) {
+     auto data = sm["liveMpc"].getLiveMpc();
+     auto x_list = data.getX();
+     auto y_list = data.getY();
+     for (int i = 0; i < 50; i++){
+       scene.mpc_x[i] = x_list[i];
+       scene.mpc_y[i] = y_list[i];
+     }
+     s->livempc_or_radarstate_changed = true;
+  }
   if (sm.updated("uiLayoutState")) {
     auto data = sm["uiLayoutState"].getUiLayoutState();
     s->active_app = data.getActiveApp();
@@ -504,6 +514,9 @@ void handle_message(UIState *s, SubMaster &sm) {
     scene.brakeLights = data.getBrakeLights();
     scene.leftBlinker = data.getLeftBlinker();
     scene.rightBlinker = data.getRightBlinker();
+    scene.leftblindspot = data.getLeftBlindspot();
+    scene.rightblindspot = data.getRightBlindspot();
+    scene.gear = data.getGearShifter();
   }
 
   s->started = scene.thermal.getStarted() || s->preview_started;
@@ -916,7 +929,12 @@ int main(int argc, char* argv[]) {
         s->controls_timeout = 5 * UI_FREQ;
       }
     } else {
-      set_awake(s, true);
+      // blank screen on reverse gear
+      if (s->scene.gear == cereal::CarState::GearShifter::REVERSE) {
+        set_awake(s, false);
+      } else {
+        set_awake(s, true);
+      }
       // Car started, fetch a new rgb image from ipc
       if (s->vision_connected){
         ui_update(s);

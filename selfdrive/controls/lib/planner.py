@@ -27,7 +27,7 @@ offset_limit = op_params.get('offset_limit', default=0.0)
 default_brake_distance = op_params.get('default_brake_distance', default=250.0)
 
 if not travis:
-  curvature_factor = opParams().get('curvature_factor', default=1.0)
+  curvature_factor = opParams().get('curvature_factor', default=1.2)
 else:
   curvature_factor = 1.0
 
@@ -133,7 +133,7 @@ class Planner():
   def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngle, model_enabled):
     center_x = -2.5 # Wheel base 2.5m
     lead1_check = True
-    mpc_offset = opParams().get('mpc_offset', default=5.0)
+    mpc_offset = opParams().get('mpc_offset', default=0.0)
     lead2_check = True
     if steeringAngle > 100: # only at high angles
       center_y = -1+2.5/math.tan(steeringAngle/1800.*math.pi) # Car Width 2m. Left side considered in left hand turn

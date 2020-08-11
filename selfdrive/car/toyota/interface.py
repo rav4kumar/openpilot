@@ -218,11 +218,11 @@ class CarInterface(CarInterfaceBase):
       ret.wheelbase = 2.68986
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
-      ret.longitudinalTuning.kpV = [0.2, 0.25, 0.325]
-      ret.longitudinalTuning.kiV = [0.10, 0.10]
+      ret.longitudinalTuning.kpV = [2.65, 1.5, 0.34]
+      ret.longitudinalTuning.kiV = [0.54, 0.34]
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.13], [0.05]]
       ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kfV = [0.00004]
+      ret.lateralTuning.pid.kfV = [0.00007818594]
       for fw in car_fw:
         if fw.ecu == "eps" and fw.fwVersion == b"8965B42170\x00\x00\x00\x00\x00\x00":
           ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
@@ -258,9 +258,9 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3060. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.pid.kfV = [0.00007818594]
       if spairrowtuning:
-        ret.steerActuatorDelay = 0.52
+        ret.steerActuatorDelay = 0.57
         ret.steerRatio = 15.33
-        ret.steerLimitTimer = 2.0
+        ret.steerLimitTimer = 5.0
         tire_stiffness_factor = 0.996  # not optimized yet
         #ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kpV = [[0.0, 15.5, 21.0, 29.0], [0.13, 0.39, 0.39, 0.6]]
         #ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kiV = [[0.0, 15.5, 21.0, 29.0], [0.005, 0.015, 0.015, 0.1]]

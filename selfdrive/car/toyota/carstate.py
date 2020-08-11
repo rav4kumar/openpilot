@@ -243,20 +243,20 @@ class CarState(CarStateBase):
     if not self.left_blinker_on and not self.right_blinker_on:
       self.Angles[self.Angle_counter] = abs(ret.steeringAngle)
       self.Angles_later[self.Angle_counter] = abs(angle_later)
-      if self.gasbuttonstatus ==1:
-        factor = 1.6
-      elif self.gasbuttonstatus == 2:
-        factor = 1.0
-      else:
-        factor = 1.3
-      ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
-      ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
     else:
       self.Angles[self.Angle_counter] = abs(ret.steeringAngle) * 0.8
       if ret.vEgo > 11:
         self.Angles_later[self.Angle_counter] = abs(angle_later) * 0.8
       else:
         self.Angles_later[self.Angle_counter] = 0.0
+    if self.gasbuttonstatus ==1:
+      factor = 1.6
+    elif self.gasbuttonstatus == 2:
+      factor = 1.0
+    else:
+      factor = 1.3
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
     self.Angle_counter = (self.Angle_counter + 1 ) % 250
 
     self.pcm_acc_status = cp.vl["PCM_CRUISE"]['CRUISE_STATE']

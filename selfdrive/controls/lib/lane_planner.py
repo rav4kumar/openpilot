@@ -95,7 +95,7 @@ class LanePlanner():
       if current_lane_width < 2.0:
         self.r_poly[3] -= 2.0 - current_lane_width # TODO: this should be l_poly if isRHD
         current_lane_width = 2.0
-      elif current_lane_width > 4.0:
+      elif current_lane_width > 4.2:
         self.l_poly[3] -= current_lane_width/2 # TODO: this should be r_poly if isRHD
         current_lane_width = current_lane_width/2
     self.lane_width_estimate += 0.005 * (current_lane_width - self.lane_width_estimate)

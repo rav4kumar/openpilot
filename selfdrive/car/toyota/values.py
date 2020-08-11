@@ -191,7 +191,7 @@ FINGERPRINTS = {
 }
 
 # Don't use theses fingerprints for fingerprinting, they are still needed for ECU detection
-IGNORED_FINGERPRINTS = []
+IGNORED_FINGERPRINTS = [CAR.LEXUS_RXH_TSS2]
 FW_VERSIONS = {
   CAR.AVALON: {
     (Ecu.esp, 0x7b0, None): [b'F152607060\x00\x00\x00\x00\x00\x00'],

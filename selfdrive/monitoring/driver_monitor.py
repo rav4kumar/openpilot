@@ -9,11 +9,6 @@ from cereal import car
 
 EventName = car.CarEvent.EventName
 
-# ******************************************************************************************
-#  NOTE: To fork maintainers.
-#  Disabling or nerfing safety features may get you and your users banned from our servers.
-#  We recommend that you do not change these numbers from the defaults.
-# ******************************************************************************************
 if not travis:
   awareness_factor = opParams().get('awareness_factor', default=1.0)
 else:

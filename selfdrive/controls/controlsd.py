@@ -27,6 +27,7 @@ from selfdrive.car.disable_radar import disable_radar
 from common.op_params import opParams
 from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from common.travis_checker import travis
+import threading
 #import selfdrive.crash as crash
 #from selfdrive.swaglog import cloudlog
 #from selfdrive.version import version, dirty
@@ -300,10 +301,8 @@ class Controls:
       if CS.steeringPressed:
         self.distance_traveled_override += CS.vEgo * DT_CTRL
     if (self.sm.frame - self.distance_traveled_frame) * DT_CTRL > 10.0 and not travis:
-      params = Params()
-      params.put("DistanceTraveled", str(self.distance_traveled))
-      params.put("DistanceTraveledEngaged", str(self.distance_traveled_engaged))
-      params.put("DistanceTraveledOverride", str(self.distance_traveled_override))
+      y = threading.Thread(target=send_params, args=(str(self.distance_traveled),str(self.distance_traveled_engaged),str(self.distance_traveled_override),))
+      y.start()
       self.distance_traveled_frame = self.sm.frame
     return CS, CS_arne182
 
@@ -643,7 +642,12 @@ class Controls:
       self.step()
       self.rk.monitor_time()
       self.prof.display()
-
+def send_params(a, b, c):
+  params = Params()
+  params.put("DistanceTraveled", a)
+  params.put("DistanceTraveledEngaged", b)
+  params.put("DistanceTraveledOverride", c)
+      
 def main(sm=None, pm=None, logcan=None, arne_sm=None):
   #params = Params()
   #dongle_id = params.get("DongleId").decode('utf-8')

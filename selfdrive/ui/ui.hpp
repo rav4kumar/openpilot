@@ -86,8 +86,8 @@ const int SET_SPEED_NA = 255;
 const uint8_t bg_colors[][4] = {
   [STATUS_STOPPED] = {0x07, 0x23, 0x39, 0xff},
   [STATUS_DISENGAGED] = {0x17, 0x33, 0x49, 0xff},
-  [STATUS_ENGAGED] = {0x17, 0x86, 0x44, 0xff},
-  [STATUS_WARNING] = {0xDA, 0x6F, 0x25, 0xff},
+  [STATUS_ENGAGED] = {0x17, 0x86, 0x44, 0x0f},
+  [STATUS_WARNING] = {0xDA, 0x6F, 0x25, 0x0f},
   [STATUS_ALERT] = {0xC9, 0x22, 0x31, 0xff},
 };
 
@@ -126,7 +126,11 @@ typedef struct UIScene {
   bool rightBlinker;
   int blinker_blinkingrate;
   std::string ipAddr;
-
+  float output_scale;
+  cereal::CarState::GearShifter gear;
+  bool rightblindspot;
+  bool leftblindspot;
+  
   bool is_rhd;
   bool map_valid;
   bool uilayout_sidebarcollapsed;
@@ -269,6 +273,8 @@ typedef struct UIState {
   bool started;
   bool preview_started;
   bool vision_seen;
+  
+  bool livempc_or_radarstate_changed;
 
   std::atomic<float> light_sensor;
 

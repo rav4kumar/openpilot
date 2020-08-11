@@ -465,6 +465,30 @@ EVENTS = {
       AlertStatus.critical, AlertSize.full,
       Priority.HIGH, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, .1, .1),
   },
+  
+  EventName.preKeepHandsOnWheel: {
+    ET.WARNING: Alert(
+      "PLACE HANDS ON WHEEL:",
+      "Hold wheel at all times",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.none, .0, .1, .1, alert_rate=0.75),
+  },
+
+  EventName.promptKeepHandsOnWheel: {
+    ET.WARNING: Alert(
+      "KEEP HANDS ON WHEEL",
+      "Driver must keep hands on wheel",
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.MID, VisualAlert.steerRequired, AudibleAlert.chimeWarning2Repeat, .1, .1, .1),
+  },
+
+  EventName.keepHandsOnWheel: {
+    ET.WARNING: Alert(
+      "DISENGAGE IMMEDIATELY",
+      "Driver must keep hands on steering wheel",
+      AlertStatus.critical, AlertSize.full,
+      Priority.HIGH, VisualAlert.steerRequired, AudibleAlert.chimeWarningRepeat, .1, .1, .1),
+  },
 
   EventName.driverMonitorLowAcc: {
     ET.WARNING: Alert(
@@ -858,6 +882,14 @@ EVENTS = {
 }
 
 EVENTSARNE182 = {
+  
+  EventNameArne182.pcmEnable: {
+    ET.ENABLE: EngagementAlert(AudibleAlert.none),
+  },
+
+  EventNameArne182.pcmDisable: {
+    ET.USER_DISABLE: EngagementAlert(AudibleAlert.none),
+  },
 
   "dfButtonAlert": {
     ET.WARNING: Alert(
@@ -871,7 +903,7 @@ EVENTSARNE182 = {
     ET.WARNING: Alert(
       "Using profile:",
       "",
-      AlertStatus.normal, AlertSize.mid,
+      AlertStatus.normal, AlertSize.small,
       Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0.2, 0., 2.),
   },
 
@@ -927,7 +959,7 @@ EVENTSARNE182 = {
     ET.WARNING: Alert(
       "Steer Assist Active",
       "Brake Pressed Acceleration Disabled",
-      AlertStatus.userPrompt, AlertSize.mid,
+      AlertStatus.userPrompt, AlertSize.small,
       Priority.LOW, VisualAlert.none, AudibleAlert.none, .4, 2., 0.2),
   },
 
