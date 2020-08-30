@@ -14,8 +14,8 @@ from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_
 from common.op_params import opParams
 
 op_params = opParams()
-rsa_max_speed = op_params.get('rsa_max_speed', 24.5)
-limit_rsa = op_params.get('limit_rsa', False)
+rsa_max_speed = op_params.get('rsa_max_speed')
+limit_rsa = op_params.get('limit_rsa')
 
 class CarState(CarStateBase):
   def __init__(self, CP):
@@ -209,6 +209,10 @@ class CarState(CarStateBase):
       minimum_set_speed = 44.0
     else:
       minimum_set_speed = 41.0
+    maximum_set_speed = 169.0
+    if self.CP.carFingerprint == CAR.LEXUS_RXH:
+      maximum_set_speed = 177.0
+    speed_range = maximum_set_speed-minimum_set_speed
     if bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE']) and not self.pcm_acc_active and self.v_cruise_pcmlast != ret.cruiseState.speed:
       if ret.vEgo < 12.5:
         self.setspeedoffset = max(min(int(minimum_set_speed-ret.vEgo*3.6),(minimum_set_speed-7.0)),0.0)
@@ -217,22 +221,22 @@ class CarState(CarStateBase):
       if self.setspeedcounter > 0 and ret.cruiseState.speed > minimum_set_speed:
         self.setspeedoffset = self.setspeedoffset + 4
       else:
-        if math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/(169.0-minimum_set_speed)  + 169.0*(minimum_set_speed-7.0)/(169.0-minimum_set_speed))-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0))) > 0:
-          self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/(169.0-minimum_set_speed)  + 169*(minimum_set_speed-7.0)/(169.0-minimum_set_speed))-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0)))
+        if math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0))) > 0:
+          self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0)))
       self.setspeedcounter = 50
     if self.v_cruise_pcmlast < ret.cruiseState.speed:
       if self.setspeedcounter > 0 and (self.setspeedoffset - 4) > 0:
         self.setspeedoffset = self.setspeedoffset - 4
       else:
-        self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/(169.0-minimum_set_speed)  + 169*(minimum_set_speed-7.0)/(169.0-minimum_set_speed))-self.setspeedoffset)/(170-ret.cruiseState.speed))
+        self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(maximum_set_speed+1.0-ret.cruiseState.speed))
       self.setspeedcounter = 50
     if self.setspeedcounter > 0:
       self.setspeedcounter = self.setspeedcounter - 1
     self.v_cruise_pcmlast = ret.cruiseState.speed
     if int(ret.cruiseState.speed) - self.setspeedoffset < 7:
       self.setspeedoffset = int(ret.cruiseState.speed) - 7
-    if int(ret.cruiseState.speed) - self.setspeedoffset > 169:
-      self.setspeedoffset = int(ret.cruiseState.speed) - 169
+    if int(ret.cruiseState.speed) - self.setspeedoffset > maximum_set_speed:
+      self.setspeedoffset = int(ret.cruiseState.speed) - maximum_set_speed
 
 
     ret.cruiseState.speed = min(max(7, int(ret.cruiseState.speed) - self.setspeedoffset),v_cruise_pcm_max)

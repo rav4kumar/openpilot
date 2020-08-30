@@ -53,13 +53,8 @@ Fork is known to work in both US and Europe
 - Chevrolet Volt 2017
 ### Todo
 
-- [ ] Finish Dev UI
-
 - [ ] Fix Lag Trafficd
 
-- [ ] get MPC working
-
-- [ ] add APK for OSM and smart steer
 ## Features
 
 - Braking:
@@ -92,9 +87,11 @@ This aims to provide a smoother driving experience in stop and go traffic (under
 - Stock Toyota ldw steering assist
 - Cruise set speed available down to 7 kph
 - Added ability to turn on and off RSA at certain speed. `python /data/openpilot/op_edit.py`
+- Virtual lane lines and Lane center. This feature is for European roads and is recommended for used in Europe only.
 ### UI Modifications
 
-- GPS Accurecy on the Dev UI.
+- Dev UI toggle in APK setting.
+- GPS Accurecy on the Dev UI
 - Easily view the EON's IP Address.Just look at the sidebar right under wifi singal strength's.
 - Battery has percentage instead of the battery icon.
 - If the model detect's cut in it will draw two different chevron to show the user that it see's both of the car.
@@ -103,13 +100,12 @@ This aims to provide a smoother driving experience in stop and go traffic (under
 - Dynamic Follow Button: Now you can change the Dynamic Follow Distance just by tapping the blue button on the bottom right. Now with colorful DF button depending on the profile
 - Smart speed icon
 - e2e button
+
 ### Work-in-Progress Features
 
 All WIP features can be configured by modifying `python /data/opepilot/op_edit.py`
 - Traffic light detection from Littlemountainman, shane and brain. To get accurate result make sure your daily commute/area is mapped on [OSM](openstreetmap.org) with right direaction. [For example](https://imgur.com/purBVpd)...  [still dont get it watch the video by mageymoo1](https://youtu.be/7dPaF0tDb7Y).
 - 2020 Corolla tuning by Spairrow326
-- Virtual lane lines and Lane center. This feature is for European roads and is recommended for used in Europe only.
-- e2e model button to fix ghost breaking issue.
 
 ## Data collection
 - Loggin has been Disabled by default on this fork. If you would like to record your drive edit the [following line](https://github.com/arne182/ArnePilot/blob/4d66df96a91c9c13491a3d78b9c1c2a9e848724a/selfdrive/manager.py#L480)

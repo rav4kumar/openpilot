@@ -6,7 +6,7 @@ import os
 from common.params import Params
 from common.op_params import opParams
 op_params = opParams()
-uniqueID = op_params.get('uniqueID', None)
+uniqueID = op_params.get('uniqueID')
 
 def upload_data():
   filepath = "/data/openpilot/selfdrive/data_collection/gps-data"
@@ -14,7 +14,7 @@ def upload_data():
     if uniqueID is None:
       op_params.put('uniqueID', ''.join([random.choice(string.ascii_lowercase+string.ascii_uppercase+string.digits) for i in range(15)]))
     try:
-      username = op_params.get('uniqueID', None)
+      username = op_params.get('uniqueID')
       try:
         with open("/data/data/ai.comma.plus.offroad/files/persistStore/persist-auth", "r") as f:
           auth = json.loads(f.read())

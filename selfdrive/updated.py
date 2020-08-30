@@ -51,7 +51,7 @@ FINALIZED = os.path.join(STAGING_ROOT, "finalized")
 NICE_LOW_PRIORITY = ["nice", "-n", "19"]
 SHORT = os.getenv("SHORT") is not None
 
-auto_update = opParams().get('autoUpdate', True) if not travis else False
+auto_update = opParams().get('autoUpdate') if not travis else False
 
 # Workaround for the EON/termux build of Python having os.link removed.
 ffi = FFI()

@@ -70,8 +70,8 @@ else:
   except:
     ipaddress = "255.255.255.255"
   error_tags = {'dirty': dirty, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin, 'distance_traveled': distance_traveled, 'distance_traveled_engaged': distance_traveled_engaged, 'distance_traveled_override': distance_traveled_override}
-  #uniqueID = op_params.get('uniqueID', None)
-  username = opParams().get('username', None)
+  #uniqueID = op_params.get('uniqueID')
+  username = opParams().get('username')
   if username is None or not isinstance(username, str):
     username = 'undefined'
   error_tags['username'] = username

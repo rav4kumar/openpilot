@@ -10,7 +10,7 @@ from cereal import car
 EventName = car.CarEvent.EventName
 
 if not travis:
-  awareness_factor = opParams().get('awareness_factor', default=1.0)
+  awareness_factor = opParams().get('awareness_factor')
 else:
   awareness_factor = 1
 

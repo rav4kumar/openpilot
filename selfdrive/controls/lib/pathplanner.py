@@ -66,8 +66,8 @@ class PathPlanner():
     self.blindspotTrueCounterleft = 0
     self.blindspotTrueCounterright = 0
     self.op_params = opParams()
-    self.alca_nudge_required = self.op_params.get('alca_nudge_required', default=True)
-    self.alca_min_speed = self.op_params.get('alca_min_speed', default=20.0)
+    self.alca_nudge_required = self.op_params.get('alca_nudge_required')
+    self.alca_min_speed = self.op_params.get('alca_min_speed')
 
   def setup_mpc(self):
     self.libmpc = libmpc_py.libmpc

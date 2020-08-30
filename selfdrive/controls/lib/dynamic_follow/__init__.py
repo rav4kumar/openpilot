@@ -97,7 +97,7 @@ class DynamicFollow:
 
   def _change_cost(self, libmpc):
     TRs = [0.9, 1.8, 2.7]
-    costs = [1.0, 0.115, 0.05]
+    costs = [1.10, 0.12, 0.05]
     cost = interp(self.TR, TRs, costs)
     if self.last_cost != cost:
       libmpc.change_tr(MPC_COST_LONG.TTC, cost, MPC_COST_LONG.ACCELERATION, MPC_COST_LONG.JERK)
@@ -321,11 +321,11 @@ class DynamicFollow:
     self.car_data.cruise_enabled = CS.cruiseState.enabled
 
   def _get_live_params(self):
-    self.global_df_mod = self.op_params.get('global_df_mod', None)
+    self.global_df_mod = self.op_params.get('global_df_mod')
     if self.global_df_mod is not None:
       self.global_df_mod = np.clip(self.global_df_mod, 0.85, 1.2)
 
-    self.min_TR = self.op_params.get('min_TR', None)
+    self.min_TR = self.op_params.get('min_TR')
     if self.min_TR is not None:
       self.min_TR = clip(self.min_TR, 0.85, 1.3)
     else:

@@ -245,7 +245,7 @@ static void ui_init(UIState *s) {
   // init display
   s->fb = framebuffer_init("ui", 0, true, &s->fb_w, &s->fb_h);
   assert(s->fb);
-  
+
   s->livempc_or_radarstate_changed = false;
 
   set_awake(s, true);
@@ -295,7 +295,7 @@ static void ui_init_vision(UIState *s, const VisionStreamBufs back_bufs,
    printf("ERROR PARSING OPPARAMS JSON!\n");
    s->scene.dfButtonStatus = 0;
  }
-  s->scene.mlButtonEnabled = false;
+  s->scene.mlButtonEnabled = true;
 
   s->rgb_width = back_bufs.width;
   s->rgb_height = back_bufs.height;
@@ -323,6 +323,7 @@ static void ui_init_vision(UIState *s, const VisionStreamBufs back_bufs,
   s->longitudinal_control_timeout = UI_FREQ / 3;
   s->is_metric_timeout = UI_FREQ / 2;
   s->limit_set_speed_timeout = UI_FREQ;
+  s->dev_bbui_timeout = UI_FREQ / 4;
 }
 
 static void read_path(PathData& p, const cereal::ModelData::PathData::Reader &pathp) {
@@ -1003,6 +1004,7 @@ int main(int argc, char* argv[]) {
     read_param_timeout(&s->longitudinal_control, "LongitudinalControl", &s->longitudinal_control_timeout);
     read_param_timeout(&s->limit_set_speed, "LimitSetSpeed", &s->limit_set_speed_timeout);
     read_param_timeout(&s->speed_lim_off, "SpeedLimitOffset", &s->limit_set_speed_timeout);
+    read_param_timeout(&s->dev_bbui, "DevBBUI", &s->dev_bbui_timeout);
     int param_read = read_param_timeout(&s->last_athena_ping, "LastAthenaPingTime", &s->last_athena_ping_timeout);
     if (param_read != -1) { // Param was updated this loop
       if (param_read != 0) { // Failed to read param

@@ -27,7 +27,7 @@ class CarInterfaceBase():
     self.disengage_due_to_slow_speed = False
     self.sm = messaging.SubMaster(['pathPlan'])
     self.op_params = opParams()
-    self.alca_min_speed = self.op_params.get('alca_min_speed', default=20.0)
+    self.alca_min_speed = self.op_params.get('alca_min_speed')
     self.CP = CP
     self.VM = VehicleModel(CP)
 

@@ -1065,12 +1065,12 @@ static void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w )
     char val_str[16];
     char uom_str[6];
     NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
-      //show Orange if more than 6 degrees
-      //show red if  more than 12 degrees
-      if(((int)(scene->angleSteers) < -6) || ((int)(scene->angleSteers) > 6)) {
+      //show Orange if more than 30 degrees
+      //show red if  more than 60 degrees
+      if(((int)(scene->angleSteers) < -30) || ((int)(scene->angleSteers) > 30)) {
         val_color = nvgRGBA(255, 188, 3, 200);
       }
-      if(((int)(scene->angleSteers) < -12) || ((int)(scene->angleSteers) > 12)) {
+      if(((int)(scene->angleSteers) < -60) || ((int)(scene->angleSteers) > 60)) {
         val_color = nvgRGBA(255, 0, 0, 200);
       }
       // steering is in degrees
@@ -1090,12 +1090,12 @@ static void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w )
     char uom_str[6];
     NVGcolor val_color = nvgRGBA(255, 255, 255, 200);
     if (scene->controls_state.getEnabled()) {
-      //show Orange if more than 6 degrees
-      //show red if  more than 12 degrees
-      if(((int)(scene->angleSteersDes) < -6) || ((int)(scene->angleSteersDes) > 6)) {
+      //show Orange if more than 30 degrees
+      //show red if  more than 60 degrees
+      if(((int)(scene->angleSteersDes) < -30) || ((int)(scene->angleSteersDes) > 30)) {
         val_color = nvgRGBA(255, 188, 3, 200);
       }
-      if(((int)(scene->angleSteersDes) < -12) || ((int)(scene->angleSteersDes) > 12)) {
+      if(((int)(scene->angleSteersDes) < -60) || ((int)(scene->angleSteersDes) > 60)) {
         val_color = nvgRGBA(255, 0, 0, 200);
       }
       // steering is in degrees
@@ -1149,7 +1149,9 @@ static void ui_draw_vision_footer(UIState *s) {
 #ifdef SHOW_SPEEDLIMIT
   ui_draw_vision_map(s);
 #endif
-  bb_ui_draw_UI(s);
+  if (s->dev_bbui) {
+    bb_ui_draw_UI(s);
+  }
 }
 
 void ui_draw_vision_alert(UIState *s, cereal::ControlsState::AlertSize va_size, int va_color,

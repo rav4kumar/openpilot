@@ -102,5 +102,10 @@
   "UZ:living_street": "30",
   "UZ:urban": "70",
   "UZ:rural": "100",
-  "UZ:motorway": "110"
+  "UZ:motorway": "110",
+  "ZA:trunk": "120",
+  "ZA:residential": "60",
+  "ZA:rural": "100",
+  "ZA:urban": "60",
+  "ZA:motorway": "120"
 }

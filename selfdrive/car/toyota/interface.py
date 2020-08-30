@@ -8,7 +8,7 @@ from selfdrive.car.interfaces import CarInterfaceBase
 from common.op_params import opParams
 
 op_params = opParams()
-spairrowtuning = op_params.get('spairrowtuning', False)
+spairrowtuning = op_params.get('spairrowtuning')
 
 GearShifter = car.CarState.GearShifter
 
@@ -94,8 +94,8 @@ class CarInterface(CarInterfaceBase):
 
       ret.lateralTuning.lqr.scale = 1500.0
       ret.lateralTuning.lqr.ki = 0.06
-      #ret.longitudinalTuning.kpV = [0.8, 1.0, 0.325]  # braking tune
-      #ret.longitudinalTuning.kiV = [0.35, 0.1]
+      ret.longitudinalTuning.kpV = [0.8, 1.0, 0.325]  # braking tune
+      ret.longitudinalTuning.kiV = [0.35, 0.1]
       ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
       ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
       ret.lateralTuning.lqr.c = [1., 0.]
@@ -103,7 +103,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
       ret.lateralTuning.lqr.dcGain = 0.002237852961363602
 
-    elif candidate == CAR.COROLLA:
+    elif candidate in [CAR.COROLLA, CAR.COROLLA_2015]:
       stop_and_go = False
       ret.safetyParam = 100
       ret.wheelbase = 2.70
@@ -238,7 +238,7 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 0.7933
       ret.longitudinalTuning.kpV = [0.2, 0.25, 0.325]
       ret.longitudinalTuning.kiV = [0.10, 0.10]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.12], [0.04]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.24], [0.04]]
       ret.mass = 3800. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.pid.kfV = [0.00004]
       for fw in car_fw:
@@ -258,7 +258,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3060. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.pid.kfV = [0.00007818594]
       if spairrowtuning:
-        ret.steerActuatorDelay = 0.57
+        ret.steerActuatorDelay = 0.60
         ret.steerRatio = 15.33
         ret.steerLimitTimer = 5.0
         tire_stiffness_factor = 0.996  # not optimized yet
@@ -352,8 +352,10 @@ class CarInterface(CarInterfaceBase):
     # mass and CG position, so all cars will have approximately similar dyn behaviors
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
-
-    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
+    if candidate == CAR.COROLLA_2015:
+      ret.enableCamera = True
+    else:
+      ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
     # Detect smartDSU, which intercepts ACC_CMD from the DSU allowing openpilot to send it
     smartDsu = 0x2FF in fingerprint[0]
     # In TSS2 cars the camera does long control
@@ -395,8 +397,9 @@ class CarInterface(CarInterfaceBase):
 
     # create message
     ret_arne182 = arne182.CarStateArne182.new_message()
-
-    ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
+    ret.canValid = self.cp.can_valid
+    if self.CP.carFingerprint != CAR.COROLLA_2015:
+      ret.canValid = ret.canValid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
     # gear except P, R
@@ -431,8 +434,7 @@ class CarInterface(CarInterfaceBase):
       events_arne182.add(EventNameArne182.longControlDisabled)
 
     ret.buttonEvents = []
-
-    if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera:
+    if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and self.CP.carFingerprint != CAR.COROLLA_2015:
       events.add(EventName.invalidGiraffeToyota)
 
     if not self.waiting and ret.vEgo < 0.3 and not ret.gasPressed and self.CP.carFingerprint == CAR.RAV4H:

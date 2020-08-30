@@ -20,14 +20,14 @@ from selfdrive.controls.lib.long_mpc_model import LongitudinalMpcModel
 from common.travis_checker import travis
 from common.op_params import opParams
 op_params = opParams()
-osm = op_params.get('osm', True)
-smart_speed = op_params.get('smart_speed', True)
-smart_speed_max_vego = op_params.get('smart_speed_max_vego', default=26.8)
-offset_limit = op_params.get('offset_limit', default=0.0)
-default_brake_distance = op_params.get('default_brake_distance', default=250.0)
+osm = op_params.get('osm')
+smart_speed = op_params.get('smart_speed')
+smart_speed_max_vego = op_params.get('smart_speed_max_vego')
+offset_limit = op_params.get('offset_limit')
+default_brake_distance = op_params.get('default_brake_distance')
 
 if not travis:
-  curvature_factor = opParams().get('curvature_factor', default=1.2)
+  curvature_factor = opParams().get('curvature_factor')
 else:
   curvature_factor = 1.0
 
@@ -133,7 +133,7 @@ class Planner():
   def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngle, model_enabled):
     center_x = -2.5 # Wheel base 2.5m
     lead1_check = True
-    mpc_offset = opParams().get('mpc_offset', default=0.0)
+    mpc_offset = opParams().get('mpc_offset')
     lead2_check = True
     if steeringAngle > 100: # only at high angles
       center_y = -1+2.5/math.tan(steeringAngle/1800.*math.pi) # Car Width 2m. Left side considered in left hand turn
@@ -150,10 +150,7 @@ class Planner():
       if self.mpc2.prev_lead_status and lead2_check:
         solutions['mpc2'] = self.mpc2.v_mpc
       if self.mpc_model.valid and model_enabled:
-        if self.mpc_model.v_mpc > 13.0:
-          solutions['model'] = NO_CURVATURE_SPEED
-        else:
-          solutions['model'] = self.mpc_model.v_mpc + mpc_offset
+        solutions['model'] = self.mpc_model.v_mpc + mpc_offset
       solutions['cruise'] = self.v_cruise
 
       slowest = min(solutions, key=solutions.get)
@@ -189,7 +186,7 @@ class Planner():
     # we read offset value every 5 seconds
     fixed_offset = 0.0
     if not travis:
-      fixed_offset = op_params.get('speed_offset', 0.0)
+      fixed_offset = op_params.get('speed_offset')
       if self.last_time > 5:
         try:
           self.offset = int(self.params.get("SpeedLimitOffset", encoding='utf8'))

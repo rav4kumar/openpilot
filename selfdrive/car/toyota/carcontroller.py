@@ -8,10 +8,12 @@ from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_comma
                                            create_fcw_command
 from selfdrive.car.toyota.values import Ecu, CAR, STATIC_MSGS, SteerLimitParams, TSS2_CAR
 from opendbc.can.packer import CANPacker
-#from common.op_params import opParams
+from common.op_params import opParams
 #import cereal.messaging as messaging
 
-#op_params = opParams()
+op_params = opParams()
+
+ludicrous_mode = op_params.get('ludicrous_mode')
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -94,7 +96,7 @@ class CarController():
     #if self.sm.updated['pathPlan']:
     #  blinker = CS.out.leftBlinker or CS.out.rightBlinker
     #  ldw_allowed = CS.out.vEgo > 12.5 and not blinker
-    #  CAMERA_OFFSET = op_params.get('camera_offset', 0.06)
+    #  CAMERA_OFFSET = op_params.get('camera_offset')
     #  right_lane_visible = self.sm['pathPlan'].rProb > 0.5
     #  left_lane_visible = self.sm['pathPlan'].lProb > 0.5
     #  self.rightLaneDepart = bool(ldw_allowed and self.sm['pathPlan'].rPoly[3] > -(0.93 + CAMERA_OFFSET) and right_lane_visible)
@@ -127,8 +129,10 @@ class CarController():
       apply_accel = actuators.gas - actuators.brake
 
     apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled)
-    apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
-
+    factor = 2 if ludicrous_mode else 1
+    apply_accel = clip(apply_accel * ACCEL_SCALE * factor, ACCEL_MIN, ACCEL_MAX)
+    #if ludicrous_mode:
+    #  print(apply_accel)
     if CS.CP.enableGasInterceptor:
       if CS.out.gasPressed:
         apply_accel = max(apply_accel, 0.06)
@@ -149,7 +153,7 @@ class CarController():
       self.last_fault_frame = frame
 
     # Cut steering for 1s after fault
-    if (frame - self.last_fault_frame < 100) or abs(CS.out.steeringRate) > 100 or (abs(CS.out.steeringAngle) > 150 and CS.CP.carFingerprint in [CAR.RAV4H, CAR.PRIUS]):
+    if (frame - self.last_fault_frame < 100) or abs(CS.out.steeringRate) > 100 or (abs(CS.out.steeringAngle) > 150 and CS.CP.carFingerprint in [CAR.RAV4H, CAR.PRIUS]) or abs(CS.out.steeringAngle) > 400:
       new_steer = 0
       apply_steer_req = 0
     else:
@@ -249,6 +253,21 @@ class CarController():
 
     for (addr, ecu, cars, bus, fr_step, vl) in STATIC_MSGS:
       if frame % fr_step == 0 and ecu in self.fake_ecus and CS.CP.carFingerprint in cars:
+        
+        ## special cases
+        #if fr_step == 5 and ecu == Ecu.fwdCamera and bus == 1:
+        #  #print(addr)
+        #  cnt = int(((frame / 5) % 7) + 1) << 5
+        #  vl = bytes([cnt]) + vl
+        #elif addr in (0x489, 0x48a) and bus == 0:
+        #  #print(addr)
+        #  # add counter for those 2 messages (last 4 bits)
+        #  cnt = int((frame/100)%0xf) + 1
+        #  if addr == 0x48a:
+        #    # 0x48a has a 8 preceding the counter
+        #    cnt += 1 << 7
+        #  vl += bytes([cnt])
+          
         can_sends.append(make_can_msg(addr, vl, bus))
 
     # Enable blindspot debug mode once

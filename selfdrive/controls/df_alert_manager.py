@@ -1,7 +1,7 @@
 class DfAlertManager:
   def __init__(self, op_params):
     self.op_params = op_params
-    self.current_profile = self.op_params.get('dynamic_follow', default='normal').lower()
+    self.current_profile = self.op_params.get('dynamic_follow').lower()
     self.profiles = ['close', 'normal', 'far']
 
     self.idx_to_profile = {0: 'close', 1: 'normal', 2: 'far'}

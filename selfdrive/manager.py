@@ -16,7 +16,7 @@ from common.android import ANDROID
 from common.op_params import opParams
 op_params = opParams()
 
-traffic_lights = op_params.get('traffic_lights', False)
+traffic_lights = op_params.get('traffic_lights')
 
 WEBCAM = os.getenv("WEBCAM") is not None
 sys.path.append(os.path.join(BASEDIR, "pyextra"))
@@ -522,13 +522,20 @@ def manager_prepare(spinner=None):
   # build all processes
   os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-  # Spinner has to start from 70 here
-  total = 100.0 if prebuilt else 30.0
-
-  for i, p in enumerate(managed_processes):
-    if spinner is not None:
-      spinner.update("%d" % ((100.0 - total) + total * (i + 1) / len(managed_processes),))
+  process_cnt = len(managed_processes)
+  loader_proc = []
+  params = Params()
+  spinner_text = "chffrplus" if params.get("Passive")=="1" else "openpilot"
+  for n,p in enumerate(managed_processes):
+    if os.getenv("PREPAREONLY") is None:
+      loader_proc.append(subprocess.Popen(["./spinner",
+        "loading {0}: {1}/{2} {3}".format(spinner_text, n+1, process_cnt, p)],
+        cwd=os.path.join(BASEDIR, "selfdrive", "ui", "spinner"),
+        close_fds=True))
     prepare_managed_process(p)
+
+  # end subprocesses here to stop screen flickering
+  [loader_proc[pc].terminate() for pc in range(process_cnt) if loader_proc]
 
 def uninstall():
   cloudlog.warning("uninstalling")
@@ -571,9 +578,9 @@ def main():
     ("LaneChangeEnabled", "1"),
     ("IsDriverViewEnabled", "0"),
     ("DisablePowerDownTime", "30"),
-    ("DistanceTraveled", "1"),
-    ("DistanceTraveledEngaged", "1"),
-    ("DistanceTraveledOverride", "1"),
+    ("DistanceTraveled", "0"),
+    ("DistanceTraveledEngaged", "0"),
+    ("DistanceTraveledOverride", "0"),
   ]
 
   # set unset params

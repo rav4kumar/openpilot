@@ -12,9 +12,9 @@ MAPS_LOOKAHEAD_DISTANCE = 50 * LOOKAHEAD_TIME
 
 op_params = opParams()
 
-traffic_lights = op_params.get('traffic_lights', True)
-traffic_lights_without_direction = op_params.get('traffic_lights_without_direction', False)
-rolling_stop = op_params.get('rolling_stop', False)
+traffic_lights = op_params.get('traffic_lights')
+traffic_lights_without_direction = op_params.get('traffic_lights_without_direction')
+rolling_stop = op_params.get('rolling_stop')
 
 DEFAULT_SPEEDS_JSON_FILE = BASEDIR + "/selfdrive/mapd/default_speeds.json"
 DEFAULT_SPEEDS = {}

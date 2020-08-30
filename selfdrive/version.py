@@ -5,7 +5,7 @@ from selfdrive.swaglog import cloudlog
 from common.op_params import opParams
 from common.travis_checker import travis
 
-cloak = opParams().get('cloak', True) if not travis else True
+cloak = opParams().get('cloak') if not travis else True
 
 def get_git_commit(default=None):
   if cloak:

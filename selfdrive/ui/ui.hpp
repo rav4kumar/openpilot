@@ -130,7 +130,7 @@ typedef struct UIScene {
   cereal::CarState::GearShifter gear;
   bool rightblindspot;
   bool leftblindspot;
-  
+
   bool is_rhd;
   bool map_valid;
   bool uilayout_sidebarcollapsed;
@@ -258,6 +258,7 @@ typedef struct UIState {
   int limit_set_speed_timeout;
   int hardware_timeout;
   int last_athena_ping_timeout;
+  int dev_bbui_timeout;
 
   bool controls_seen;
 
@@ -266,6 +267,7 @@ typedef struct UIState {
   bool is_metric;
   bool longitudinal_control;
   bool limit_set_speed;
+  bool dev_bbui;
   float speed_lim_off;
   bool is_ego_over_limit;
   float alert_blinking_alpha;
@@ -273,7 +275,7 @@ typedef struct UIState {
   bool started;
   bool preview_started;
   bool vision_seen;
-  
+
   bool livempc_or_radarstate_changed;
 
   std::atomic<float> light_sensor;
