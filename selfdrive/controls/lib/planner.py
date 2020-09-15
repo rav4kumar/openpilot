@@ -14,6 +14,7 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState, MIN_CAN_SPEED
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+from selfdrive.controls.lib.turn_controller import TurnController
 
 MAX_SPEED = 255.0
 
@@ -69,6 +70,7 @@ class Planner():
 
     self.mpc1 = LongitudinalMpc(1)
     self.mpc2 = LongitudinalMpc(2)
+    self.turn_controller = TurnController(CP)
 
     self.v_acc_start = 0.0
     self.a_acc_start = 0.0
@@ -93,6 +95,8 @@ class Planner():
         solutions['mpc1'] = self.mpc1.v_mpc
       if self.mpc2.prev_lead_status:
         solutions['mpc2'] = self.mpc2.v_mpc
+      if self.turn_controller.is_active:
+        solutions['turn'] = self.turn_controller.v_turn
 
       slowest = min(solutions, key=solutions.get)
 
@@ -107,8 +111,13 @@ class Planner():
       elif slowest == 'cruise':
         self.v_acc = self.v_cruise
         self.a_acc = self.a_cruise
+      elif slowest == 'turn':
+        self.v_acc = self.turn_controller.v_turn
+        self.a_acc = self.turn_controller.a_turn
 
     self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
+    if self.turn_controller.is_active:
+      self.v_acc_future = min(self.v_acc_future, self.turn_controller.v_turn_future)
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
@@ -164,6 +173,8 @@ class Planner():
 
     self.mpc1.update(pm, sm['carState'], lead_1, v_cruise_setpoint)
     self.mpc2.update(pm, sm['carState'], lead_2, v_cruise_setpoint)
+    self.turn_controller.update(enabled, self.v_acc_start, self.a_acc_start, v_cruise_setpoint,
+                                [float(x) for x in PP.LP.d_poly], sm['carState'].steeringAngle)
 
     self.choose_solution(v_cruise_setpoint, enabled)
 
@@ -214,6 +225,7 @@ class Planner():
 
     # Send out fcw
     plan_send.plan.fcw = fcw
+    plan_send.plan.decelForTurn = bool(self.turn_controller.is_active)
 
     pm.send('plan', plan_send)
 
