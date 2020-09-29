@@ -36,6 +36,7 @@
 #define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
+#define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
 
 #define UI_BUF_COUNT 4
 
@@ -56,6 +57,8 @@ const int header_h = 420;
 const int footer_h = 280;
 const Rect settings_btn = {50, 35, 200, 117};
 const Rect home_btn = {60, 1080 - 180 - 40, 180, 180};
+const int speed_sgn_r = 96;
+const int speed_sgn_touch_pad = 50;
 
 const int UI_FREQ = 20;   // Hz
 
@@ -97,6 +100,12 @@ typedef struct UIScene {
 
   bool is_rhd;
   bool driver_view;
+
+  // Speed limit control
+  int ui_speed_sgn_x, ui_speed_sgn_y; // speed sign position
+  bool speed_limit_control_enabled;
+  float speed_limit_perc_offset;
+  double last_speed_limit_sign_tap;
 
   std::string alert_text1;
   std::string alert_text2;
@@ -163,6 +172,11 @@ typedef struct UIState {
 
   // device state
   bool awake;
+
+  // speed limit controll state
+  bool speed_limit_control_enabled;
+  float speed_limit_perc_offset;
+  double last_speed_limit_sign_tap;
 
   bool sidebar_collapsed;
   Rect video_rect, viz_rect;
