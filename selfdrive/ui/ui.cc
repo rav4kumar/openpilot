@@ -22,6 +22,12 @@ int write_param_float(float param, const char* param_name, bool persistent_param
   return write_db_value(param_name, s, size < sizeof(s) ? size : sizeof(s), persistent_param);
 }
 
+int write_param_bool(bool param, const char* param_name, bool persistent_param) {
+  char s[16];
+  int size = snprintf(s, sizeof(s), "%d", param);
+  return write_db_value(param_name, s, size < sizeof(s) ? size : sizeof(s), persistent_param);
+}
+
 void ui_init(UIState *s) {
   s->sm = new SubMaster({"model", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
                          "health", "carParams", "ubloxGnss", "driverState", "dMonitoringState"});
@@ -30,6 +36,8 @@ void ui_init(UIState *s) {
   s->status = STATUS_OFFROAD;
   s->scene.satelliteCount = -1;
   read_param(&s->is_metric, "IsMetric");
+  read_param(&s->speed_limit_control_enabled, "SpeedLimitControl");
+  read_param(&s->speed_limit_perc_offset, "SpeedLimitPercOffset");
 
   s->fb = framebuffer_init("ui", 0, true, &s->fb_w, &s->fb_h);
   assert(s->fb);

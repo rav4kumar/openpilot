@@ -119,7 +119,18 @@ static void handle_vision_touch(UIState *s, int touch_x, int touch_y) {
   if (s->started && (touch_x >= s->scene.ui_viz_rx - bdr_s)
       && (s->active_app != cereal::UiLayoutState::App::SETTINGS)) {
     if (!s->scene.frontview) {
-      s->scene.uilayout_sidebarcollapsed = !s->scene.uilayout_sidebarcollapsed;
+      if (s->scene.controls_state.getSpeedLimit() > 0.0 
+          && touch_y >= s->scene.ui_speed_sgn_y - speed_sgn_touch_pad
+          && touch_y < s->scene.ui_speed_sgn_y + 2 * speed_sgn_r + speed_sgn_touch_pad
+          && touch_x >= s->scene.ui_speed_sgn_x - speed_sgn_touch_pad
+          && touch_x < s->scene.ui_speed_sgn_x + 2 * speed_sgn_r + speed_sgn_touch_pad) {
+        // If touching the speed limit sign area when visible
+        s->last_speed_limit_sign_tap = seconds_since_boot();
+        s->speed_limit_control_enabled = !s->speed_limit_control_enabled;
+        write_param_bool(s->speed_limit_control_enabled, "SpeedLimitControl");
+      } else {
+        s->scene.uilayout_sidebarcollapsed = !s->scene.uilayout_sidebarcollapsed;
+      }
     } else {
       write_db_value("IsDriverViewEnabled", "0", 1);
     }
