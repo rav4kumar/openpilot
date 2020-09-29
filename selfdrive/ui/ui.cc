@@ -264,6 +264,10 @@ static void update_status(UIState *s) {
 
       s->scene.is_rhd = Params().getBool("IsRHD");
       s->scene.end_to_end = Params().getBool("EndToEndToggle");
+
+      s->scene.speed_limit_control_enabled = Params().getBool("SpeedLimitControl");
+      s->scene.speed_limit_perc_offset = Params().getBool("SpeedLimitPercOffset");
+
       s->vipc_client = s->scene.driver_view ? s->vipc_client_front : s->vipc_client_rear;
     } else {
       s->vipc_client->connected = false;

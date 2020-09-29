@@ -8,6 +8,7 @@ import os
 import threading
 from common.basedir import BASEDIR
 
+<<<<<<< HEAD
 
 cdef class ParamKeyType:
   PERSISTENT = c_ParamKeyType.PERSISTENT
@@ -15,6 +16,89 @@ cdef class ParamKeyType:
   CLEAR_ON_PANDA_DISCONNECT = c_ParamKeyType.CLEAR_ON_PANDA_DISCONNECT
   CLEAR_ON_IGNITION = c_ParamKeyType.CLEAR_ON_IGNITION
   ALL = c_ParamKeyType.ALL
+=======
+cdef enum TxType:
+  PERSISTENT = 1
+  CLEAR_ON_MANAGER_START = 2
+  CLEAR_ON_PANDA_DISCONNECT = 3
+
+keys = {
+  b"AccessToken": [TxType.CLEAR_ON_MANAGER_START],
+  b"ApiCache_DriveStats": [TxType.PERSISTENT],
+  b"ApiCache_Device": [TxType.PERSISTENT],
+  b"ApiCache_Owner": [TxType.PERSISTENT],
+  b"AthenadPid": [TxType.PERSISTENT],
+  b"CalibrationParams": [TxType.PERSISTENT],
+  b"CarBatteryCapacity": [TxType.PERSISTENT],
+  b"CarParams": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"CarParamsCache": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"CarVin": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"CommunityFeaturesToggle": [TxType.PERSISTENT],
+  b"EndToEndToggle": [TxType.PERSISTENT],
+  b"CompletedTrainingVersion": [TxType.PERSISTENT],
+  b"DisablePowerDown": [TxType.PERSISTENT],
+  b"DisableUpdates": [TxType.PERSISTENT],
+  b"DoUninstall": [TxType.CLEAR_ON_MANAGER_START],
+  b"DongleId": [TxType.PERSISTENT],
+  b"GitDiff": [TxType.PERSISTENT],
+  b"GitBranch": [TxType.PERSISTENT],
+  b"GitCommit": [TxType.PERSISTENT],
+  b"GitRemote": [TxType.PERSISTENT],
+  b"GithubSshKeys": [TxType.PERSISTENT],
+  b"GithubUsername": [TxType.PERSISTENT],
+  b"HardwareSerial": [TxType.PERSISTENT],
+  b"HandsOnWheelMonitoring": [TxType.PERSISTENT],
+  b"HasAcceptedTerms": [TxType.PERSISTENT],
+  b"HasCompletedSetup": [TxType.PERSISTENT],
+  b"IsDriverViewEnabled": [TxType.CLEAR_ON_MANAGER_START],
+  b"IMEI": [TxType.PERSISTENT],
+  b"IsLdwEnabled": [TxType.PERSISTENT],
+  b"IsMetric": [TxType.PERSISTENT],
+  b"IsOffroad": [TxType.CLEAR_ON_MANAGER_START],
+  b"IsRHD": [TxType.PERSISTENT],
+  b"IsTakingSnapshot": [TxType.CLEAR_ON_MANAGER_START],
+  b"IsUpdateAvailable": [TxType.CLEAR_ON_MANAGER_START],
+  b"IsUploadRawEnabled": [TxType.PERSISTENT],
+  b"LastAthenaPingTime": [TxType.PERSISTENT],
+  b"LastGPSPosition": [TxType.PERSISTENT],
+  b"LastUpdateException": [TxType.PERSISTENT],
+  b"LastUpdateTime": [TxType.PERSISTENT],
+  b"LiveParameters": [TxType.PERSISTENT],
+  b"MaxDecelerationForTurns": [TxType.PERSISTENT],
+  b"OpenpilotEnabledToggle": [TxType.PERSISTENT],
+  b"PandaFirmware": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"PandaFirmwareHex": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"PandaDongleId": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"Passive": [TxType.PERSISTENT],
+  b"RecordFront": [TxType.PERSISTENT],
+  b"RecordFrontLock": [TxType.PERSISTENT],  # for the internal fleet
+  b"ReleaseNotes": [TxType.PERSISTENT],
+  b"ShouldDoUpdate": [TxType.CLEAR_ON_MANAGER_START],
+  b"SpeedLimitControl": [TxType.PERSISTENT],
+  b"SpeedLimitPercOffset": [TxType.PERSISTENT],
+  b"SubscriberInfo": [TxType.PERSISTENT],
+  b"SshEnabled": [TxType.PERSISTENT],
+  b"TermsVersion": [TxType.PERSISTENT],
+  b"Timezone": [TxType.PERSISTENT],
+  b"TrainingVersion": [TxType.PERSISTENT],
+  b"TurnVisionControl": [TxType.PERSISTENT],
+  b"UpdateAvailable": [TxType.CLEAR_ON_MANAGER_START],
+  b"UpdateFailedCount": [TxType.CLEAR_ON_MANAGER_START],
+  b"Version": [TxType.PERSISTENT],
+  b"VisionRadarToggle": [TxType.PERSISTENT],
+  b"Offroad_ChargeDisabled": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"Offroad_ConnectivityNeeded": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_ConnectivityNeededPrompt": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_TemperatureTooHigh": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_PandaFirmwareMismatch": [TxType.CLEAR_ON_MANAGER_START, TxType.CLEAR_ON_PANDA_DISCONNECT],
+  b"Offroad_InvalidTime": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_IsTakingSnapshot": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_NeosUpdate": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_UpdateFailed": [TxType.CLEAR_ON_MANAGER_START],
+  b"Offroad_HardwareUnsupported": [TxType.CLEAR_ON_MANAGER_START],
+  b"ForcePowerDown": [TxType.CLEAR_ON_MANAGER_START],
+}
+>>>>>>> 39e5c4a40... Speed Limit Controller: Implemnetation
 
 def ensure_bytes(v):
   if isinstance(v, str):
