@@ -68,7 +68,7 @@ class LongControl():
     self.pid.reset()
     self.v_pid = v_pid
 
-  def dynamic_gas(self, v_ego, gas_interceptor, gas_button_status):
+  def dynamic_gas(self, v_ego, gas_interceptor):
     dynamic = False
     if gas_interceptor:
         dynamic = True
@@ -104,7 +104,7 @@ class LongControl():
     except AttributeError:
       gas_interceptor = False
     # Actuation limits
-    gas_max = interp(v_ego, gas_interceptor)
+    gas_max = self.dynamic_gas(CS.vEgo, gas_interceptor)
     brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
 
     # Update state machine
