@@ -43,6 +43,8 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
+      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
+      ret.longitudinalTuning.kiV = [0.135, 0.10]
       stop_and_go = True
       ret.safetyParam = 55
       ret.wheelbase = 2.70002 #from toyota online sepc.
