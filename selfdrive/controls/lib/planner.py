@@ -39,7 +39,7 @@ def calc_cruise_accel_limits(v_ego, following):
   a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V)
 
   if following:
-    a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V_FOLLOWING)
+    a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MIN_V_FOLLOWING)
   else:
     a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V)
   return np.vstack([a_cruise_min, a_cruise_max])
