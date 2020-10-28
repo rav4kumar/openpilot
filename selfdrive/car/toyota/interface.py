@@ -49,6 +49,7 @@ class CarInterface(CarInterfaceBase):
       ret.safetyParam = 55
       ret.wheelbase = 2.70002 #from toyota online sepc.
       ret.steerRatio = 13.4   # True steerRation from older prius
+      ret.steerActuatorDelay = 0.5
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
       #lqr
