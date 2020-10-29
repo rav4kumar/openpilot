@@ -15,6 +15,8 @@ class CarState(CarStateBase):
 
     # All TSS2 car have the accurate sensor
     self.accurate_steer_angle_seen = CP.carFingerprint in TSS2_CAR
+    self.setspeedcounter = 0
+
 
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.

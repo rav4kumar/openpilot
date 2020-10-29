@@ -17,6 +17,8 @@ MAX_CTRL_SPEED = (V_CRUISE_MAX + 4) * CV.KPH_TO_MS  # 144 + 4 = 92 mph
 
 class CarInterfaceBase():
   def __init__(self, CP, CarController, CarState):
+    self.keep_openpilot_engaged = True
+    self.disengage_due_to_slow_speed = False
     self.CP = CP
     self.VM = VehicleModel(CP)
 

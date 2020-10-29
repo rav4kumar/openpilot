@@ -365,7 +365,7 @@ class Controls:
 
     if not self.active:
       self.LaC.reset()
-      self.LoC.reset(v_pid=CS.vEgo)
+      self.LoC.reset(v_pid=plan.vTargetFuture)
 
     plan_age = DT_CTRL * (self.sm.frame - self.sm.rcv_frame['plan'])
     # no greater than dt mpc + dt, to prevent too high extraps

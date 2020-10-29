@@ -346,8 +346,30 @@ class CarInterface(CarInterfaceBase):
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
+    longControlDisabled = False
+    if not self.CS.out.cruiseState.enabled:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+    else:
+      if self.keep_openpilot_engaged:
+        ret.cruiseState.enabled = bool(self.CS.main_on)
+      if not self.CS.pcm_acc_active:
+        longControlDisabled = True
+        ret.brakePressed = True
+        self.disengage_due_to_slow_speed = False
+    if ret.vEgo < 1 or not self.keep_openpilot_engaged:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+      if self.CS.out.cruiseState.enabled and not self.CS.pcm_acc_active:
+        self.disengage_due_to_slow_speed = True
+    if self.disengage_due_to_slow_speed and ret.vEgo > 1 and ret.gearShifter != GearShifter.reverse:
+      self.disengage_due_to_slow_speed = False
+      ret.cruiseState.enabled = bool(self.CS.main_on)
+
     # events
     events = self.create_common_events(ret)
+
+    if longControlDisabled:
+     events.add(EventName.longControlDisabled)
+
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and not self.CP.isPandaBlack:
       events.add(EventName.invalidGiraffeToyota)
