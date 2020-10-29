@@ -368,8 +368,7 @@ class CarInterface(CarInterfaceBase):
     events = self.create_common_events(ret)
 
     if longControlDisabled:
-     events.add(EventName.longControlDisabled)
-
+      events.add(EventName.longControlDisabled)
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and not self.CP.isPandaBlack:
       events.add(EventName.invalidGiraffeToyota)
