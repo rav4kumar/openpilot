@@ -109,9 +109,17 @@ class LongControl():
 
     # Update state machine
     output_gb = self.last_output_gb
+    if radarState is None:
+      dRel = 200
+    else:
+      dRel = radarState.leadOne.dRel
+    if hasLead:
+      stop = True if (dRel < 4.0 and radarState.leadOne.status) else False
+    else:
+      stop = False
     self.long_control_state = long_control_state_trans(active, self.long_control_state, CS.vEgo,
                                                        v_target_future, self.v_pid, output_gb,
-                                                       CS.brakePressed, CS.cruiseState.standstill)
+                                                       CS.brakePressed, CS.cruiseState.standstill, stop)
 
     v_ego_pid = max(CS.vEgo, MIN_CAN_SPEED)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
 
