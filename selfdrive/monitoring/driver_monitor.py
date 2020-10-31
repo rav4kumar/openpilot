@@ -13,7 +13,6 @@ EventName = car.CarEvent.EventName
 #  Disabling or nerfing safety features may get you and your users banned from our servers.
 #  We recommend that you do not change these numbers from the defaults.
 # ******************************************************************************************
-
 _AWARENESS_TIME = 35.  # passive wheel touch total timeout
 _AWARENESS_PRE_TIME_TILL_TERMINAL = 12.
 _AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6.

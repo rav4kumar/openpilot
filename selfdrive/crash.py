@@ -39,9 +39,9 @@ else:
   error_tags['username'] = username
 
   if smiskol_remote:  # CHANGE TO YOUR remote and sentry key to receive errors if you fork this fork
-    sentry_uri = 'https://7f66878806a948f9a8b52b0fe7781201@o237581.ingest.sentry.io/5252098'
+    sentry_uri = 'https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547'
   else:
-    sentry_uri = 'https://1994756b5e6f41cf939a4c65de45f4f2:cefebaf3a8aa40d182609785f7189bd7@app.getsentry.com/77924'  # stock
+    sentry_uri = 'https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547'  # stock
   client = Client(sentry_uri, install_sys_hook=False, transport=HTTPTransport, release=version, tags=error_tags)
 
   def save_exception(exc_text):
@@ -57,8 +57,24 @@ else:
       client.captureException(*args, **kwargs)
     cloudlog.error("crash", exc_info=kwargs.get('exc_info', 1))
 
+  def save_exception(exc_text):
+    if not os.path.exists(CRASHES_DIR):
+      os.mkdir(CRASHES_DIR)
+    log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%Y-%m-%d--%H-%M-%S.%f.log')[:-3])
+    with open(log_file, 'w') as f:
+      f.write(exc_text)
+    print('Logged current crash to {}'.format(log_file))
+
   def bind_user(**kwargs):
     client.user_context(kwargs)
+
+  def capture_warning(warning_string):
+    bind_user(id=dongle_id, ip_address=ip)
+    client.captureMessage(warning_string, level='warning')
+
+  def capture_info(info_string):
+    bind_user(id=dongle_id, ip_address=ip)
+    client.captureMessage(info_string, level='info')
 
   def bind_extra(**kwargs):
     client.extra_context(kwargs)
