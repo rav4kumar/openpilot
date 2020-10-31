@@ -69,7 +69,7 @@ class DynamicGas:
   def set_profile(self):
     x = [0.0, 1.4082, 2.80311, 4.22661, 5.38271, 6.16561, 7.24781, 8.28308, 10.24465, 12.96402, 15.42303, 18.11903, 20.11703, 24.46614, 29.05805, 32.71015, 35.76326]
     y = [0.234, 0.237, 0.246, 0.26, 0.279, 0.297, 0.332, 0.354, 0.368, 0.377, 0.389, 0.399, 0.411, 0.45, 0.504, 0.558, 0.617]
-    self.supported_car = False
+    self.supported_car = True
     if self.CP.enableGasInterceptor:
       if self.candidate == CAR_TOYOTA.COROLLA:
         x = [0.0, 1.4082, 2.8031, 4.2266, 5.3827, 6.1656, 7.2478, 8.2831, 10.2447, 12.964, 15.423, 18.119, 20.117, 24.4661, 29.0581, 32.7101, 35.7633]
@@ -89,12 +89,14 @@ class DynamicGas:
         # x, y = self.CP.gasMaxBP, self.CP.gasMaxV  # probably better to use custom maxGas above
         self.supported_car = True
     else:
-      y = [0.35, 0.47, 0.43, 0.35, 0.3, 0.3, 0.3229, 0.34784, 0.36765, 0.38, 0.396, 0.409, 0.425, 0.478, 0.55, 0.621, 0.7]
-      if self.candidate in [CAR_TOYOTA.PRIUS_2020, CAR_TOYOTA.RAV4_TSS2]:
-        y = [i * (1 - 0.2) for i in y]
-      else:
-        y = [interp(i, [y[0], y[-1]], [1.15, 1.0]) * i for i in y]  # more gas at lower speeds
       self.supported_car = True
+      if self.candidate in [CAR_TOYOTA.PRIUS_TSS2, CAR_TOYOTA.PRIUS_2020]:
+        # y = [0.35587, 0.46747, 0.41816, 0.33261, 0.27844, 0.2718, 0.28396, 0.29537, 0.30647, 0.31161, 0.3168, 0.3272, 0.34, 0.3824, 0.44, 0.4968, 0.56]
+        y = [0.35587, 0.46747, 0.41816, 0.33261, 0.27844, 0.2718, 0.28184, 0.29106, 0.29785, 0.297, 0.29658, 0.30308, 0.31354, 0.34922, 0.39767, 0.44527, 0.4984]
+      elif self.candidate in [CAR_TOYOTA.RAV4_TSS2, CAR_TOYOTA.RAV4H_TSS2]:
+        y = [0.35587, 0.46747, 0.41816, 0.33261, 0.27844, 0.2718, 0.28396, 0.29537, 0.30647, 0.31161, 0.3168, 0.3272, 0.34, 0.3824, 0.44, 0.4968, 0.56]
+      else:
+        self.supported_car = False
 
     self.gasMaxBP, self.gasMaxV = x, y
 
