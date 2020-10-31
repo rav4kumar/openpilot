@@ -83,12 +83,8 @@ class LongControl():
 
   def update(self, active, CS, v_target, v_target_future, a_target, CP, extras, hasLead, radarState):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
-    try:
-      gas_interceptor = CP.enableGasInterceptor
-    except AttributeError:
-      gas_interceptor = False
     # Actuation limits
-    gas_max = self.dynamic_gas(CS.vEgo, gas_interceptor)
+    gas_max = interp(CS.vEgo, CP.gasMaxBP, CP.gasMaxV)
     brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
 
     if self.enable_dg:
