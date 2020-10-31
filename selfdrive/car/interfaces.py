@@ -8,6 +8,7 @@ from selfdrive.config import Conversions as CV
 from selfdrive.controls.lib.events import Events
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+from common.op_params import opParams
 
 GearShifter = car.CarState.GearShifter
 EventName = car.CarEvent.EventName
@@ -21,6 +22,7 @@ class CarInterfaceBase():
     self.disengage_due_to_slow_speed = False
     self.CP = CP
     self.VM = VehicleModel(CP)
+    self.disengage_on_gas = opParams().get('disengage_on_gas')
 
     self.frame = 0
     self.low_speed_alert = False
@@ -102,7 +104,7 @@ class CarInterfaceBase():
       events.add(EventName.wrongCarMode)
     if cs_out.espDisabled:
       events.add(EventName.espDisabled)
-    if cs_out.gasPressed:
+    if cs_out.gasPressed and self.disengage_on_gas:
       events.add(EventName.gasPressed)
     if cs_out.stockFcw:
       events.add(EventName.stockFcw)

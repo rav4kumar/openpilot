@@ -3,12 +3,9 @@ import os
 import sys
 import threading
 import capnp
-from datetime import datetime
+from selfdrive.version import version, dirty
 import traceback
-from selfdrive.version import version, dirty, origin, branch
-from common.params import Params
-import requests
-CRASHES_DIR = '/sdcard/crash_logs/'
+from datetime import datetime
 
 from selfdrive.swaglog import cloudlog
 from common.hardware import PC
@@ -28,19 +25,30 @@ if os.getenv("NOLOG") or os.getenv("NOCRASH") or PC:
 else:
   from raven import Client
   from raven.transport.http import HTTPTransport
-  params = Params()
-  try:
-    dongle_id = params.get("DongleId").decode('utf8')
-  except AttributeError:
-    dongle_id = "None"
-  try:
-    ip = requests.get('https://checkip.amazonaws.com/', timeout=3).text.strip() if is_online() else '255.255.255.255'
-  except:
-    ip = "255.255.255.255"
-  error_tags = {'dirty': dirty, 'username': dongle_id, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin}
+  from selfdrive.version import origin, branch, smiskol_remote, get_git_commit
+  from common.op_params import opParams
 
-  client = Client('https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547',
-                  install_sys_hook=False, transport=HTTPTransport, release=version, tags=error_tags)
+  CRASHES_DIR = '/data/community/crashes'
+  if not os.path.exists(CRASHES_DIR):
+    os.makedirs(CRASHES_DIR)
+
+  error_tags = {'dirty': dirty, 'origin': origin, 'branch': branch, 'commit': get_git_commit()}
+  username = opParams().get('username')
+  if username is None or not isinstance(username, str):
+    username = 'undefined'
+  error_tags['username'] = username
+
+  if smiskol_remote:  # CHANGE TO YOUR remote and sentry key to receive errors if you fork this fork
+    sentry_uri = 'https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547'
+  else:
+    sentry_uri = 'https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547'  # stock
+  client = Client(sentry_uri, install_sys_hook=False, transport=HTTPTransport, release=version, tags=error_tags)
+
+  def save_exception(exc_text):
+    log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%d-%m-%Y--%I:%M.%S-%p.log'))
+    with open(log_file, 'w') as f:
+      f.write(exc_text)
+    print('Logged current crash to {}'.format(log_file))
 
   def capture_exception(*args, **kwargs):
     save_exception(traceback.format_exc())

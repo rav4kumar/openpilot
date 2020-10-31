@@ -1,6 +1,8 @@
 from cereal import log
 from common.numpy_fast import clip, interp
-from selfdrive.controls.lib.pid import PIController
+from selfdrive.controls.lib.pid import LongPIDController
+from selfdrive.controls.lib.dynamic_gas import DynamicGas
+from common.op_params import opParams
 
 LongCtrlState = log.ControlsState.LongControlState
 
@@ -53,51 +55,33 @@ def long_control_state_trans(active, long_control_state, v_ego, v_target, v_pid,
 
 
 class LongControl():
-  def __init__(self, CP, compute_gb):
+  def __init__(self, CP, compute_gb, candidate):
     self.long_control_state = LongCtrlState.off  # initialized to off
-    self.pid = PIController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
-                            (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
-                            rate=RATE,
-                            sat_limit=0.8,
-                            convert=compute_gb)
+    kdBP = [0., 16., 35.]
+    if CP.enableGasInterceptor:
+      kdV = [0.05, 1.0285 * 1.45, 1.8975 * 0.8]
+    else:
+      kdV = [0.08, 1.215, 2.51]
+
+    self.pid = LongPIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
+                                 (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
+                                 (kdBP, kdV),
+                                 rate=RATE,
+                                 sat_limit=0.8,
+                                 convert=compute_gb)
     self.v_pid = 0.0
     self.last_output_gb = 0.0
+
+    self.op_params = opParams()
+    self.enable_dg = self.op_params.get('dynamic_gas')
+    self.dynamic_gas = DynamicGas(CP, candidate)
 
   def reset(self, v_pid):
     """Reset PID controller and change setpoint"""
     self.pid.reset()
     self.v_pid = v_pid
 
-  def dynamic_gas(self, v_ego, gas_interceptor):
-    dynamic = False
-    if gas_interceptor:
-        dynamic = True
-        x = [0.0, 1.4082, 2.80311, 4.22661, 5.38271, 6.16561, 7.24781, 8.28308, 10.24465, 12.96402, 15.42303, 18.11903, 20.11703, 24.46614, 29.05805, 32.71015, 35.76326]
-        y = [0.3, 0.304, 0.315, 0.342, 0.365, 0.386, 0.429, 0.454, 0.472, 0.48, 0.489, 0.421, 0.432, 0.480, 0.55, 0.56, 0.59]
-    else:
-        dynamic = True
-        x = [0.0, 1.4082, 2.80311, 4.22661, 5.38271, 6.16561, 7.24781, 8.28308, 10.24465, 12.96402, 15.42303, 18.11903, 20.11703, 24.46614, 29.05805, 32.71015, 35.76326]
-        y = [0.3, 0.304, 0.315, 0.342, 0.365, 0.386, 0.429, 0.454, 0.472, 0.48, 0.489, 0.421, 0.432, 0.480, 0.55, 0.56, 0.59]
-    if not dynamic:
-      x = [0., 9., 55.]  # default BP values
-
-    accel = interp(v_ego, x, y)
-
-    #if dynamic and hasLead:  # dynamic gas profile specific operations, and if lead
-    #  if v_ego < 6.7056:  # if under 15 mph
-    #    x = [1.61479, 1.99067, 2.28537, 2.49888, 2.6312, 2.68224]
-    #    y = [-accel, -(accel / 1.06), -(accel / 1.2), -(accel / 1.8), -(accel / 4.4), 0]  # array that matches current chosen accel value
-    #    accel += interp(vRel, x, y)
-    #  else:
-    #    x = [-0.89408, 0, 0.89408, 4.4704]
-    #    y = [-.15, -.05, .005, .05]
-    #    accel += interp(vRel, x, y)
-
-    min_return = 0.0
-    max_return = 1.0
-    return round(max(min(accel, max_return), min_return), 5)  # ensure we return a value between range
-
-  def update(self, active, CS, v_target, v_target_future, a_target, CP, hasLead, radarState):
+  def update(self, active, CS, v_target, v_target_future, a_target, CP, extras, hasLead, radarState):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
     try:
       gas_interceptor = CP.enableGasInterceptor
@@ -106,6 +90,9 @@ class LongControl():
     # Actuation limits
     gas_max = self.dynamic_gas(CS.vEgo, gas_interceptor)
     brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
+
+    if self.enable_dg:
+      gas_max = self.dynamic_gas.update(CS, extras)
 
     # Update state machine
     output_gb = self.last_output_gb
@@ -169,4 +156,4 @@ class LongControl():
     final_gas = clip(output_gb, 0., gas_max)
     final_brake = -clip(output_gb, -brake_max, 0.)
 
-    return final_gas, final_brake
+    return float(final_gas), float(final_brake)

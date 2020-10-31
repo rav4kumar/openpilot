@@ -14,13 +14,13 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState, MIN_CAN_SPEED
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+from selfdrive.controls.lib.long_mpc_model import LongitudinalMpcModel
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distracted
 
 # lookup tables VS speed to determine min and max accels in cruise
 # make sure these accelerations are smaller than mpc limits
-#_A_CRUISE_MIN_V_FOLLOWING = [-3.0, -2.5, -2.0, -1.5, -1.0]
 _A_CRUISE_MIN_V = [-1.0, -0.7, -0.6, -0.5, -0.3]
 _A_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
 
@@ -33,7 +33,6 @@ _A_CRUISE_MAX_BP = [0., 5., 10., 20., 55.]
 # Lookup table for turns
 _A_TOTAL_MAX_V = [3.5, 4.0, 5.0]
 _A_TOTAL_MAX_BP = [0., 25., 55.]
-
 
 def calc_cruise_accel_limits(v_ego, following):
   a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V)
@@ -64,6 +63,7 @@ class Planner():
 
     self.mpc1 = LongitudinalMpc(1)
     self.mpc2 = LongitudinalMpc(2)
+    self.mpc_model = LongitudinalMpcModel()
 
     self.v_acc_start = 0.0
     self.a_acc_start = 0.0
@@ -81,13 +81,17 @@ class Planner():
     self.params = Params()
     self.first_loop = True
 
-  def choose_solution(self, v_cruise_setpoint, enabled):
+  def choose_solution(self, v_cruise_setpoint, enabled, model_enabled):
+    possible_futures = [self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint]
     if enabled:
       solutions = {'cruise': self.v_cruise}
       if self.mpc1.prev_lead_status:
         solutions['mpc1'] = self.mpc1.v_mpc
       if self.mpc2.prev_lead_status:
         solutions['mpc2'] = self.mpc2.v_mpc
+      if self.mpc_model.valid and model_enabled:
+        solutions['model'] = self.mpc_model.v_mpc
+        possible_futures.append(self.mpc_model.v_mpc_future)  # only used when using model
 
       slowest = min(solutions, key=solutions.get)
 
@@ -102,8 +106,11 @@ class Planner():
       elif slowest == 'cruise':
         self.v_acc = self.v_cruise
         self.a_acc = self.a_cruise
+      elif slowest == 'model':
+        self.v_acc = self.mpc_model.v_mpc
+        self.a_acc = self.mpc_model.a_mpc
 
-    self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
+    self.v_acc_future = min(possible_futures)
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
@@ -156,11 +163,16 @@ class Planner():
 
     self.mpc1.set_cur_state(self.v_acc_start, self.a_acc_start)
     self.mpc2.set_cur_state(self.v_acc_start, self.a_acc_start)
+    self.mpc_model.set_cur_state(self.v_acc_start, self.a_acc_start)
 
     self.mpc1.update(pm, sm['carState'], lead_1)
     self.mpc2.update(pm, sm['carState'], lead_2)
+    self.mpc_model.update(sm['carState'].vEgo, sm['carState'].aEgo,
+                          sm['model'].longitudinal.distances,
+                          sm['model'].longitudinal.speeds,
+                          sm['model'].longitudinal.accelerations)
 
-    self.choose_solution(v_cruise_setpoint, enabled)
+    self.choose_solution(v_cruise_setpoint, enabled, sm['modelLongButton'].enabled)
 
     # determine fcw
     if self.mpc1.new_lead:
