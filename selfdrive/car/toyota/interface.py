@@ -86,8 +86,10 @@ class CarInterface(CarInterfaceBase):
         ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
-      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
-      ret.longitudinalTuning.kiV = [0.135, 0.10]
+      #ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
+      #ret.longitudinalTuning.kiV = [0.135, 0.10]
+      ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # braking tune from rav4h
+      ret.longitudinalTuning.kiV = [0.068, 0.10]
       stop_and_go = True
       ret.safetyParam = 55
       ret.wheelbase = 2.70002 #from toyota online sepc.
@@ -117,7 +119,7 @@ class CarInterface(CarInterfaceBase):
       #ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.16]]
       #ret.lateralTuning.pid.kf = 0.00007818594
       if prius_use_pid:
-        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.36], [0.1]]
+        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.36], [0.13]]
         ret.lateralTuning.pid.kdV = [2.]  # corolla D times gain in PI values
         ret.lateralTuning.pid.kf = 0.00007818594
       else:
