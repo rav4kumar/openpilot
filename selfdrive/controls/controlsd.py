@@ -179,6 +179,8 @@ class Controls:
     self.events.clear()
     self.events.add_from_msg(CS.events)
     self.events.add_from_msg(self.sm['dMonitoringState'].events)
+    self.events.add_from_msg(self.sm['plan'].eventsDEPRECATED)
+
 
     # Handle startup event
     if self.startup_event is not None:
@@ -563,6 +565,7 @@ class Controls:
     controlsState.longControlState = self.LoC.long_control_state
     controlsState.vPid = float(self.LoC.v_pid)
     controlsState.vCruise = float(self.v_cruise_kph)
+    controlsState.speedLimit = float(CS.cruiseState.speedLimit)
     controlsState.upAccelCmd = float(self.LoC.pid.p)
     controlsState.uiAccelCmd = float(self.LoC.pid.id)
     controlsState.ufAccelCmd = float(self.LoC.pid.f)
@@ -578,6 +581,7 @@ class Controls:
     controlsState.mapValid = self.sm['plan'].mapValid
     controlsState.forceDecel = bool(force_decel)
     controlsState.canErrorCounter = self.can_error_counter
+    controlsState.speedLimitControlState = self.sm['plan'].speedLimitControlState
 
     if self.CP.lateralTuning.which() == 'pid':
       controlsState.lateralControlState.pidState = lac_log

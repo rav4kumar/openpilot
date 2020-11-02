@@ -65,6 +65,30 @@ static void ui_draw_text(NVGcontext *vg, float x, float y, const char* string, f
   nvgText(vg, x, y, string, NULL);
 }
 
+static void ui_draw_circle(NVGcontext *vg, float x, float y, float size, NVGcolor color) {
+  nvgBeginPath(vg);
+  nvgCircle(vg, x, y + (bdr_s * 1.5), size);
+  nvgFillColor(vg, color);
+  nvgFill(vg);
+}
+
+static void ui_draw_speed_sign(NVGcontext *vg, float x, float y, int size, float speed, float speed_offset, int font, int ring_alpha, int inner_alpha) {
+  ui_draw_circle(vg, x, y, float(size), COLOR_RED_ALPHA(ring_alpha));
+  ui_draw_circle(vg, x, y, float(size) * 0.8, COLOR_WHITE_ALPHA(inner_alpha));
+
+  char speedlimit_str[16];
+  nvgTextAlign(vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+  snprintf(speedlimit_str, sizeof(speedlimit_str), "%d", int(speed));
+  ui_draw_text(vg, x, y + (bdr_s * 1.5), speedlimit_str, 120, COLOR_BLACK_ALPHA(inner_alpha), font);
+
+  if (int(speed_offset) == 0) {
+    return;
+  }
+  char speedlimitoffset_str[16];
+  snprintf(speedlimitoffset_str, sizeof(speedlimitoffset_str), "%+d", int(speed_offset));
+  ui_draw_text(vg, x, y + (bdr_s * 1.5) + 55, speedlimitoffset_str, 50, COLOR_BLACK_ALPHA(inner_alpha), font);
+}
+
 static void draw_chevron(UIState *s, float x_in, float y_in, float sz,
                           NVGcolor fillColor, NVGcolor glowColor) {
   const vec4 p_car_space = (vec4){{x_in, y_in, 0., 1.}};
@@ -414,6 +438,31 @@ static void ui_draw_vision_maxspeed(UIState *s) {
   }
 }
 
+static void ui_draw_vision_speedlimit(UIState *s) {
+  const float speedLimit = s->scene.controls_state.getSpeedLimit();
+  const float speedLimitOffset = speedLimit * s->speed_limit_perc_offset / 100.0;
+
+  if (speedLimit > 0.0) {
+    const int viz_maxspeed_w = 189;
+    const int viz_maxspeed_h = 202;
+    const float sign_center_x = s->scene.viz_rect.x + bdr_s * 3 + viz_maxspeed_w + speed_sgn_r;
+    const float sign_center_y = s->scene.viz_rect.y + viz_maxspeed_h / 2;
+    const float speed = (s->is_metric ? speedLimit * 3.6 : speedLimit * 2.2369363) + 0.5;
+    const float speed_offset = (s->is_metric ? speedLimitOffset * 3.6 : speedLimitOffset * 2.2369363) + 0.5;
+
+    auto speedLimitControlState = s->scene.controls_state.getSpeedLimitControlState();
+    const bool force_active = s->speed_limit_control_enabled && seconds_since_boot() < s->last_speed_limit_sign_tap + 5.0;
+    const bool inactive = !force_active && (!s->speed_limit_control_enabled || speedLimitControlState == cereal::ControlsState::SpeedLimitControlState::INACTIVE);
+    const bool temp_inactive = !force_active && (s->speed_limit_control_enabled && speedLimitControlState == cereal::ControlsState::SpeedLimitControlState::TEMP_INACTIVE);
+    const int ring_alpha = inactive ? 100 : 255;
+    const int inner_alpha = inactive || temp_inactive ? 100 : 255;
+
+    ui_draw_speed_sign(s->vg, sign_center_x, sign_center_y, speed_sgn_r, speed, speed_offset, s->font_sans_bold, ring_alpha, inner_alpha);
+    s->scene.ui_speed_sgn_x = sign_center_x - speed_sgn_r;
+    s->scene.ui_speed_sgn_y = sign_center_y - speed_sgn_r;
+  }
+}
+
 static void ui_draw_vision_speed(UIState *s) {
   const Rect &viz_rect = s->scene.viz_rect;
   float v_ego = s->scene.controls_state.getVEgo();
@@ -600,6 +649,7 @@ static void ui_draw_vision_header(UIState *s) {
   ui_draw_rect(s->vg, viz_rect.x, viz_rect.y, viz_rect.w, header_h, gradient);
 
   ui_draw_vision_maxspeed(s);
+  ui_draw_vision_speedlimit(s);
   ui_draw_vision_speed(s);
   ui_draw_vision_event(s);
 }

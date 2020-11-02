@@ -25,6 +25,7 @@
 #include "common/framebuffer.h"
 #include "common/modeldata.h"
 #include "common/params.h"
+#include "common/timing.h"
 #include "sound.hpp"
 
 #define COLOR_BLACK nvgRGBA(0, 0, 0, 255)
@@ -33,6 +34,7 @@
 #define COLOR_WHITE_ALPHA(x) nvgRGBA(255, 255, 255, x)
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
+#define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
 
 #define UI_BUF_COUNT 4
 
@@ -52,6 +54,8 @@ const int header_h = 420;
 const int footer_h = 280;
 const Rect settings_btn = {50, 35, 200, 117};
 const Rect home_btn = {60, 1080 - 180 - 40, 180, 180};
+const int speed_sgn_r = 96;
+const int speed_sgn_touch_pad = 50;
 
 const int UI_FREQ = 20;   // Hz
 
@@ -101,6 +105,8 @@ typedef struct UIScene {
   // responsive layout
   Rect viz_rect;
   int ui_viz_ro;
+  // speed sign position
+  int ui_speed_sgn_x, ui_speed_sgn_y;
 
   std::string alert_text1;
   std::string alert_text2;
@@ -196,6 +202,10 @@ typedef struct UIState {
   bool alert_blinked;
   float alert_blinking_alpha;
 
+  bool speed_limit_control_enabled;
+  float speed_limit_perc_offset;
+  double last_speed_limit_sign_tap;
+
   track_vertices_data track_vertices[2];
   model_path_vertices_data model_path_vertices[MODEL_LANE_PATH_CNT * 2];
 
@@ -207,6 +217,7 @@ void sa_init(UIState *s, bool full_init);
 void ui_update(UIState *s);
 
 int write_param_float(float param, const char* param_name, bool persistent_param = false);
+int write_param_bool(bool param, const char* param_name, bool persistent_param = false);
 template <class T>
 int read_param(T* param, const char *param_name, bool persistent_param = false){
   T param_orig = *param;

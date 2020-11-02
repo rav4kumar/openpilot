@@ -549,6 +549,10 @@ struct ControlsState @0x97ff69c53601abf1 {
   decelForModel @54 :Bool;
   canErrorCounter @57 :UInt32;
 
+  # speed limit control
+  speedLimit @58 :Float32;
+  speedLimitControlState @59 :SpeedLimitControlState;
+
   lateralControlState :union {
     indiState @52 :LateralINDIState;
     pidState @53 :LateralPIDState;
@@ -567,6 +571,13 @@ struct ControlsState @0x97ff69c53601abf1 {
     pid @1;
     stopping @2;
     starting @3;
+  }
+
+  enum SpeedLimitControlState {
+    inactive @0; # No speed limit set or not enabled by parameter.
+    tempInactive @1; # User wants to ignore speed limit until it changes.
+    adapting @2; # Reducing speed to match new speed limit.
+    active @3; # Cruising at speed limit.
   }
 
   enum AlertStatus {
@@ -826,6 +837,7 @@ struct Plan {
   radarCanError @30 :Bool;
 
   processingDelay @29 :Float32;
+  speedLimitControlState @32 :ControlsState.SpeedLimitControlState; 
 
 
   struct GpsTrajectory {
@@ -839,6 +851,7 @@ struct Plan {
     mpc2 @2;
     mpc3 @3;
     model @4;
+    limit @5;
   }
 }
 

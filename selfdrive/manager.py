@@ -565,6 +565,8 @@ def main():
     ("IsLdwEnabled", "1"),
     ("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')),
     ("OpenpilotEnabledToggle", "1"),
+    ("SpeedLimitControl", "1"),
+    ("SpeedLimitPercOffset", "10.0"),
     ("LaneChangeEnabled", "1"),
     ("IsDriverViewEnabled", "0"),
   ]
@@ -573,6 +575,10 @@ def main():
   for k, v in default_params:
     if params.get(k) is None:
       params.put(k, v)
+
+# parameters set by Enviroment Varables
+  if os.getenv("FOLLOWSPEEDLIMIT") is not None:
+    params.put("SpeedLimitControl", str(int(os.getenv("FOLLOWSPEEDLIMIT"))))
 
   # is this chffrplus?
   if os.getenv("PASSIVE") is not None:

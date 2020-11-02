@@ -54,6 +54,8 @@ keys = {
   b"RecordFront": [TxType.PERSISTENT],
   b"ReleaseNotes": [TxType.PERSISTENT],
   b"ShouldDoUpdate": [TxType.CLEAR_ON_MANAGER_START],
+  b"SpeedLimitControl": [TxType.PERSISTENT],
+  b"SpeedLimitPercOffset": [TxType.PERSISTENT],
   b"SubscriberInfo": [TxType.PERSISTENT],
   b"TermsVersion": [TxType.PERSISTENT],
   b"TrainingVersion": [TxType.PERSISTENT],
