@@ -89,7 +89,7 @@ class CarInterface(CarInterfaceBase):
       #ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
       #ret.longitudinalTuning.kiV = [0.135, 0.10]
       ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # braking tune from rav4h
-      ret.longitudinalTuning.kiV = [0.068, 0.10]
+      ret.longitudinalTuning.kiV = [0.135, 0.10]
       stop_and_go = True
       ret.safetyParam = 55
       ret.wheelbase = 2.70002 #from toyota online sepc.
@@ -119,16 +119,16 @@ class CarInterface(CarInterfaceBase):
       #ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.16]]
       #ret.lateralTuning.pid.kf = 0.00007818594
       if prius_use_pid:
-        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.36], [0.13]]
+        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.36], [0.1]]
         ret.lateralTuning.pid.kdV = [2.]  # corolla D times gain in PI values
         ret.lateralTuning.pid.kf = 0.00007818594
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGain = 4.0
-        ret.lateralTuning.indi.outerLoopGainBP = [0]
-        ret.lateralTuning.indi.outerLoopGainV = [3.0]
-        ret.lateralTuning.indi.timeConstant = 0.1 if ret.hasZss else 1.0
-        ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+        ret.lateralTuning.indi.innerLoopGain = 9.0
+        ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 25, 26]
+        ret.lateralTuning.indi.outerLoopGainV = [5.0, 9.0, 9.0, 15.0]
+        ret.lateralTuning.indi.timeConstant = 5.5
+        ret.lateralTuning.indi.actuatorEffectiveness = 9.0
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False

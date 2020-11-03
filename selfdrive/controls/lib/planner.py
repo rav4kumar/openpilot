@@ -33,8 +33,8 @@ _A_CRUISE_MAX_V_FOLLOWING = [1.7, 1.65, 0.7, .5, .3]
 _A_CRUISE_MAX_BP = [0., 5., 10., 20., 55.]
 
 # Lookup table for turns
-_A_TOTAL_MAX_V = [3.5, 4.0, 5.0]
-_A_TOTAL_MAX_BP = [0., 25., 55.]
+_A_TOTAL_MAX_V = [3.5, 5.5, 6.0]
+_A_TOTAL_MAX_BP = [0., 25., 40.]
 
 def calc_cruise_accel_limits(v_ego, following):
   a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V)
