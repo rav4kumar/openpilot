@@ -12,7 +12,7 @@ _MIN_ADAPTING_BRAKE_ACC = -2.0  # Minimum acceleration allowed when adapting to 
 _SPEED_OFFSET_TH = -5.0  # Maximum offset between speed limit and current speed for adapting state.
 _LIMIT_ADAPT_TIME = 4.0  # Ideal time (s) to adapt to lower speed limit. i.e. braking.
 
-_MAX_SPEED_OFFSET_DELTA = 1.0  # m/s Maximum delta for speed limit changes.
+_MAX_SPEED_OFFSET_DELTA = 4.47  # m/s Maximum delta for speed limit changes.
 
 SpeedLimitControlState = log.ControlsState.SpeedLimitControlState
 EventName = car.CarEvent.EventName
