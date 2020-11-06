@@ -123,12 +123,17 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kdV = [2.]  # corolla D times gain in PI values
         ret.lateralTuning.pid.kf = 0.00007818594
       else:
-        ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGain = 9.0
-        ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 25, 26]
-        ret.lateralTuning.indi.outerLoopGainV = [5.0, 9.0, 9.0, 15.0]
-        ret.lateralTuning.indi.timeConstant = 5.5
-        ret.lateralTuning.indi.actuatorEffectiveness = 9.0
+        ret.lateralTuning.init('lqr')
+
+        ret.lateralTuning.lqr.scale = 1500.0
+        ret.lateralTuning.lqr.ki = 0.05
+
+        ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+        ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+        ret.lateralTuning.lqr.c = [1., 0.]
+        ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+        ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
+        ret.lateralTuning.lqr.dcGain = 0.002237852961363602
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
