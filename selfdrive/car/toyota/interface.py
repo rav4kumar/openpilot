@@ -90,6 +90,10 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kiV = [0.18, 0.12]
       #ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # braking tune from rav4h
       #ret.longitudinalTuning.kiV = [0.135, 0.10]
+      #ret.longitudinalTuning.kpV = [2.5, 1.5, 0.325]
+      #ret.longitudinalTuning.kiV = [0.3, 0.10]
+      #ret.longitudinalTuning.kpV = [1.0, 0.75, 0.3]
+      #ret.longitudinalTuning.kiV = [0.15, 0.1]
       stop_and_go = True
       ret.safetyParam = 55
       ret.wheelbase = 2.70002 #from toyota online sepc.
