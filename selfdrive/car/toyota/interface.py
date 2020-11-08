@@ -86,8 +86,8 @@ class CarInterface(CarInterfaceBase):
         ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
-      ret.longitudinalTuning.kpV = [0.55, 0.43, 0.32]  # braking tune from rav4h
-      ret.longitudinalTuning.kiV = [0.15, 0.12]
+      ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+      ret.longitudinalTuning.kiV = [0.18, 0.12]
       #ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # braking tune from rav4h
       #ret.longitudinalTuning.kiV = [0.135, 0.10]
       stop_and_go = True
@@ -124,11 +124,11 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kf = 0.00007818594
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGain = 6.0
-        ret.lateralTuning.indi.outerLoopGainBP = [20, 21]
-        ret.lateralTuning.indi.outerLoopGainV = [6, 15]
-        ret.lateralTuning.indi.timeConstant = 5.5
-        ret.lateralTuning.indi.actuatorEffectiveness = 6.0
+        ret.lateralTuning.indi.innerLoopGain = 4.0
+        ret.lateralTuning.indi.outerLoopGainBP = [0.]
+        ret.lateralTuning.indi.outerLoopGainV = [3.]
+        ret.lateralTuning.indi.timeConstant = 0.1
+        ret.lateralTuning.indi.actuatorEffectiveness = 1.0
         ret.steerActuatorDelay = 0.5
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
