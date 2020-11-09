@@ -86,13 +86,19 @@ class CarInterface(CarInterfaceBase):
         ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
-      ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
-      ret.longitudinalTuning.kiV = [0.18, 0.12]
-      #ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # braking tune from rav4h
+      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # smooth breaking but when coming to full stop always get double or tripple breaking
+      ret.longitudinalTuning.kiV = [0.135, 0.10]
+
+      #ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
+      #ret.longitudinalTuning.kiV = [0.18, 0.12] # not as smooth breaking.
+
+      #ret.longitudinalTuning.kpV = [0.25, 0.3, 0.325]  # fcw sometimes
       #ret.longitudinalTuning.kiV = [0.135, 0.10]
-      #ret.longitudinalTuning.kpV = [2.5, 1.5, 0.325]
+
+      #ret.longitudinalTuning.kpV = [2.5, 1.5, 0.325] # need to test it
       #ret.longitudinalTuning.kiV = [0.3, 0.10]
-      #ret.longitudinalTuning.kpV = [1.0, 0.75, 0.3]
+
+      #ret.longitudinalTuning.kpV = [1.0, 0.75, 0.3] # need to test it
       #ret.longitudinalTuning.kiV = [0.15, 0.1]
       stop_and_go = True
       ret.safetyParam = 55
