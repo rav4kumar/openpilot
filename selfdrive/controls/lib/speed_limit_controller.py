@@ -9,7 +9,7 @@ _LON_MPC_STEP = 0.2  # Time stemp of longitudinal control (5 Hz)
 _WAIT_TIME_LIMIT_RISE = 2.0  # Waiting time before raising the speed limit.
 
 _MIN_ADAPTING_BRAKE_ACC = -2.0  # Minimum acceleration allowed when adapting to lower speed limit.
-_SPEED_OFFSET_TH = -5.0  # Maximum offset between speed limit and current speed for adapting state.
+_SPEED_OFFSET_TH = -4.47  # Maximum offset between speed limit and current speed for adapting state.
 _LIMIT_ADAPT_TIME = 4.0  # Ideal time (s) to adapt to lower speed limit. i.e. braking.
 
 _MAX_SPEED_OFFSET_DELTA = 4.47  # m/s Maximum delta for speed limit changes.
