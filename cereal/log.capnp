@@ -2131,5 +2131,6 @@ struct Event {
     sentinel @73 :Sentinel;
     wideFrame @74: FrameData;
     modelV2 @75 :ModelDataV2;
+    modelLongButton @81 :ModelLongButton;
   }
 }
