@@ -45,10 +45,10 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
-      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
-      ret.longitudinalTuning.kiV = [0.135, 0.10]
+      ret.longitudinalTuning.kpV = [1.2, 0.75, 0.285]
+      ret.longitudinalTuning.kiV = [0.15, 0.11]
       stop_and_go = True
-      ret.safetyParam = 55
+      ret.safetyParam = 54
       ret.wheelbase = 2.70002 #from toyota online sepc.
       ret.steerRatio = 13.4   # True steerRation from older prius
       ret.steerActuatorDelay = 0.5
