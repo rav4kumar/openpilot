@@ -2047,6 +2047,10 @@ struct Sentinel {
   type @0 :SentinelType;
 }
 
+struct ModelLongButton {
+  enabled @0 :Bool;
+}
+
 struct Event {
   # in nanoseconds?
   logMonoTime @0 :UInt64;
