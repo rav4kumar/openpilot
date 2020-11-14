@@ -6,6 +6,8 @@ from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness,
 from selfdrive.swaglog import cloudlog
 from selfdrive.car.interfaces import CarInterfaceBase
 
+GearShifter = car.CarState.GearShifter
+
 EventName = car.CarEvent.EventName
 
 class CarInterface(CarInterfaceBase):
@@ -41,6 +43,38 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.indi.timeConstant = 1.0
       ret.lateralTuning.indi.actuatorEffectiveness = 1.0
       ret.steerActuatorDelay = 0.5
+
+    elif candidate == CAR.PRIUS_TSS2:
+      ret.longitudinalTuning.kpV = [0.5, 0.4, 0.3]  # braking tune from rav4h
+      ret.longitudinalTuning.kiV = [0.135, 0.10]
+      stop_and_go = True
+      ret.safetyParam = 55
+      ret.wheelbase = 2.70002 #from toyota online sepc.
+      ret.steerRatio = 13.4   # True steerRation from older prius
+      ret.steerActuatorDelay = 0.5
+      tire_stiffness_factor = 0.6371   # hand-tune
+      ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
+      #lqr
+      #ret.lateralTuning.init('lqr')
+      #ret.lateralTuning.lqr.scale = 1500.0
+      #ret.lateralTuning.lqr.ki = 0.05
+
+      #ret.lateralTuning.lqr.a = [0., 1., -0.22619643, 1.21822268]
+      #ret.lateralTuning.lqr.b = [-1.92006585e-04, 3.95603032e-05]
+      #ret.lateralTuning.lqr.c = [1., 0.]
+      #ret.lateralTuning.lqr.k = [-110.73572306, 451.22718255]
+      #ret.lateralTuning.lqr.l = [0.3233671, 0.3185757]
+      #ret.lateralTuning.lqr.dcGain = 0.002237852961363602
+      #INDI
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGain = 4.0
+      ret.lateralTuning.indi.outerLoopGain = 3.0
+      ret.lateralTuning.indi.timeConstant = 0.1
+      ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+      ret.steerActuatorDelay = 0.5
+      #PID
+     # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.15]]
+      #ret.lateralTuning.pid.kf = 0.00007818594
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -258,16 +292,6 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
       ret.lateralTuning.pid.kf = 0.00006
 
-    elif candidate == CAR.PRIUS_TSS2:
-      stop_and_go = True
-      ret.safetyParam = 73
-      ret.wheelbase = 2.70002 #from toyota online sepc.
-      ret.steerRatio = 13.4   # True steerRation from older prius
-      tire_stiffness_factor = 0.6371   # hand-tune
-      ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.15]]
-      ret.lateralTuning.pid.kf = 0.00007818594
-
     ret.steerRateCost = 0.7
     ret.centerToFront = ret.wheelbase * 0.44
 
@@ -329,8 +353,32 @@ class CarInterface(CarInterfaceBase):
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
+    # gear except P, R
+    extra_gears = [GearShifter.neutral, GearShifter.eco, GearShifter.manumatic, GearShifter.drive, GearShifter.sport, GearShifter.low, GearShifter.brake, GearShifter.unknown]
+
+    longControlDisabled = False
+    if not self.CS.out.cruiseState.enabled:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+    else:
+      if self.keep_openpilot_engaged:
+        ret.cruiseState.enabled = bool(self.CS.main_on)
+      if not self.CS.pcm_acc_active:
+        longControlDisabled = True
+        ret.brakePressed = True
+        self.disengage_due_to_slow_speed = False
+    if ret.vEgo < 1 or not self.keep_openpilot_engaged:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+      if self.CS.out.cruiseState.enabled and not self.CS.pcm_acc_active:
+        self.disengage_due_to_slow_speed = True
+    if self.disengage_due_to_slow_speed and ret.vEgo > 1 and ret.gearShifter != GearShifter.reverse:
+      self.disengage_due_to_slow_speed = False
+      ret.cruiseState.enabled = bool(self.CS.main_on)
+
     # events
     events = self.create_common_events(ret)
+
+    if longControlDisabled:
+      events.add(EventName.longControlDisabled)
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and not self.CP.isPandaBlack:
       events.add(EventName.invalidGiraffeToyota)

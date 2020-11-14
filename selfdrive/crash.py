@@ -3,7 +3,12 @@ import os
 import sys
 import threading
 import capnp
-from selfdrive.version import version, dirty
+from datetime import datetime
+import traceback
+from selfdrive.version import version, dirty, origin, branch
+from common.params import Params
+import requests
+CRASHES_DIR = '/sdcard/crash_logs/'
 
 from selfdrive.swaglog import cloudlog
 from common.hardware import PC
@@ -23,10 +28,22 @@ if os.getenv("NOLOG") or os.getenv("NOCRASH") or PC:
 else:
   from raven import Client
   from raven.transport.http import HTTPTransport
-  client = Client('https://1994756b5e6f41cf939a4c65de45f4f2:cefebaf3a8aa40d182609785f7189bd7@app.getsentry.com/77924',
-                  install_sys_hook=False, transport=HTTPTransport, release=version, tags={'dirty': dirty})
+  params = Params()
+  try:
+    dongle_id = params.get("DongleId").decode('utf8')
+  except AttributeError:
+    dongle_id = "None"
+  try:
+    ip = requests.get('https://checkip.amazonaws.com/', timeout=3).text.strip() if is_online() else '255.255.255.255'
+  except:
+    ip = "255.255.255.255"
+  error_tags = {'dirty': dirty, 'username': dongle_id, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin}
+
+  client = Client('https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547',
+                  install_sys_hook=False, transport=HTTPTransport, release=version, tags=error_tags)
 
   def capture_exception(*args, **kwargs):
+    save_exception(traceback.format_exc())
     exc_info = sys.exc_info()
     if not exc_info[0] is capnp.lib.capnp.KjException:
       client.captureException(*args, **kwargs)
@@ -35,9 +52,25 @@ else:
   def bind_user(**kwargs):
     client.user_context(kwargs)
 
+  def save_exception(exc_text):
+    if not os.path.exists(CRASHES_DIR):
+      os.mkdir(CRASHES_DIR)
+    log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%Y-%m-%d--%H-%M-%S.%f.log')[:-3])
+    with open(log_file, 'w') as f:
+      f.write(exc_text)
+    print('Logged current crash to {}'.format(log_file))
+
   def bind_extra(**kwargs):
     client.extra_context(kwargs)
 
+  def capture_warning(warning_string):
+    bind_user(id=dongle_id, ip_address=ip)
+    client.captureMessage(warning_string, level='warning')
+
+  def capture_info(info_string):
+    bind_user(id=dongle_id, ip_address=ip)
+    client.captureMessage(info_string, level='info')
+    
   def install():
     """
     Workaround for `sys.excepthook` thread bug from:
