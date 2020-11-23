@@ -1,8 +1,7 @@
 from cereal import car
-from common.realtime import DT_CTRL
 from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, create_lfa_mfa
-from selfdrive.car.hyundai.values import Buttons, SteerLimitParams, CAR
+from selfdrive.car.hyundai.values import Buttons, SteerLimitParams, CAR, FEATURES
 from opendbc.can.packer import CANPacker
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
@@ -45,6 +44,11 @@ class CarController():
 
   def update(self, enabled, CS, frame, actuators, pcm_cancel_cmd, visual_alert,
              left_lane, right_lane, left_lane_depart, right_lane_depart):
+
+    if self.car_fingerprint in FEATURES["send_lfa_mfa"]:
+      self.lfa_available = True
+    else:
+      self.lfa_available = False
     # Steering Torque
     new_steer = actuators.steer * SteerLimitParams.STEER_MAX
     apply_steer = apply_std_steer_torque_limits(new_steer, self.apply_steer_last, CS.out.steeringTorque, SteerLimitParams)
@@ -69,19 +73,15 @@ class CarController():
     can_sends.append(create_lkas11(self.packer, frame, self.car_fingerprint, apply_steer, lkas_active,
                                    CS.lkas11, sys_warning, sys_state, enabled,
                                    left_lane, right_lane,
-                                   left_lane_warning, right_lane_warning))
+                                   left_lane_warning, right_lane_warning, self.lfa_available))
 
     if pcm_cancel_cmd:
       can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.CANCEL))
-    elif CS.out.cruiseState.standstill:
-      # SCC won't resume anyway when the lead distace is less than 3.7m
-      # send resume at a max freq of 5Hz
-      if CS.lead_distance > 3.7 and (frame - self.last_resume_frame)*DT_CTRL > 0.2:
-        can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.RES_ACCEL))
-        self.last_resume_frame = frame
+    elif CS.out.cruiseState.standstill and CS.vrelative > 0:
+      can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.RES_ACCEL))
 
     # 20 Hz LFA MFA message
-    if frame % 5 == 0 and self.car_fingerprint in [CAR.SONATA, CAR.PALISADE, CAR.IONIQ]:
+    if frame % 5 == 0 and self.lfa_available:
       can_sends.append(create_lfa_mfa(self.packer, frame, enabled))
 
     return can_sends

@@ -2,7 +2,9 @@ import importlib
 from setproctitle import setproctitle  # pylint: disable=no-name-in-module
 
 import cereal.messaging as messaging
-import selfdrive.crash as crash
+from common.travis_checker import travis
+if not travis:
+  import selfdrive.crash as crash
 from selfdrive.swaglog import cloudlog
 
 def launcher(proc):
@@ -23,5 +25,6 @@ def launcher(proc):
   except Exception:
     # can't install the crash handler becuase sys.excepthook doesn't play nice
     # with threads, so catch it here.
-    crash.capture_exception()
+    if not travis:
+      crash.capture_exception()
     raise

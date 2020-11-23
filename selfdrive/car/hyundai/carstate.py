@@ -1,5 +1,6 @@
+import copy
 from cereal import car
-from selfdrive.car.hyundai.values import DBC, STEER_THRESHOLD, FEATURES, EV_HYBRID
+from selfdrive.car.hyundai.values import DBC, STEER_THRESHOLD, FEATURES, ELEC_VEH, HYBRID_VEH
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
@@ -10,6 +11,7 @@ GearShifter = car.CarState.GearShifter
 class CarState(CarStateBase):
   def update(self, cp, cp_cam):
     ret = car.CarState.new_message()
+
     ret.doorOpen = any([cp.vl["CGW1"]['CF_Gway_DrvDrSw'], cp.vl["CGW1"]['CF_Gway_AstDrSw'],
                         cp.vl["CGW2"]['CF_Gway_RLDrSw'], cp.vl["CGW2"]['CF_Gway_RRDrSw']])
 
@@ -36,15 +38,13 @@ class CarState(CarStateBase):
 
     # cruise state
     ret.cruiseState.available = True
-    ret.cruiseState.enabled = cp.vl["SCC12"]['ACCMode'] != 0
+    ret.cruiseState.enabled = self.rawcruiseStateenabled = (cp.vl["SCC12"]['ACCMode'] != 0)
     ret.cruiseState.standstill = cp.vl["SCC11"]['SCCInfoDisplay'] == 4.
 
-    if ret.cruiseState.enabled:
-      is_set_speed_in_mph = int(cp.vl["CLU11"]["CF_Clu_SPEED_UNIT"])
-      speed_conv = CV.MPH_TO_MS if is_set_speed_in_mph else CV.KPH_TO_MS
-      ret.cruiseState.speed = cp.vl["SCC11"]['VSetDis'] * speed_conv
-    else:
-      ret.cruiseState.speed = 0
+    self.is_set_speed_in_mph = int(cp.vl["CLU11"]["CF_Clu_SPEED_UNIT"])
+
+    speed_conv = CV.MPH_TO_MS if self.is_set_speed_in_mph else CV.KPH_TO_MS
+    ret.cruiseState.speed = self.cruisesetspeed = cp.vl["SCC11"]['VSetDis'] * speed_conv
 
     # TODO: Find brake pressure
     ret.brake = 0
@@ -52,12 +52,15 @@ class CarState(CarStateBase):
 
     # TODO: Check this
     ret.brakeLights = bool(cp.vl["TCS13"]['BrakeLight'] or ret.brakePressed)
-    if self.CP.carFingerprint in EV_HYBRID:
+
+    if self.CP.carFingerprint in ELEC_VEH:
       ret.gas = cp.vl["E_EMS11"]['Accel_Pedal_Pos'] / 256.
-      ret.gasPressed = ret.gas > 0
+    elif self.CP.carFingerprint in HYBRID_VEH:
+      ret.gas = cp.vl["EV_PC4"]['CR_Vcu_AccPedDep_Pc']
     else:
       ret.gas = cp.vl["EMS12"]['PV_AV_CAN'] / 100
-      ret.gasPressed = bool(cp.vl["EMS16"]["CF_Ems_AclAct"])
+
+    ret.gasPressed = (cp.vl["TCS13"]["DriverOverride"] == 1)
 
     # TODO: refactor gear parsing in function
     # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection,
@@ -111,7 +114,6 @@ class CarState(CarStateBase):
       else:
         ret.gearShifter = GearShifter.unknown
 
-
     if self.CP.carFingerprint in FEATURES["use_fca"]:
       ret.stockAeb = cp.vl["FCA11"]['FCA_CmdAct'] != 0
       ret.stockFcw = cp.vl["FCA11"]['CF_VSM_Warn'] == 2
@@ -123,10 +125,12 @@ class CarState(CarStateBase):
       ret.leftBlindspot = cp.vl["LCA11"]["CF_Lca_IndLeft"] != 0
       ret.rightBlindspot = cp.vl["LCA11"]["CF_Lca_IndRight"] != 0
 
+    self.lead_distance = cp.vl["SCC11"]['ACC_ObjDist']
+    self.vrelative = cp.vl["SCC11"]['ACC_ObjRelSpd']
 
     # save the entire LKAS11 and CLU11
-    self.lkas11 = cp_cam.vl["LKAS11"]
-    self.clu11 = cp.vl["CLU11"]
+    self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
+    self.clu11 = copy.copy(cp.vl["CLU11"])
     self.park_brake = cp.vl["CGW1"]['CF_Gway_ParkBrakeSw']
     self.steer_state = cp.vl["MDPS12"]['CF_Mdps_ToiActive']  # 0 NOT ACTIVE, 1 ACTIVE
     self.lead_distance = cp.vl["SCC11"]['ACC_ObjDist']
@@ -175,6 +179,7 @@ class CarState(CarStateBase):
       ("ACCEnable", "TCS13", 0),
       ("BrakeLight", "TCS13", 0),
       ("DriverBraking", "TCS13", 0),
+      ("DriverOverride", "TCS13",0),
 
       ("ESC_Off_Step", "TCS15", 0),
 
@@ -191,6 +196,7 @@ class CarState(CarStateBase):
 
       ("MainMode_ACC", "SCC11", 0),
       ("VSetDis", "SCC11", 0),
+      ("ACC_ObjRelSpd", "SCC11", 0),
       ("SCCInfoDisplay", "SCC11", 0),
       ("ACC_ObjDist", "SCC11", 0),
       ("ACCMode", "SCC12", 1),
@@ -218,12 +224,19 @@ class CarState(CarStateBase):
       ]
       checks += [("LCA11", 50)]
 
-    if CP.carFingerprint in EV_HYBRID:
+    if CP.carFingerprint in ELEC_VEH:
       signals += [
         ("Accel_Pedal_Pos", "E_EMS11", 0),
       ]
       checks += [
         ("E_EMS11", 50),
+      ]
+    elif CP.carFingerprint in HYBRID_VEH:
+      signals += [
+        ("CR_Vcu_AccPedDep_Pc", "EV_PC4", 0),
+      ]
+      checks += [
+        ("EV_PC4", 50),
       ]
     else:
       signals += [
@@ -282,7 +295,7 @@ class CarState(CarStateBase):
 
     signals = [
       # sig_name, sig_address, default
-      ("CF_Lkas_Bca_R", "LKAS11", 0),
+      ("CF_Lkas_LdwsActivemode", "LKAS11", 0),
       ("CF_Lkas_LdwsSysState", "LKAS11", 0),
       ("CF_Lkas_SysWarning", "LKAS11", 0),
       ("CF_Lkas_LdwsLHWarning", "LKAS11", 0),
@@ -299,6 +312,8 @@ class CarState(CarStateBase):
       ("CF_Lkas_LdwsOpt_USM", "LKAS11", 0)
     ]
 
-    checks = []
+    checks = [
+      ("LKAS11", 100)
+    ]
 
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)

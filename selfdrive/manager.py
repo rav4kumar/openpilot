@@ -14,6 +14,7 @@ from selfdrive.swaglog import cloudlog, add_logentries_handler
 from common.basedir import BASEDIR, PARAMS
 from common.android import ANDROID
 from common.op_params import opParams
+from common.travis_checker import travis
 op_params = opParams()
 
 traffic_lights = op_params.get('traffic_lights')
@@ -165,7 +166,8 @@ import cereal
 import cereal.messaging as messaging
 
 from common.params import Params
-import selfdrive.crash as crash
+if not travis:
+  import selfdrive.crash as crash
 from selfdrive.registration import register
 from selfdrive.version import version, dirty
 from selfdrive.loggerd.config import ROOT
@@ -417,7 +419,8 @@ def manager_init(should_register=True):
     if reg_res:
       dongle_id = reg_res
     else:
-      raise Exception("server registration failed")
+      cloudlog.info("server registration failed")
+      dongle_id = "0000000000000000"
   else:
     dongle_id = "c"*16
 
@@ -430,8 +433,9 @@ def manager_init(should_register=True):
     os.environ['CLEAN'] = '1'
 
   cloudlog.bind_global(dongle_id=dongle_id, version=version, dirty=dirty, is_eon=True)
-  crash.bind_user(id=dongle_id)
-  crash.bind_extra(version=version, dirty=dirty, is_eon=True)
+  if not travis:
+    crash.bind_user(id=dongle_id)
+    crash.bind_extra(version=version, dirty=dirty, is_eon=True)
 
   os.umask(0)
   try:
@@ -563,6 +567,7 @@ def main():
     ("IsRHD", "0"),
     ("IsMetric", "1"),
     ("RecordFront", "0"),
+    ("HandsOnWheelMonitoring", "1"),
     ("HasAcceptedTerms", "0"),
     ("HasCompletedSetup", "0"),
     ("IsUploadRawEnabled", "1"),
@@ -588,6 +593,10 @@ def main():
     if params.get(k) is None:
       params.put(k, v)
 
+  # parameters set by Enviroment Varables
+  if os.getenv("HANDSMONITORING") is not None:
+    params.put("HandsOnWheelMonitoring", str(int(os.getenv("HANDSMONITORING"))))
+
   # is this chffrplus?
   if os.getenv("PASSIVE") is not None:
     params.put("Passive", str(int(os.getenv("PASSIVE"))))
@@ -611,7 +620,8 @@ def main():
     manager_thread()
   except Exception:
     traceback.print_exc()
-    crash.capture_exception()
+    if not travis:
+      crash.capture_exception()
   finally:
     cleanup_all_processes(None, None)
 

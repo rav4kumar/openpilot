@@ -141,7 +141,7 @@ void start_capture() {
   struct tm tm = get_time_struct();
   snprintf(filename,sizeof(filename),"%04d%02d%02d-%02d%02d%02d.mp4", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
   //snprintf(cmd,sizeof(cmd),"screenrecord --size 1280x720 --bit-rate 10000000 %s/%s&",videos_dir,filename);
-  snprintf(cmd,sizeof(cmd),"screenrecord --size 960x540 --bit-rate 5000000 %s/%s&",videos_dir,filename);
+  snprintf(cmd,sizeof(cmd),"screenrecord --size 1920x1080 --bit-rate 5000000 %s/%s&",videos_dir,filename);
   strcpy(filenames[captureNum],filename);
 
   printf("Capturing to file: %s\n",cmd);

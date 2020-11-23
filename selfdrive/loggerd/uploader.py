@@ -250,6 +250,9 @@ def uploader_fn(exit_event):
 
   try:
     last_gps_size = os.path.getsize("/data/openpilot/selfdrive/data_collection/gps-data")
+    if last_gps_size > 500000000:
+      os.remove("/data/openpilot/selfdrive/data_collection/gps-data")
+      last_gps_size = None
   except:
     last_gps_size = None
 

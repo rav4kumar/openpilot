@@ -10,10 +10,11 @@ from selfdrive.car.vin import get_vin, VIN_UNKNOWN
 from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car
 from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
-import selfdrive.crash as crash
 from selfdrive.car import gen_empty_fingerprint
 from common.travis_checker import travis
 from common.op_params import opParams
+if not travis:
+  import selfdrive.crash as crash
 
 op_params = opParams()
 use_car_caching = op_params.get('use_car_caching')
@@ -175,8 +176,9 @@ def fingerprint(logcan, sendcan, has_relay):
             car_fingerprint = "TOYOTA COROLLA TSS2 2019"
           if any(("TOYOTA COROLLA HYBRID TSS2 2019" in c) for c in candidate_cars[b]):
             car_fingerprint = "TOYOTA COROLLA HYBRID TSS2 2019"
-          if any(("HYUNDAI IONIQ ELECTRIC LIMITED 2019" in c) for c in candidate_cars[b]):
-            car_fingerprint = "HYUNDAI IONIQ ELECTRIC LIMITED 2019"
+          if any(("TOYOTA PRIUS 2017" in c) for c in candidate_cars[b]):
+            car_fingerprint = "TOYOTA PRIUS 2017"
+         
 
     # bail if no cars left or we've been waiting for more than 2s
     failed = all(len(cc) == 0 for cc in candidate_cars.values()) or frame > 200

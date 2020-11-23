@@ -40,6 +40,7 @@ def main(filename = DEFAULT_OUTPUT_FILENAME):
 
   """ States """
   new_york = US.add_region("New York") # Fourth step, add a state/region to country
+  new_york.add_rule({"highway": "motorway"}, "65 mph")
   new_york.add_rule({"highway": "primary"}, "45 mph") # Fifth step , add rules to the state. See the text above for how to write rules
   new_york.add_rule({"highway": "secondary"}, "55 mph")
   new_york.add_rule({"highway": "tertiary"}, "55 mph")
@@ -47,6 +48,7 @@ def main(filename = DEFAULT_OUTPUT_FILENAME):
   new_york.add_rule({"highway": "primary_link"}, "45 mph")
   new_york.add_rule({"highway": "secondary_link"}, "55 mph")
   new_york.add_rule({"highway": "tertiary_link"}, "55 mph")
+  new_york.add_rule({"highway": "living_street"}, "20 mph")
   # All if not written by the state, the rules will default to the country rules
 
   #california = US.add_region("California")

@@ -229,14 +229,15 @@ class Controls:
                                         LaneChangeState.laneChangeFinishing]:
       self.events.add(EventName.laneChange)
 
-    if self.can_rcv_error or (not CS.canValid and self.sm.frame > 5 / DT_CTRL):
-      self.events.add(EventName.canError)
+    #if self.can_rcv_error or (not CS.canValid and self.sm.frame > 5 / DT_CTRL):
+    #  self.events.add(EventName.canError)
     if self.mismatch_counter >= 200:
       self.events.add(EventName.controlsMismatch)
     if not self.sm.alive['plan'] and self.sm.alive['pathPlan']:
       # only plan not being received: radar not communicating
       self.events.add(EventName.radarCommIssue)
     elif not self.sm.all_alive_and_valid() and self.sm.frame > 5 / DT_CTRL:
+      self.sm.print_dead_and_not_valid()
       self.events.add(EventName.commIssue)
     if not self.sm['pathPlan'].mpcSolutionValid and self.sm.frame > 5 / DT_CTRL:
       self.events.add(EventName.plannerError)

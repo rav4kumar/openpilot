@@ -422,7 +422,8 @@ struct CarParams {
     kf @4 :Float32;
     kfV @5 :List(Float32);
     kfBP @6 :List(Float32);
-    
+    kdBP @7 :List(Float32);
+    kdV @8 :List(Float32);
   }
 
   struct LongitudinalPIDTuning {
@@ -432,13 +433,16 @@ struct CarParams {
     kiV @3 :List(Float32);
     deadzoneBP @4 :List(Float32);
     deadzoneV @5 :List(Float32);
+    kfBP @6 :List(Float32);
+    kfV @7 :List(Float32);
   }
 
   struct LateralINDITuning {
-    outerLoopGain @0 :Float32;
-    innerLoopGain @1 :Float32;
-    timeConstant @2 :Float32;
-    actuatorEffectiveness @3 :Float32;
+    outerLoopGainV @0 :List(Float32);
+    outerLoopGainBP @1 :List(Float32);
+    innerLoopGain @2 :Float32;
+    timeConstant @3 :Float32;
+    actuatorEffectiveness @4 :Float32;
   }
 
   struct LateralLQRTuning {
@@ -480,6 +484,7 @@ struct CarParams {
     volkswagenPq @21;
     subaruLegacy @22;  # pre-Global platform
     hyundaiLegacy @23;
+    hyundaiCommunity @24;
   }
 
   enum SteerControlType {

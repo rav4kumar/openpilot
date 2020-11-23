@@ -9,7 +9,7 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def compute_gb(accel, speed):
-    return float(accel) / 3.0
+    return float(accel) / 1.0
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):  # pylint: disable=dangerous-default-value
@@ -21,139 +21,142 @@ class CarInterface(CarInterfaceBase):
     # Most Hyundai car ports are community features for now
     ret.communityFeature = candidate not in [CAR.SONATA]
 
-    ret.steerActuatorDelay = 0.1  # Default delay
-    ret.steerRateCost = 0.5
-    ret.steerLimitTimer = 0.4
+    ret.steerActuatorDelay = 0.4  # Default delay
+    ret.steerRateCost = 0.45
+    ret.steerLimitTimer = 0.8
     tire_stiffness_factor = 1.
 
+    ret.longitudinalTuning.kfBP = [0., 5.]
+    ret.longitudinalTuning.kfV = [1., 1.]
+
+    ret.lateralTuning.pid.kiBP = [0., 10., 20.]
+    ret.lateralTuning.pid.kpV = [0.01, 0.07, 0.13]
+    ret.lateralTuning.pid.kpBP = [0., 10., 30.]
+    ret.lateralTuning.pid.kiV = [0.001, 0.003, 0.005]
+    ret.lateralTuning.pid.kfBP = [0., 10., 30.]
+    ret.lateralTuning.pid.kfV = [0.00002, 0.00003, 0.00005]
+    ret.lateralTuning.pid.kdBP, ret.lateralTuning.pid.kdV = [[0.], [0.]]
+
     if candidate == CAR.SANTA_FE:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 3982. * CV.LB_TO_KG + STD_CARGO_KG
       ret.wheelbase = 2.766
       # Values from optimizer
       ret.steerRatio = 16.55  # 13.8 is spec end-to-end
       tire_stiffness_factor = 0.82
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[9., 22.], [9., 22.]]
-      ret.lateralTuning.pid.kfBP = [0.]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.2, 0.35], [0.05, 0.09]]
-    elif candidate == CAR.SONATA:
-      ret.lateralTuning.pid.kfV = [0.00005]
+    elif candidate in [CAR.SONATA, CAR.SONATA_HEV]:
       ret.mass = 1513. + STD_CARGO_KG
       ret.wheelbase = 2.84
       ret.steerRatio = 13.27 * 1.15   # 15% higher at the center seems reasonable
       tire_stiffness_factor = 0.65
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate == CAR.SONATA_2019:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 4497. * CV.LB_TO_KG
       ret.wheelbase = 2.804
       ret.steerRatio = 13.27 * 1.15   # 15% higher at the center seems reasonable
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate == CAR.PALISADE:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 1999. + STD_CARGO_KG
       ret.wheelbase = 2.90
       ret.steerRatio = 13.75 * 1.15
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate == CAR.KIA_SORENTO:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 1985. + STD_CARGO_KG
       ret.wheelbase = 2.78
       ret.steerRatio = 14.4 * 1.1   # 10% higher at the center seems reasonable
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate in [CAR.ELANTRA, CAR.ELANTRA_GT_I30]:
-      ret.lateralTuning.pid.kfV = [0.00006]
       ret.mass = 1275. + STD_CARGO_KG
       ret.wheelbase = 2.7
       ret.steerRatio = 15.4            # 14 is Stock | Settled Params Learner values are steerRatio: 15.401566348670535
       tire_stiffness_factor = 0.385    # stiffnessFactor settled on 1.0081302973865127
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
       ret.minSteerSpeed = 32 * CV.MPH_TO_MS
     elif candidate == CAR.HYUNDAI_GENESIS:
-      ret.lateralTuning.pid.kfV = [0.00005]
-
+      ret.steerActuatorDelay = 0.3
+      ret.steerRateCost = 0.45
       ret.mass = 2060. + STD_CARGO_KG
       ret.wheelbase = 3.01
       ret.steerRatio = 16.5
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
-      ret.minSteerSpeed = 60 * CV.KPH_TO_MS
-    elif candidate in [CAR.GENESIS_G90, CAR.GENESIS_G80]:
-      ret.mass = 2200
-      ret.wheelbase = 3.15
-      ret.steerRatio = 12.069
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
-      ret.minSteerSpeed = 60 * CV.KPH_TO_MS
+      ret.minSteerSpeed = 55 * CV.KPH_TO_MS
+    elif candidate == CAR.GENESIS_G70:
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGain = 3.0
+      ret.lateralTuning.indi.outerLoopGainBP = [0.0]
+      ret.lateralTuning.indi.outerLoopGainV = [2.0]
+      ret.lateralTuning.indi.timeConstant = 1.0
+      ret.lateralTuning.indi.actuatorEffectiveness = 1.5
+      ret.steerActuatorDelay = 0.08
+      ret.steerLimitTimer = 0.4
+      tire_stiffness_factor = 1.125
+      ret.steerRateCost = 1.0
+      ret.mass = 1640.0 + STD_CARGO_KG
+      ret.wheelbase = 2.84
+      ret.steerRatio = 13.56
     elif candidate == CAR.GENESIS_G80:
-      ret.lateralTuning.pid.kfV = [0.00005]
+      ret.steerActuatorDelay = 0.4
+      ret.steerRateCost = 0.45
       ret.mass = 2060. + STD_CARGO_KG
       ret.wheelbase = 3.01
       ret.steerRatio = 16.5
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
     elif candidate == CAR.GENESIS_G90:
-      ret.mass = 2200
-      ret.wheelbase = 3.15
-      ret.steerRatio = 12.069
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.16], [0.01]]
-    elif candidate in [CAR.KIA_OPTIMA, CAR.KIA_OPTIMA_H]:
-      ret.lateralTuning.pid.kfV = [0.00005]
+      ret.mass = 2060. + STD_CARGO_KG
+      ret.wheelbase = 3.01
+      ret.steerRatio = 16.5
+    elif candidate in [CAR.KIA_OPTIMA, CAR.KIA_OPTIMA_HEV]:
       ret.mass = 3558. * CV.LB_TO_KG
       ret.wheelbase = 2.80
-      ret.steerRatio = 13.75
+      ret.steerRatio = 13.75 * 1.15
       tire_stiffness_factor = 0.5
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate == CAR.KIA_STINGER:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 1825. + STD_CARGO_KG
       ret.wheelbase = 2.78
       ret.steerRatio = 14.4 * 1.15   # 15% higher at the center seems reasonable
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
     elif candidate == CAR.KONA:
-      ret.lateralTuning.pid.kfV = [0.00006]
       ret.mass = 1275. + STD_CARGO_KG
       ret.wheelbase = 2.7
-      ret.steerRatio = 13.73  # Spec
+      ret.steerRatio = 13.73 * 1.15  # Spec
       tire_stiffness_factor = 0.385
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
-    elif candidate == CAR.KONA_EV:
-      ret.lateralTuning.pid.kfV = [0.00006]
+    elif candidate in [CAR.KONA_HEV, CAR.KONA_EV]:
       ret.mass = 1685. + STD_CARGO_KG
       ret.wheelbase = 2.7
-      ret.steerRatio = 13.73  # Spec
+      ret.steerRatio = 13.73 * 1.15  # Spec
       tire_stiffness_factor = 0.385
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
-    elif candidate in [CAR.IONIQ, CAR.IONIQ_EV_LTD]:
-      ret.lateralTuning.pid.kfV = [0.00006]
+    elif candidate in [CAR.IONIQ_HEV, CAR.IONIQ_EV_LTD]:
       ret.mass = 1490. + STD_CARGO_KG   #weight per hyundai site https://www.hyundaiusa.com/ioniq-electric/specifications.aspx
       ret.wheelbase = 2.7
-      ret.steerRatio = 13.73   #Spec
+      ret.steerRatio = 13.73 * 1.15   #Spec
       tire_stiffness_factor = 0.385
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
-      ret.minSteerSpeed = 32 * CV.MPH_TO_MS
     elif candidate == CAR.KIA_FORTE:
-      ret.lateralTuning.pid.kfV = [0.00005]
       ret.mass = 3558. * CV.LB_TO_KG
       ret.wheelbase = 2.80
+      ret.steerRatio = 13.75 * 1.15
+      tire_stiffness_factor = 0.5
+    elif candidate == CAR.KIA_CEED:
+      ret.mass = 1350. + STD_CARGO_KG
+      ret.wheelbase = 2.65
       ret.steerRatio = 13.75
       tire_stiffness_factor = 0.5
-      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.25], [0.05]]
+    elif candidate == CAR.KIA_SPORTAGE:
+      ret.mass = 1985. + STD_CARGO_KG
+      ret.wheelbase = 2.78
+      ret.steerRatio = 14.4 * 1.1   # 10% higher at the center seems reasonable
+    elif candidate == CAR.VELOSTER:
+      ret.mass = 2960. * CV.LB_TO_KG
+      ret.wheelbase = 2.69
+      ret.steerRatio = 13.75 * 1.15
+    elif candidate in [CAR.KIA_NIRO_HEV, CAR.KIA_NIRO_EV]:
+      ret.steerRatio = 13.73
+      ret.mass = 1737. + STD_CARGO_KG
+      ret.wheelbase = 2.7
+      tire_stiffness_factor = 0.385
+    elif candidate in [CAR.GRANDEUR, CAR.GRANDEUR_HEV]:
+      ret.mass = 1719. + STD_CARGO_KG
+      ret.wheelbase = 2.8
+      ret.steerRatio = 12.5
+    elif candidate in [CAR.KIA_CADENZA, CAR.KIA_CADENZA_HEV]:
+      ret.mass = 1575. + STD_CARGO_KG
+      ret.wheelbase = 2.85
+      ret.steerRatio = 12.5
+      ret.steerRateCost = 0.4
 
     # these cars require a special panda safety mode due to missing counters and checksums in the messages
-    if candidate in [CAR.HYUNDAI_GENESIS, CAR.IONIQ_EV_LTD, CAR.IONIQ, CAR.KONA_EV]:
+    if candidate in [ CAR.HYUNDAI_GENESIS, CAR.IONIQ_EV_LTD, CAR.IONIQ_HEV, CAR.KONA_EV, CAR.KIA_NIRO_EV, CAR.KIA_SORENTO, CAR.SONATA_2019, 
+                     CAR.KIA_OPTIMA, CAR.VELOSTER, CAR.KIA_STINGER, CAR.GENESIS_G70, CAR.SONATA_HEV, CAR.SANTA_FE]:
       ret.safetyModel = car.CarParams.SafetyModel.hyundaiLegacy
 
     ret.centerToFront = ret.wheelbase * 0.4

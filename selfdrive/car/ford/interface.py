@@ -25,6 +25,7 @@ class CarInterface(CarInterfaceBase):
     ret.mass = 3045. * CV.LB_TO_KG + STD_CARGO_KG
     ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP, ret.lateralTuning.pid.kfBP = [[0.], [0.], [0.]]
     ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV, ret.lateralTuning.pid.kfV = [[0.01], [0.005], [1. / MAX_ANGLE]]     # TODO: tune this # MAX Steer angle to normalize FF
+    ret.lateralTuning.pid.kdBP, ret.lateralTuning.pid.kdV = [[0.], [0.]]
     ret.steerActuatorDelay = 0.1  # Default delay, not measured yet
     ret.steerLimitTimer = 0.8
     ret.steerRateCost = 1.0

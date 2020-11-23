@@ -13,10 +13,14 @@ https://d.sdut.me/arne/release4
 or if you want to use the command line or https://github.com/jfrux/workbench
 `cd /data; rm -rf openpilot; git clone --depth 1 https://github.com/arne182/openpilot -b release4; reboot`
 
-still have trouble ?? More info about how to install this fork can be found [here](https://medium.com/@jfrux/comma-eon-installing-a-fork-of-openpilot-5c2b5c134b4b).
+#### Troubleshooting
+Arnepilot has comma logger disabled. This gives a 35% more cpu but at cost of giving [connection error](https://cdn.discordapp.com/attachments/538741329799413760/743231854764884067/image0.jpg)
+
+If you get the [no vehicle](https://cdn.discordapp.com/attachments/538741329799413760/743231854764884067/image0.jpg) after installing Arnepilot completely power cycle your device. If this still doesn't fix the problem look below at panda flashing and run the command. This is a known issue with comma2 users.
+
 ## Panda flashing
 
-This is done automatically otherwise run (pkill -f boardd; cd /data/openpilot/panda/board; make; reboot) to change the following:
+This is done automatically otherwise run `pkill -f boardd; cd /data/openpilot/panda/board; make; reboot` to change the following:
 - allowing no disengage on brake and gas for Toyota
 - changing acceleration limits for Toyota and
 - adapting lane departure warning where it gives you a slight push back into the middle of the lane without needing to be engaged (not yet complete)
@@ -29,9 +33,9 @@ This is done automatically otherwise run (pkill -f boardd; cd /data/openpilot/pa
 
 `release4`: this is the default branch that is most up to date with the ArnePilot 0.7 release branch. Normally you should use this branch because it has been tested and verified that it is fully working without any issues.
 
-`075-clean`: this is my old testing branch. I moved on to 077.
+`077-clean`: Current development branch.
 
-`077-clean`: Current development branch
+`075-clean`: this is my old testing branch. I moved on to 077.
 
 `release3`: this is my old branch, that is compatible with ArnePilot 0.6.
 
@@ -46,11 +50,12 @@ Fork is known to work in both US and Europe
 - RAV4 Hybrid 2016-19
 - RAV4 2017-19
 - Corolla 2019-20
-- Prius 2017
+- Prius 2017-2021
 - RX hyrid 2017
 - CT 2018
-- Hyundia Genesis 2015-16
+- Hyundia is fully supported thank to @xps-genesis
 - Chevrolet Volt 2017
+- Subaru Crosstrek Limited 2019 with 0.8 it will use Eyesight for radar. 
 ### Todo
 
 - [ ] Fix Lag Trafficd
@@ -79,7 +84,7 @@ This aims to provide a smoother driving experience in stop and go traffic (under
 - We also have enabled commas e2e model which will only work between 11 MPH to 29 MPH. Commas e2e model helps slows down for traffic light, stop sign, etc. e2e, traffic model and mapd all works together to help you stop at the light. All of this can be turned off via `/data/openpilot/op_edit.py`.
 - Smart speed (smart speed is essentially speedlimit which eon will not go over unless you have set custom offset) can be overridden by pressing gas above the current smart speed.
 - Hands on wheel sensing to comply with European driving regulations by [alfhern](https://github.com/move-fast)
-- Control 3 gas profiles with sport eco and normal buttons on car
+- Control 3 gas profiles with sport eco and normal buttons on car (only on limited car) 
 - Blind Spot Monitoring for all of the toyota which will be added to control ALC(vision based lane change from comma.ai). For right now it is always on. It will flash rapidly when stopped and if the object is detected.
 - ALC w/ BSM : (Automatic Lane Change with Blind spot monitoring) you can now change lane automataclly. It will wait 1 sec before applying ALC. If the BSM detacts objects it will stop the lane change and will take you back in your original lane. Also, it will notify the user on the eon.
 - Reacting Toyota tssp higher acceleration and braking limits.
@@ -113,6 +118,7 @@ All WIP features can be configured by modifying `python /data/opepilot/op_edit.p
 - OSM tracers logging and uploading anonymously to help improve MapD as well as OSM accuracy. [Arne is currently ranked 8th for overal tracers uploaded](https://www.openstreetmap.org/stats/data_stats.html).
 - Added stats that track meter driven as well as overrides/disengagement. These go to a leaderboard. Please added your name to `python /data/opepilot/op_edit.py` to participate.
 # Licensing
+© OpenStreetMap contributors
 
 ArnePilot is released under the MIT license. Some parts of the software are released under other licenses as specified.
 

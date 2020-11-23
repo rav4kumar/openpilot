@@ -32,6 +32,7 @@ class CarInterface(CarInterfaceBase):
     ret.steerRateCost = 1.0
     ret.steerLimitTimer = 0.8
     tire_stiffness_factor = 0.70   # not optimized yet
+    ret.lateralTuning.pid.kdBP, ret.lateralTuning.pid.kdV = [[0.], [0.]]
 
     if candidate in [CAR.CX5]:
       ret.mass = 3655 * CV.LB_TO_KG + STD_CARGO_KG

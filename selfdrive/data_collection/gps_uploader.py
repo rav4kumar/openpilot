@@ -1,8 +1,10 @@
-import ftplib
+import os
 import json
+import gzip
+import ftplib
 import string
 import random
-import os
+import datetime
 from common.params import Params
 from common.op_params import opParams
 op_params = opParams()
@@ -31,17 +33,24 @@ def upload_data():
         username+="-{}".format(car[0])
 
       filename = "gps-data.{}".format(random.randint(1,99999))
-
+      fp = open(filepath,"rb")
+      data = fp.read()
+      bindata = bytearray(data)
+      with gzip.open("/data/" + filename + ".gz", "wb") as f:
+        f.write(bindata)
       ftp = ftplib.FTP("arneschwarck.dyndns.org")
       ftp.login("openpilot", "communitypilot")
-      with open(filepath, "rb") as f:
+      with open("/data/" + filename + ".gz", "rb") as f:
         try:
           ftp.mkd("/{}".format(username))
         except:
           pass
-        ftp.storbinary("STOR /{}/{}".format(username, filename), f)
+        ftp.storbinary("STOR /{}/{}".format(username, filename + ".gz"), f)
       ftp.quit()
       os.remove(filepath)
+      os.remove("/data/" + filename + ".gz")
+      t = datetime.datetime.utcnow().isoformat()
+      params.put("LastUpdateTime", t.encode('utf8'))
       return True
     except:
       return False
