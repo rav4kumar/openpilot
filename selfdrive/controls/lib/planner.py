@@ -353,7 +353,7 @@ class Planner():
                           sm['model'].longitudinal.speeds,
                           sm['model'].longitudinal.accelerations)
 
-    self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle, arne_sm['modelLongButton'].enabled)
+    self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle, sm['modelLongButton'].enabled)
 
     # determine fcw
     if self.mpc1.new_lead:

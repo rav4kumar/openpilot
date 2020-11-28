@@ -89,6 +89,8 @@ static std::map<UIStatus, NVGcolor> bg_colors = {
 
 typedef struct UIScene {
 
+  bool mlButtonEnabled;
+
   float mpc_x[50];
   float mpc_y[50];
 
@@ -199,6 +201,7 @@ typedef struct UIState {
   int img_speed;
 
   SubMaster *sm;
+  PubMaster *pm;
 
   Sound *sound;
   UIStatus status;
@@ -228,6 +231,7 @@ typedef struct UIState {
   bool ignition;
   bool is_metric;
   bool longitudinal_control;
+  bool ui_debug;
   bool limit_set_speed;
   bool is_ego_over_limit;
   float speed_lim_off;
@@ -244,6 +248,7 @@ typedef struct UIState {
 } UIState;
 
 void ui_init(UIState *s);
+void sa_init(UIState *s, bool full_init);
 void ui_update(UIState *s);
 
 int write_param_float(float param, const char* param_name, bool persistent_param = false);

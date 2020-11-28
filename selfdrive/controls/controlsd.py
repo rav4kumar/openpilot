@@ -60,10 +60,10 @@ class Controls:
     self.sm = sm
     if self.sm is None:
       self.sm = messaging.SubMaster(['thermal', 'health', 'frame', 'model', 'liveCalibration',
-                                     'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'radarState'])
+                                     'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'modelLongButton' , 'radarState'])
     self.arne_sm = arne_sm
     if self.arne_sm is None:
-      self.arne_sm = messaging_arne.SubMaster(['arne182Status', 'dynamicFollowButton', 'trafficModelEvent', 'modelLongButton' ])
+      self.arne_sm = messaging_arne.SubMaster(['arne182Status', 'dynamicFollowButton', 'trafficModelEvent'])
 
     self.op_params = opParams()
     self.df_manager = dfManager(self.op_params)

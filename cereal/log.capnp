@@ -2056,6 +2056,10 @@ struct Sentinel {
   type @0 :SentinelType;
 }
 
+struct ModelLongButton {
+  enabled @0 :Bool;
+}
+
 struct Event {
   # in nanoseconds?
   logMonoTime @0 :UInt64;
@@ -2136,5 +2140,7 @@ struct Event {
     sentinel @73 :Sentinel;
     wideFrame @74: FrameData;
     modelV2 @75 :ModelDataV2;
+    #e2e button from shane. https://github.com/ShaneSmiskol/openpilot/pull/130/files
+    modelLongButton @14 :ModelLongButton;
   }
 }
