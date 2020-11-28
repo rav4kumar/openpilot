@@ -973,12 +973,11 @@ EVENTSARNE182 = {
     ET.NO_ENTRY: NoEntryAlert("Reverse Gear"),
   },
 
-    "modelLongAlert": {
-    ET.WARNING: Alert(
+  'modelLongAlert': {
+    ET.PERMANENT: Alert(
       "Model longitudinal ",
       "Remain alert",
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOW, VisualAlert.none, AudibleAlert.chimeWarning1, .4, 0., 2.),
+      Priority.LOW, VisualAlert.none, AudibleAlert.chimeWarning1, .4, 0., 1.5),
   },
-
 }
