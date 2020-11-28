@@ -7,8 +7,7 @@ from cereal import car, log
 from common.basedir import BASEDIR
 from common.params import Params
 from common.realtime import DT_CTRL
-from selfdrive.controls.lib.events import EVENTSARNE182
-from selfdrive.controls.lib.events import Alert
+from selfdrive.controls.lib.events import Alert, EVENTSARNE182, ET
 from selfdrive.swaglog import cloudlog
 
 
@@ -56,6 +55,8 @@ class AlertManager:
     added_alert.start_time = frame * DT_CTRL
     added_alert.alert_text_1 += extra_text_1
     added_alert.alert_text_2 += extra_text_2
+    added_alert.alert_type = f"{alert_name}/{ET.PERMANENT}"  # fixes alerts being silent
+    added_alert.event_type = event_type
 
     # if new alert is higher priority, log it
     if not self.alert_present() or added_alert.alert_priority > self.activealerts[0].alert_priority:

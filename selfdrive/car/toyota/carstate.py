@@ -55,8 +55,9 @@ class CarState(CarStateBase):
     self.rsa_ignored_speed = 0
     self.spdval1 = 0
     self.distance = 0
+    self.read_distance_lines = 0
     if not travis:
-      self.arne_pm = messaging_arne.PubMaster(['liveTrafficData', 'arne182Status'])
+      self.arne_pm = messaging_arne.PubMaster(['liveTrafficData', 'arne182Status', 'dynamicFollowButton'])
       self.arne_sm = messaging_arne.SubMaster(['latControl'])
       self.sm = messaging.SubMaster(['liveMapData'])
 
@@ -164,7 +165,12 @@ class CarState(CarStateBase):
       self.rightblindspot = cp.vl["BSM"]['R_ADJACENT'] == 1
       self.rightblindspotD1 = 10.1
       self.rightblindspotD2 = 10.1
-
+    if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
+      self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
+      msg_df = messaging_arne.new_message('dynamicFollowButton')
+      msg_df.dynamicFollowButton.status = max(self.read_distance_lines - 1, 0)
+      self.arne_pm.send('dynamicFollowButton', msg_df)
+    
     msg.arne182Status.leftBlindspot = self.leftblindspot
     ret.leftBlindspot = self.leftblindspot
     msg.arne182Status.rightBlindspot = self.rightblindspot

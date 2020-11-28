@@ -143,6 +143,7 @@ class Events_arne182:
 
           if DT_CTRL * (self.events_prev[e] + 1) >= alert.creation_delay:
             alert.alert_type = f"{EVENT_NAME_ARNE182[e]}/{et}"
+            alert.event_type = et
             ret.append(alert)
     return ret
 
