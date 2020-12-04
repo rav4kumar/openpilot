@@ -6,6 +6,7 @@ from common.dp_common import common_interface_atl, common_interface_get_params_l
 
 EventName = car.CarEvent.EventName
 
+
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
     super().__init__(CP, CarController, CarState)
