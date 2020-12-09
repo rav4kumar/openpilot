@@ -22,81 +22,66 @@ AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distract
 
 # lookup tables VS speed to determine min and max accels in cruise
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MIN_V = [-1.0, -.8, -.67, -.5, -.30]
-_A_CRUISE_MIN_BP = [   0., 5.,  10., 20.,  40.]
+_A_CRUISE_MIN_V_ECO = [-1.0, -0.7, -0.6, -0.5, -0.3]
+_A_CRUISE_MIN_V_SPORT = [-3.0, -2.6, -2.3, -2.0, -1.0]
+_A_CRUISE_MIN_V_FOLLOWING = [-3.0, -2.5, -2.0, -1.5, -1.0]
+_A_CRUISE_MIN_V = [-2.0, -1.5, -1.0, -0.7, -0.5]
+_A_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
 
 # need fast accel at very low speed for stop and go
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MAX_V = [1.2, 1.2, 0.65, .4]
-_A_CRUISE_MAX_V_FOLLOWING = [1.6, 1.6, 0.65, .4]
-_A_CRUISE_MAX_BP = [0.,  6.4, 22.5, 40.]
+_A_CRUISE_MAX_V = [2.0, 2.0, 1.5, .5, .3]
+_A_CRUISE_MAX_V_ECO = [0.8, 0.9, 1.0, 0.4, 0.2]
+_A_CRUISE_MAX_V_SPORT = [3.0, 3.5, 3.0, 2.0, 2.0]
+_A_CRUISE_MAX_V_FOLLOWING = [1.6, 1.4, 1.4, .7, .3]
+_A_CRUISE_MAX_BP = [0., 5., 10., 20., 55.]
 
 # Lookup table for turns
-_A_TOTAL_MAX_V = [1.7, 3.2]
-_A_TOTAL_MAX_BP = [20., 40.]
+_A_TOTAL_MAX_V = [3.5, 4.0, 5.0]
+_A_TOTAL_MAX_BP = [0., 25., 55.]
 
 # 75th percentile
 SPEED_PERCENTILE_IDX = 7
 
-# dp
-DP_OFF = 0
-DP_ECO = 1
-DP_NORMAL = 2
-DP_SPORT = 3
-# accel profile by @arne182
-_DP_CRUISE_MIN_V = [-2.0, -1.5, -1.0, -0.7, -0.5]
-_DP_CRUISE_MIN_V_ECO = [-1.0, -0.7, -0.6, -0.5, -0.3]
-_DP_CRUISE_MIN_V_SPORT = [-3.0, -2.6, -2.3, -2.0, -1.0]
-_DP_CRUISE_MIN_V_FOLLOWING = [-3.0, -2.5, -2.0, -1.5, -1.0]
-_DP_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
 
-_DP_CRUISE_MAX_V = [2.0, 2.0, 1.5, .5, .3]
-_DP_CRUISE_MAX_V_ECO = [0.8, 0.9, 1.0, 0.4, 0.2]
-_DP_CRUISE_MAX_V_SPORT = [3.0, 3.5, 3.0, 2.0, 2.0]
-_DP_CRUISE_MAX_V_FOLLOWING = [1.6, 1.4, 1.4, .7, .3]
-_DP_CRUISE_MAX_BP = [0., 5., 10., 20., 55.]
-
-# Lookup table for turns
-_DP_TOTAL_MAX_V = [3.3, 3.0, 3.9]
-_DP_TOTAL_MAX_BP = [0., 25., 55.]
-
-def dp_calc_cruise_accel_limits(v_ego, following, dp_profile):
+def calc_cruise_accel_limits(v_ego, following, gas_button_status):
   if following:
-    a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_FOLLOWING)
-    a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_FOLLOWING)
+    a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V_FOLLOWING)
   else:
-    if dp_profile == DP_ECO:
-      a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_ECO)
-      a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_ECO)
-    elif dp_profile == DP_SPORT:
-      a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_SPORT)
-      a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_SPORT)
+    if gas_button_status == 1:
+      a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V_SPORT)
+    elif gas_button_status == 2:
+      a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V_ECO)
     else:
-      a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V)
-      a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V)
-  return np.vstack([a_cruise_min, a_cruise_max])
-
-def calc_cruise_accel_limits(v_ego, following):
-  a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V)
+      a_cruise_min = interp(v_ego, _A_CRUISE_MIN_BP, _A_CRUISE_MIN_V)
 
   if following:
     a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V_FOLLOWING)
   else:
-    a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V)
+    if gas_button_status == 1:
+      a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V_SPORT)
+    elif gas_button_status == 2:
+      a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V_ECO)
+    else:
+      a_cruise_max = interp(v_ego, _A_CRUISE_MAX_BP, _A_CRUISE_MAX_V)
   return np.vstack([a_cruise_min, a_cruise_max])
 
 
-def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):
+def limit_accel_in_turns(v_ego, angle_steers, a_target, CP, angle_later):
   """
   This function returns a limited long acceleration allowed, depending on the existing lateral acceleration
   this should avoid accelerating when losing the target in turns
   """
 
   a_total_max = interp(v_ego, _A_TOTAL_MAX_BP, _A_TOTAL_MAX_V)
-  a_y = v_ego**2 * angle_steers * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
-  a_x_allowed = math.sqrt(max(a_total_max**2 - a_y**2, 0.))
+  a_y = v_ego**2 * abs(angle_steers) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
+  #a_y2 = v_ego**2 * abs(angle_later) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
+  a_x_allowed = a_total_max - a_y
+  #a_x_allowed2 = a_total_max - a_y2
+  a_target[1] = min(a_target[1], a_x_allowed, a_x_allowed2)
+  a_target[0] = min(a_target[0], a_target[1])
 
-  return [a_target[0], min(a_target[1], a_x_allowed)]
+  return a_target
 
 
 class Planner():
@@ -122,8 +107,6 @@ class Planner():
     self.params = Params()
     self.first_loop = True
 
-    # dp
-    self.dp_profile = DP_OFF
     # dp - slow on curve from 0.7.6.1
     self.dp_slow_on_curve = False
     self.v_model = 0.0
@@ -161,10 +144,23 @@ class Planner():
 
     self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
 
-  def update(self, sm, pm, CP, VM, PP):
+  def update(self, sm, pm, CP, VM, PP, arne_sm):
     """Gets called when new radarState is available"""
     cur_time = sec_since_boot()
+    gas_button_status = arne_sm['arne182Status'].gasbuttonstatus
+    #if eco_mode and gas_button_status == 0:
+      #gas_button_status = 2
     v_ego = sm['carState'].vEgo
+    blinkers = sm['carState'].leftBlinker or sm['carState'].rightBlinker
+    if blinkers:
+      steering_angle = 0.
+      #angle_later = 0.
+    else:
+      steering_angle = sm['carState'].steeringAngle
+      #if v_ego < 11:
+      #  angle_later = 0.
+      #else:
+      #  angle_later = self.arne_sm['latControl'].anglelater
 
     long_control_state = sm['controlsState'].longControlState
     v_cruise_kph = sm['controlsState'].vCruise
@@ -203,14 +199,10 @@ class Planner():
       model_speed = MAX_SPEED
 
     # Calculate speed for normal cruise control
-    pedal_pressed = sm['carState'].gasPressed or sm['carState'].brakePressed
-    if enabled and not self.first_loop and not pedal_pressed:
-      if self.dp_profile == DP_OFF:
-        accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following)]
-      else:
-        accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, self.dp_profile)]
+    if enabled and not self.first_loop and not sm['carState'].brakePressed and not sm['carState'].gasPressed:
+      accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following), gas_button_status]
       jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
-      accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngle, accel_limits, self.CP)
+      accel_limits_turns = limit_accel_in_turns(v_ego, steering_angle, accel_limits, self.CP, angle_later)
 
       if force_slow_decel:
         # if required so, force a smooth deceleration
@@ -255,7 +247,7 @@ class Planner():
     if self.mpc1.new_lead:
       self.fcw_checker.reset_lead(cur_time)
 
-    blinkers = sm['carState'].leftBlinker or sm['carState'].rightBlinker
+    #blinkers = sm['carState'].leftBlinker or sm['carState'].rightBlinker
     fcw = self.fcw_checker.update(self.mpc1.mpc_solution, cur_time,
                                   sm['controlsState'].active,
                                   v_ego, sm['carState'].aEgo,

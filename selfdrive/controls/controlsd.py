@@ -7,6 +7,7 @@ from common.realtime import sec_since_boot, config_realtime_process, Priority, R
 from common.profiler import Profiler
 from common.params import Params, put_nonblocking
 import cereal.messaging as messaging
+import cereal.messaging_arne as messaging_arne
 from selfdrive.config import Conversions as CV
 from selfdrive.boardd.boardd import can_list_to_can_capnp
 from selfdrive.car.car_helpers import get_car, get_startup_event, get_one_can
@@ -45,7 +46,7 @@ LEAD_AWAY_STATE_ALERTED = 2
 
 
 class Controls:
-  def __init__(self, sm=None, pm=None, can_sock=None):
+  def __init__(self, sm=None, pm=None, can_sock=None, arne_sm=None):
     config_realtime_process(3, Priority.CTRL_HIGH)
 
     params = Params()
@@ -62,6 +63,10 @@ class Controls:
                                      'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'dragonConf']
       ignore_alive = None if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState']
       self.sm = messaging.SubMaster(socks, ignore_alive=ignore_alive)
+
+    self.arne_sm = arne_sm
+    if self.arne_sm is None:
+      self.arne_sm = messaging_arne.SubMaster(['arne182Status'])#, 'dynamicFollowButton', 'trafficModelEvent'])
 
     self.can_sock = can_sock
     if can_sock is None:
@@ -306,7 +311,7 @@ class Controls:
 
     # Update carState from CAN
     can_strs = messaging.drain_sock_raw(self.can_sock, wait_for_one=True)
-    CS = self.CI.update(self.CC, can_strs, self.sm['dragonConf'])
+    CS, CS_arne182 = self.CI.update(self.CC, can_strs, self.sm['dragonConf'])
 
     self.sm.update(0)
 
@@ -329,7 +334,7 @@ class Controls:
 
     self.distance_traveled += CS.vEgo * DT_CTRL
 
-    return CS
+    return CS, CS_arne182
 
   def state_transition(self, CS):
     """Compute conditional state transitions and execute actions on state transitions"""
@@ -433,7 +438,11 @@ class Controls:
     v_acc_sol = plan.vStart + dt * (a_acc_sol + plan.aStart) / 2.0
 
     # Gas/Brake PID loop
-    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm)
+    if self.arne_sm.updated['arne182Status']:
+      gas_button_status = self.arne_sm['arne182Status'].gasbuttonstatus
+    else:
+      gas_button_status = 0
+    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, plan.hasLead, self.sm['radarState'], gas_button_status)
     # Steering PID loop and lateral MPC
     actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan)
 
@@ -459,7 +468,7 @@ class Controls:
 
     return actuators, v_acc_sol, a_acc_sol, lac_log
 
-  def publish_logs(self, CS, start_time, actuators, v_acc, a_acc, lac_log):
+  def publish_logs(self, CS, start_time, actuators, v_acc, a_acc, lac_log, CS_arne182):
     """Send actuators and hud commands to the car, send controlsstate and MPC logging"""
 
     CC = car.CarControl.new_message()
@@ -607,10 +616,10 @@ class Controls:
     self.prof.checkpoint("Ratekeeper", ignore=True)
 
     # Sample data from sockets and get a carState
-    CS = self.data_sample()
+    CS, CS_arne182 = self.data_sample()
     self.prof.checkpoint("Sample")
 
-    self.update_events(CS)
+    self.update_events(CS, CS_arne182)
 
     if not self.read_only:
       # Update control state
@@ -623,7 +632,7 @@ class Controls:
     self.prof.checkpoint("State Control")
 
     # Publish data
-    self.publish_logs(CS, start_time, actuators, v_acc, a_acc, lac_log)
+    self.publish_logs(CS, start_time, actuators, v_acc, a_acc, lac_log, CS_arne182)
     self.prof.checkpoint("Sent")
 
   def controlsd_thread(self):
@@ -632,8 +641,8 @@ class Controls:
       self.rk.monitor_time()
       self.prof.display()
 
-def main(sm=None, pm=None, logcan=None):
-  controls = Controls(sm, pm, logcan)
+def main(sm=None, pm=None, logcan=None, arne_sm=None):
+  controls = Controls(sm, pm, logcan, arne_sm)
   controls.controlsd_thread()
 
 

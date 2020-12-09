@@ -59,7 +59,7 @@ confs = [
   {'name': 'dp_dynamic_follow_multiplier', 'default': 0.85, 'type': 'Float32', 'min': 0.85, 'max': 1.2, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param']},
   {'name': 'dp_dynamic_follow_min_tr', 'default': 0.9, 'type': 'Float32', 'min': 0.85, 'max': 1.6, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param']},
   #{'name': 'dp_dynamic_gas', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param']},
-  {'name': 'dp_accel_profile', 'default': 0, 'type': 'UInt8', 'min': 0, 'max': 3, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
+  #{'name': 'dp_accel_profile', 'default': 0, 'type': 'UInt8', 'min': 0, 'max': 3, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   # safety
   {'name': 'dp_driver_monitor', 'default': True, 'type': 'Bool', 'conf_type': ['param', 'struct']},
   {'name': 'dp_steering_monitor', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_driver_monitor', 'vals': [False]}], 'conf_type': ['param', 'struct']},

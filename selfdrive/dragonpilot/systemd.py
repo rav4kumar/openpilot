@@ -78,7 +78,7 @@ def confd_thread():
         last_modified = modified
     '''
     ===================================================
-    conditionally set update_params to true 
+    conditionally set update_params to true
     ===================================================
     '''
     # force updating param when `started` changed
@@ -90,7 +90,7 @@ def confd_thread():
       update_params = True
     '''
     ===================================================
-    conditionally update dp param base on stock param 
+    conditionally update dp param base on stock param
     ===================================================
     '''
     if update_params and params.get("LaneChangeEnabled") == b"1":
@@ -214,8 +214,6 @@ def update_custom_logic(msg):
     msg.dragonConf.dpAutoLcMinMph = msg.dragonConf.dpAssistedLcMinMph
   if msg.dragonConf.dpAtl:
     msg.dragonConf.dpAllowGas = True
-    msg.dragonConf.dpDynamicFollow = 0
-    msg.dragonConf.dpAccelProfile = 0
     msg.dragonConf.dpGearCheck = False
   if msg.dragonConf.dpAppWaze or msg.dragonConf.dpAppHr:
     msg.dragonConf.dpDrivingUi = False

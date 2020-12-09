@@ -1,5 +1,7 @@
 from cereal import car
 from common.numpy_fast import mean
+import cereal.messaging_arne as messaging_arne
+import cereal.messaging as messaging
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
@@ -23,6 +25,10 @@ class CarState(CarStateBase):
     self.pcm_acc_active = False
     self.main_on = False
     self.distance = 0
+
+    self.arne_pm = messaging_arne.PubMaster(['arne182Status'])
+    #self.arne_sm = messaging_arne.SubMaster(['latControl'])
+    #self.sm = messaging.SubMaster(['liveMapData'])
 
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
@@ -79,6 +85,31 @@ class CarState(CarStateBase):
     ret.steeringRate = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
     can_gear = int(cp.vl["GEAR_PACKET"]['GEAR'])
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
+    try:
+      self.econ_on = cp.vl["GEAR_PACKET"]['ECON_ON']
+    except:
+      self.econ_on = 0
+    try:
+      if self.CP.carFingerprint == CAR.RAV4_TSS2:
+        self.sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON_2']
+      else:
+        self.sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON']
+    except:
+      self.sport_on = 0
+    if self.CP.carFingerprint in [CAR.COROLLAH_TSS2, CAR.LEXUS_ESH_TSS2, CAR.RAV4H_TSS2, CAR.LEXUS_UXH_TSS2, CAR.CHRH, CAR.PRIUS_TSS2, CAR.HIGHLANDERH_TSS2]:
+      self.sport_on = cp.vl["GEAR_PACKET2"]['SPORT_ON']
+      self.econ_on = cp.vl["GEAR_PACKET2"]['ECON_ON']
+
+    if self.sport_on == 1:
+      self.gasbuttonstatus = 1
+    if self.econ_on == 1:
+      self.gasbuttonstatus = 2
+    if self.sport_on == 0 and self.econ_on == 0:
+      self.gasbuttonstatus = 0
+    msg = messaging_arne.new_message('arne182Status')
+
+    msg.arne182Status.gasbuttonstatus = self.gasbuttonstatus
+
     ret.leftBlinker = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 1
     ret.rightBlinker = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 2
 
