@@ -5,7 +5,7 @@ import sys
 import fcntl
 import errno
 import signal
-import shutil
+#import shutil
 import subprocess
 import datetime
 import textwrap
@@ -131,9 +131,9 @@ if not prebuilt:
           for i in range(3, -1, -1):
             print("....%d" % i)
             time.sleep(1)
-          subprocess.check_call(["scons", "-c"], cwd=BASEDIR, env=env)
-          shutil.rmtree("/tmp/scons_cache", ignore_errors=True)
-          shutil.rmtree("/data/scons_cache", ignore_errors=True)
+          #subprocess.check_call(["scons", "-c"], cwd=BASEDIR, env=env)
+          #shutil.rmtree("/tmp/scons_cache", ignore_errors=True)
+          #shutil.rmtree("/data/scons_cache", ignore_errors=True)
         else:
           print("scons build failed after retry")
           sys.exit(1)
