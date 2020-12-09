@@ -96,7 +96,7 @@ class CarState(CarStateBase):
         self.sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON']
     except:
       self.sport_on = 0
-    if self.CP.carFingerprint in [CAR.COROLLAH_TSS2, CAR.LEXUS_ESH_TSS2, CAR.RAV4H_TSS2, CAR.LEXUS_UXH_TSS2, CAR.CHRH, CAR.PRIUS_TSS2, CAR.HIGHLANDERH_TSS2]:
+    if self.CP.carFingerprint in [CAR.COROLLAH_TSS2, CAR.LEXUS_ESH_TSS2, CAR.RAV4H_TSS2, CAR.CHRH, CAR.PRIUS_TSS2, CAR.HIGHLANDERH_TSS2]:
       self.sport_on = cp.vl["GEAR_PACKET2"]['SPORT_ON']
       self.econ_on = cp.vl["GEAR_PACKET2"]['ECON_ON']
 
