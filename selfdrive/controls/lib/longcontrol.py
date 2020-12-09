@@ -68,10 +68,58 @@ class LongControl():
     self.pid.reset()
     self.v_pid = v_pid
 
-  def update(self, active, CS, v_target, v_target_future, a_target, CP, gas_button_status, has_lead):#, sm):
+    def dynamic_gas(self, v_ego, gas_interceptor, gas_button_status):
+    dynamic = False
+    if gas_interceptor:
+      if gas_button_status == 0:
+        dynamic = True
+        x = [0.0, 1.4082, 2.8031, 4.2266, 5.3827, 6.1656, 7.2478, 8.2831, 10.2447, 12.964, 15.423, 18.119, 20.117, 24.4661, 29.0581, 32.7101, 35.7633]
+        y = [0.3, 0.304, 0.315, 0.342, 0.365, 0.386, 0.429, 0.454, 0.472, 0.48, 0.489, 0.421, 0.432, 0.480, 0.55, 0.621, 0.7]
+      elif gas_button_status == 1:
+        y = [0.3, 0.9, 0.9]
+      elif gas_button_status == 2:
+        y = [0.15, 0.1548, 0.1646, 0.179, 0.1976, 0.2143, 0.2481, 0.2689, 0.2873, 0.3011, 0.3162, 0.3349, 0.3508, 0.3991, 0.4647, 0.529, 0.5981]
+    else:
+      if gas_button_status == 0:
+        dynamic = True
+        x = [0.0, 1.4082, 2.8031, 4.2266, 5.3827, 6.1656, 7.2478, 8.2831, 10.2447, 12.964, 15.423, 18.119, 20.117, 24.4661, 29.0581, 32.7101, 35.7633]
+        y = [0.3, 0.304, 0.315, 0.342, 0.365, 0.386, 0.429, 0.454, 0.472, 0.48, 0.489, 0.421, 0.432, 0.480, 0.55, 0.621, 0.7]
+      elif gas_button_status == 1:
+        y = [0.5, 0.95, 0.99]
+      elif gas_button_status == 2:
+        y = [0.25, 0.2, 0.2]
+
+    if not dynamic:
+      x = [0., 9., 55.]  # default BP values
+      #need some work
+      #x = [0.0, 1.4082, 2.8031, 4.2266, 5.3827, 6.1656, 7.2478, 8.2831, 10.2447, 12.964, 15.423, 18.119, 20.117, 24.4661, 29.0581, 32.7101, 35.7633]
+      #y = [0.218, 0.222, 0.233, 0.25, 0.273, 0.294, 0.337, 0.362, 0.38, 0.389, 0.398, 0.41, 0.421, 0.459, 0.512, 0.564, 0.621]
+
+    accel = interp(v_ego, x, y)
+
+    #if dynamic and hasLead:  # dynamic gas profile specific operations, and if lead
+    #  if v_ego < 6.7056:  # if under 15 mph
+    #    x = [1.61479, 1.99067, 2.28537, 2.49888, 2.6312, 2.68224]
+    #    y = [-accel, -(accel / 1.06), -(accel / 1.2), -(accel / 1.8), -(accel / 4.4), 0]  # array that matches current chosen accel value
+    #    accel += interp(vRel, x, y)
+    #  else:
+    #    x = [-0.89408, 0, 0.89408, 4.4704]
+    #    y = [-.15, -.05, .005, .05]
+    #    accel += interp(vRel, x, y)
+
+    min_return = 0.0
+    max_return = 1.0
+    return round(max(min(accel, max_return), min_return), 5)  # ensure we return a value between range
+
+  def update(self, active, CS, v_target, v_target_future, a_target, CP, hasLead, radarState, decelForTurn, longitudinalPlanSource, gas_button_status):
     """Update longitudinal control. This updates the state machine and runs a PID loop"""
+    try:
+      gas_interceptor = CP.enableGasInterceptor
+    except AttributeError:
+      gas_interceptor = False
     # Actuation limits
-    gas_max = interp(CS.vEgo, CP.gasMaxBP, CP.gasMaxV)
+    #gas_max = interp(CS.vEgo, CP.gasMaxBP, CP.gasMaxV)
+    gas_max = self.dynamic_gas(CS.vEgo, gas_interceptor, gas_button_status)
     brake_max = interp(CS.vEgo, CP.brakeMaxBP, CP.brakeMaxV)
 
     # Update state machine
