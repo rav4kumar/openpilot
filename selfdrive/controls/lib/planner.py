@@ -4,6 +4,9 @@ import numpy as np
 from common.params import Params
 from common.numpy_fast import interp
 
+from datetime import datetime
+import time
+
 import cereal.messaging as messaging
 from cereal import car
 from common.realtime import sec_since_boot
@@ -14,6 +17,9 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState, MIN_CAN_SPEED
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+
+offset = 0
+osm = True
 
 MAX_SPEED = 255.0
 
@@ -179,6 +185,63 @@ class Planner():
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
     following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
 
+    now = datetime.now()
+    try:
+      if sm['liveMapData'].speedLimitValid and osm and self.osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000 and (smart_speed or smart_speed_max_vego > v_ego):
+        speed_limit = sm['liveMapData'].speedLimit
+        if speed_limit is not None:
+          v_speedlimit = speed_limit
+          # offset is in percentage,.
+          if v_ego > offset_limit:
+            v_speedlimit = v_speedlimit * (1. + self.offset/100.0)
+          if v_speedlimit > fixed_offset:
+            v_speedlimit = v_speedlimit + fixed_offset
+      else:
+        speed_limit = None
+      if sm['liveMapData'].speedLimitAheadValid and osm and self.osm and sm['liveMapData'].speedLimitAheadDistance < speed_ahead_distance and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000 and (smart_speed or smart_speed_max_vego > v_ego):
+        distanceatlowlimit = 50
+        if sm['liveMapData'].speedLimitAhead < 21/3.6:
+          distanceatlowlimit = speed_ahead_distance = (v_ego - sm['liveMapData'].speedLimitAhead)*3.6*2
+          if distanceatlowlimit < 50:
+            distanceatlowlimit = 0
+          distanceatlowlimit = min(distanceatlowlimit,100)
+          speed_ahead_distance = (v_ego - sm['liveMapData'].speedLimitAhead)*3.6*5
+          speed_ahead_distance = min(speed_ahead_distance,300)
+          speed_ahead_distance = max(speed_ahead_distance,50)
+        if speed_limit is not None and sm['liveMapData'].speedLimitAheadDistance > distanceatlowlimit and v_ego + 3 < sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)*sm['liveMapData'].speedLimitAheadDistance/speed_ahead_distance:
+          speed_limit_ahead = sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)*(sm['liveMapData'].speedLimitAheadDistance - distanceatlowlimit)/(speed_ahead_distance - distanceatlowlimit)
+        else:
+          speed_limit_ahead = sm['liveMapData'].speedLimitAhead
+        if speed_limit_ahead is not None:
+          v_speedlimit_ahead = speed_limit_ahead
+          if v_ego > offset_limit:
+            v_speedlimit_ahead = v_speedlimit_ahead * (1. + self.offset/100.0)
+          if v_speedlimit_ahead > fixed_offset:
+            v_speedlimit_ahead = v_speedlimit_ahead + fixed_offset
+      if sm['liveMapData'].curvatureValid and sm['liveMapData'].distToTurn < speed_ahead_distance and osm and self.osm and (sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000:
+        curvature = abs(sm['liveMapData'].curvature)
+        radius = 1/max(1e-4, curvature) * curvature_factor
+        if gas_button_status == 1:
+          radius = radius * 2.0
+        elif gas_button_status == 2:
+          radius = radius * 1.0
+        else:
+          radius = radius * 1.5
+        if radius > 500:
+          c=0.9 # 0.9 at 1000m = 108 kph
+        elif radius > 250:
+          c = 3.5-13/2500*radius # 2.2 at 250m 84 kph
+        else:
+          c= 3.0 - 2/625 *radius # 3.0 at 15m 24 kph
+        v_curvature_map = math.sqrt(c*radius)
+        v_curvature_map = min(NO_CURVATURE_SPEED, v_curvature_map)
+    except KeyError:
+      pass
+
+    decel_for_turn = bool(v_curvature_map < min([v_cruise_setpoint, v_speedlimit, v_ego + 1.]))
+
+    speed_ahead_distance = 250
+
     # dp
     self.dp_profile = sm['dragonConf'].dpAccelProfile
     self.dp_slow_on_curve = sm['dragonConf'].dpSlowOnCurve
@@ -216,6 +279,19 @@ class Planner():
         # if required so, force a smooth deceleration
         accel_limits_turns[1] = min(accel_limits_turns[1], AWARENESS_DECEL)
         accel_limits_turns[0] = min(accel_limits_turns[0], accel_limits_turns[1])
+
+      if decel_for_turn and sm['liveMapData'].distToTurn < speed_ahead_distance and not following:
+        time_to_turn = max(1.0, sm['liveMapData'].distToTurn / max((v_ego + v_curvature_map)/2, 1.))
+        required_decel = min(0, (v_curvature_map - v_ego) / time_to_turn)
+        accel_limits[0] = max(accel_limits[0], required_decel)
+      if v_speedlimit_ahead < v_speedlimit and v_ego > v_speedlimit_ahead and sm['liveMapData'].speedLimitAheadDistance > 1.0 and not following:
+        required_decel = min(0, (v_speedlimit_ahead*v_speedlimit_ahead - v_ego*v_ego)/(sm['liveMapData'].speedLimitAheadDistance*2))
+        required_decel = max(required_decel, -3.0)
+        decel_for_turn = True
+        accel_limits[0] = required_decel
+        accel_limits[1] = required_decel
+        self.a_acc_start = required_decel
+        v_speedlimit_ahead = v_ego
 
       self.v_cruise, self.a_cruise = speed_smoother(self.v_acc_start, self.a_acc_start,
                                                     v_cruise_setpoint,
@@ -289,6 +365,10 @@ class Planner():
     plan_send.plan.vTargetFuture = float(self.v_acc_future)
     plan_send.plan.hasLead = self.mpc1.prev_lead_status
     plan_send.plan.longitudinalPlanSource = self.longitudinalPlanSource
+
+    plan_send.plan.vCurvature = float(v_curvature_map)
+    plan_send.plan.decelForTurn = bool(decel_for_turn)
+    plan_send.plan.mapValid = True
 
     radar_valid = not (radar_dead or radar_fault)
     plan_send.plan.radarValid = bool(radar_valid)

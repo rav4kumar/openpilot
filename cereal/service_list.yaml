@@ -67,7 +67,7 @@ frontEncodeIdx: [8061, true, 5.] # should be 20fps on tici
 orbFeaturesSummary: [8062, true, 0.]
 driverState: [8063, true, 5., 1]
 liveParameters: [8064, true, 20., 2]
-liveMapData: [8065, true, 0.]
+liveMapData: [8065, false, 0.]
 cameraOdometry: [8066, true, 20., 5]
 pathPlan: [8067, true, 20., 2]
 kalmanOdometry: [8068, true, 0.]
@@ -86,6 +86,9 @@ dragonConf: [8088, false, 2.]
 testModel: [8040, false, 0.]
 testLiveLocation: [8045, false, 0.]
 testJoystick: [8056, false, 0.]
+
+liveTrafficData: [8208, false, 100.]
+
 
 # 8080 is reserved for slave testing daemon
 # 8762 is reserved for logserver
