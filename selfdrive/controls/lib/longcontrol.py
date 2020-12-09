@@ -68,7 +68,7 @@ class LongControl():
     self.pid.reset()
     self.v_pid = v_pid
 
-    def dynamic_gas(self, v_ego, gas_interceptor, gas_button_status):
+  def dynamic_gas(self, v_ego, gas_interceptor, gas_button_status):
     dynamic = False
     if gas_interceptor:
       if gas_button_status == 0:
