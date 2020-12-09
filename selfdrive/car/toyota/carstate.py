@@ -140,6 +140,8 @@ class CarState(CarStateBase):
       # sig_name, sig_address, default
       ("STEER_ANGLE", "STEER_ANGLE_SENSOR", 0),
       ("GEAR", "GEAR_PACKET", 0),
+      ("SPORT_ON", "GEAR_PACKET", 0),
+      ("ECON_ON", "GEAR_PACKET", 0),
       ("BRAKE_PRESSED", "BRAKE_MODULE", 0),
       ("GAS_PEDAL", "GAS_PEDAL", 0),
       ("WHEEL_SPEED_FL", "WHEEL_SPEEDS", 0),
