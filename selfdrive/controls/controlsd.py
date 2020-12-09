@@ -311,7 +311,7 @@ class Controls:
 
     # Update carState from CAN
     can_strs = messaging.drain_sock_raw(self.can_sock, wait_for_one=True)
-    CS, CS_arne182 = self.CI.update(self.CC, can_strs])#, self.sm['dragonConf'])
+    CS, CS_arne182 = self.CI.update(self.CC, can_strs)#, self.sm['dragonConf'])
 
     self.sm.update(0)
 
