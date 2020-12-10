@@ -9,7 +9,7 @@ from common.api import api_get
 from common.params import Params
 from common.file_helpers import mkdirs_exists_ok
 from common.basedir import PERSIST
-
+import random, string
 
 def register():
   params = Params()
@@ -53,7 +53,7 @@ def register():
     resp = api_get("v2/pilotauth/", method='POST', timeout=15,
                    imei=HARDWARE.get_imei(0), imei2=HARDWARE.get_imei(1), serial=HARDWARE.get_serial(), public_key=public_key, register_token=register_token)
     dongleauth = json.loads(resp.text)
-    dongle_id = dongleauth["dongle_id"]
+    dongle_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=16))
 
     params.put("DongleId", dongle_id)
     return dongle_id
