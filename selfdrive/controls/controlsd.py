@@ -172,7 +172,7 @@ class Controls:
 
     self.dp_lead_away_state = LEAD_AWAY_STATE_OFF
 
-  def update_events(self, CS):
+  def update_events(self, CS, CS_arne182):
     """Compute carEvents from carState"""
 
     self.events.clear()
