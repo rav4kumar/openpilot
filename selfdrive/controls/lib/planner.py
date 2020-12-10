@@ -75,10 +75,10 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):#, angle_later):
 
   a_total_max = interp(v_ego, _A_TOTAL_MAX_BP, _A_TOTAL_MAX_V)
   a_y = v_ego**2 * abs(angle_steers) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
-  #a_y2 = v_ego**2 * abs(angle_later) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
+  a_y2 = v_ego**2 * abs(angle_later) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
   a_x_allowed = a_total_max - a_y
-  #a_x_allowed2 = a_total_max - a_y2
-  a_target[1] = min(a_target[1], a_x_allowed)#, a_x_allowed2)
+  a_x_allowed2 = a_total_max - a_y2
+  a_target[1] = min(a_target[1], a_x_allowed), a_x_allowed2)
   a_target[0] = min(a_target[0], a_target[1])
 
   return a_target
@@ -154,13 +154,13 @@ class Planner():
     blinkers = sm['carState'].leftBlinker or sm['carState'].rightBlinker
     if blinkers:
       steering_angle = 0.
-      #angle_later = 0.
+      angle_later = 0.
     else:
       steering_angle = sm['carState'].steeringAngle
-      #if v_ego < 11:
-      #  angle_later = 0.
-      #else:
-      #  angle_later = self.arne_sm['latControl'].anglelater
+      if v_ego < 11:
+        angle_later = 0.
+      else:
+        angle_later = self.arne_sm['latControl'].anglelater
 
     long_control_state = sm['controlsState'].longControlState
     v_cruise_kph = sm['controlsState'].vCruise
@@ -202,7 +202,7 @@ class Planner():
     if enabled and not self.first_loop and not sm['carState'].brakePressed and not sm['carState'].gasPressed:
       accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following, gas_button_status)]
       jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
-      accel_limits_turns = limit_accel_in_turns(v_ego, steering_angle, accel_limits, self.CP)#, angle_later)
+      accel_limits_turns = limit_accel_in_turns(v_ego, steering_angle, accel_limits, self.CP, angle_later)
 
       if force_slow_decel:
         # if required so, force a smooth deceleration
