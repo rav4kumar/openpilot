@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from cereal import car
+from cereal import car, arne182, log
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import Ecu, ECU_FINGERPRINT, CAR, TSS2_CAR, FINGERPRINTS
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
@@ -448,7 +448,7 @@ class CarInterface(CarInterfaceBase):
     ret.events = events.to_msg()
 
     self.CS.out = ret.as_reader()
-    return self.CS.out
+    return self.CS.out, ret_arne182.as_reader()
 
   # pass in a car.CarControl
   # to be called @ 100hz
