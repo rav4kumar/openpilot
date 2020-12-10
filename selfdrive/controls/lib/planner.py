@@ -78,7 +78,7 @@ def limit_accel_in_turns(v_ego, angle_steers, a_target, CP):#, angle_later):
   a_y2 = v_ego**2 * abs(angle_later) * CV.DEG_TO_RAD / (CP.steerRatio * CP.wheelbase)
   a_x_allowed = a_total_max - a_y
   a_x_allowed2 = a_total_max - a_y2
-  a_target[1] = min(a_target[1], a_x_allowed), a_x_allowed2)
+  a_target[1] = min(a_target[1], a_x_allowed, a_x_allowed2)
   a_target[0] = min(a_target[0], a_target[1])
 
   return a_target
