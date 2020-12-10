@@ -404,6 +404,8 @@ class CarInterface(CarInterfaceBase):
     else:
       self.dp_cruise_speed = 0.
 
+    ret_arne182 = arne182.CarStateArne182.new_message()
+
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
