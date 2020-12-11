@@ -197,8 +197,6 @@ class CarState(CarStateBase):
       ("LKA_STATE", "EPS_STATUS", 0),
       ("BRAKE_LIGHTS_ACC", "ESP_CONTROL", 0),
       ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
-      ("SPORT_ON", "GEAR_PACKET", 0),
-      ("ECON_ON", "GEAR_PACKET", 0),
       ("DISTANCE_LINES", "PCM_CRUISE_SM", 0),
     ]
 
