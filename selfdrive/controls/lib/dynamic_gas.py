@@ -23,8 +23,8 @@ class DynamicGas:
 
     current_dp_profile = sm['dragonConf'].dpAccelProfile
     if self.dp_profile != current_dp_profile:
-      self.set_profile()
       self.dp_profile = current_dp_profile
+      self.set_profile()
 
     if self.dp_profile == DP_OFF:
       return float(interp(v_ego, self.CP.gasMaxBP, self.CP.gasMaxV))
