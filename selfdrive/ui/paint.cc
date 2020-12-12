@@ -482,9 +482,9 @@ static void ui_draw_vision_event(UIState *s) {
 }
 
 static void ui_draw_vision_map(UIState *s) {
+  const int map_size = 96;
   const int map_x = (s->video_rect.x + (map_size * 3) + (bdr_s * 3));
   const int map_y = (s->scene.viz_rect.bottom() + ((footer_h - map_size) / 2));
-  const int map_y = (footer_y + ((footer_h - map_size) / 2));
   ui_draw_circle_image(s->vg, map_x, map_y, map_size, s->img_map, s->scene.map_valid);
 }
 
