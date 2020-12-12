@@ -15,7 +15,7 @@ import selfdrive.crash as crash
 from common.params import Params
 from collections import defaultdict
 import cereal.messaging as messaging
-import cereal.messaging_arne as messaging_arne
+#import cereal.messaging_arne as messaging_arne
 from selfdrive.version import version, dirty
 from common.transformations.coordinates import geodetic2ecef
 from selfdrive.mapd.mapd_helpers import MAPS_LOOKAHEAD_DISTANCE, Way, circle_through_points, rate_curvature_points
@@ -488,13 +488,13 @@ class MessagedGPSThread(LoggerThread):
             query_lock.release()
             self.logger.debug("setting last_gps to %s" % str(gps))
 
-class MessagedArneThread(LoggerThread):
+class MessagedThread(LoggerThread):
     def __init__(self, threadID, name, sharedParams={}):
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
-        self.arne_sm = messaging_arne.SubMaster(['liveTrafficData','trafficModelEvent'])
-        self.logger.debug("entered messageArned_thread, ... %s" % str(self.arne_sm))
+        self.sm = messaging.SubMaster(['liveTrafficData'])#,'trafficModelEvent'])
+        #self.logger.debug("entered messageArned_thread, ... %s" % str(self.arne_sm))
     def run(self):
         self.logger.debug("Entered run method for thread :" + str(self.name))
         last_not_none_signal = 'NONE'
@@ -515,27 +515,27 @@ class MessagedArneThread(LoggerThread):
             else:
                 start = time.time()
             self.logger.debug("starting new cycle in endless loop")
-            self.arne_sm.update(0)
-            if self.arne_sm.updated['trafficModelEvent']:
-              traffic_status = self.arne_sm['trafficModelEvent'].status
-              traffic_confidence = round(self.arne_sm['trafficModelEvent'].confidence * 100, 2)
-              if traffic_confidence >= 50 and (traffic_status == 'GREEN' or traffic_status == 'SLOW'):
-                last_not_none_signal = traffic_status
-                last_not_none_signal_counter = 0
-              elif traffic_confidence >= 50 and traffic_status == 'NONE' and last_not_none_signal != 'NONE':
-                if last_not_none_signal_counter < 25:
-                  last_not_none_signal_counter = last_not_none_signal_counter + 1
+            #self.arne_sm.update(0)
+            #if self.arne_sm.updated['trafficModelEvent']:
+             # traffic_status = self.arne_sm['trafficModelEvent'].status
+              #traffic_confidence = round(self.arne_sm['trafficModelEvent'].confidence * 100, 2)
+              #if traffic_confidence >= 50 and (traffic_status == 'GREEN' or traffic_status == 'SLOW'):
+                #last_not_none_signal = traffic_status
+                #last_not_none_signal_counter = 0
+              #elif traffic_confidence >= 50 and traffic_status == 'NONE' and last_not_none_signal != 'NONE':
+                #if last_not_none_signal_counter < 25:
+                  #last_not_none_signal_counter = last_not_none_signal_counter + 1
                   #print("self.last_not_none_signal_counter")
                   #print(self.last_not_none_signal_counter)
                   #print("self.last_not_none_signal")
                   #print(self.last_not_none_signal)
-                else:
-                  last_not_none_signal = 'NONE'
+              #else:
+                  #last_not_none_signal = 'NONE'
             query_lock = self.sharedParams.get('query_lock', None)
             query_lock.acquire()
             speedLimittrafficvalid = self.sharedParams['speedLimittrafficvalid']
             query_lock.release()
-            traffic = self.arne_sm['liveTrafficData']
+            traffic = self.sm['liveTrafficData']
             if traffic.speedLimitValid:
                 speedLimittraffic = traffic.speedLimit
                 if abs(speedLimittraffic_prev - speedLimittraffic) > 0.1:
@@ -589,12 +589,12 @@ def main():
     qt = QueryThread(1, "QueryThread", sharedParams=sharedParams)
     mt = MapsdThread(2, "MapsdThread", sharedParams=sharedParams)
     mggps = MessagedGPSThread(3, "MessagedGPSThread", sharedParams=sharedParams)
-    mgarne = MessagedArneThread(4, "MessagedArneThread", sharedParams=sharedParams)
+    #mgarne = MessagedArneThread(4, "MessagedArneThread", sharedParams=sharedParams)
 
     qt.start()
     mt.start()
     mggps.start()
-    mgarne.start()
+    #mgarne.start()
 
 if __name__ == "__main__":
     main()
