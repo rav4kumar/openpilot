@@ -27,7 +27,7 @@ def plannerd_thread(sm=None, pm=None, arne_sm=None):
     sm = messaging.SubMaster(['carState', 'controlsState', 'radarState', 'model', 'liveParameters', 'dragonConf'],
                              poll=['radarState', 'model'])
   if arne_sm is None:
-    arne_sm = messaging_arne.SubMaster(['arne182Status'])#, 'latControl'])
+    arne_sm = messaging_arne.SubMaster(['arne182Status', 'latControl'])
   if pm is None:
     pm = messaging.PubMaster(['plan', 'liveLongitudinalMpc', 'pathPlan', 'liveMpc'])
 
