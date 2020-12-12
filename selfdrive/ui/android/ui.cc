@@ -29,6 +29,18 @@ static void ui_set_brightness(UIState *s, int brightness) {
   }
 }
 
+static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
+  if (s->active_app == cereal::UiLayoutState::App::NONE) {  // if onroad (not settings or home)
+    if ((s->awake && s->vision_connected && s->status != STATUS_OFFROAD) || s->ui_debug) {  // if car started or debug mode
+      //if (handle_df_touch(s, touch_x, touch_y) || handle_ls_touch(s, touch_x, touch_y) || handle_ml_touch(s, touch_x, touch_y)) {
+        s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
+        return true;  // only allow one button to be pressed at a time
+      //}
+    }
+  }
+  return false;
+}
+
 static void handle_display_state(UIState *s, bool user_input) {
 
   static int awake_timeout = 0;
@@ -161,6 +173,7 @@ int main(int argc, char* argv[]) {
   UIState uistate = {};
   UIState *s = &uistate;
   ui_init(s);
+  sa_init(s, true);
   s->sound = &sound;
 
   TouchState touch = {0};
@@ -192,10 +205,16 @@ int main(int argc, char* argv[]) {
   s->scene.dp_alert_type = 1;
   bool show_layer = true;
 
+  bool last_started = s->started;
   while (!do_exit) {
     if (!s->started) {
       usleep(50 * 1000);
     }
+
+    if (s->started && !last_started) {
+      sa_init(s, false);  // reset ml button and regrab params
+    }
+    last_started = s->started;
     double u1 = millis_since_boot();
 
     ui_update(s);
@@ -217,9 +236,11 @@ int main(int argc, char* argv[]) {
     int touch_x = -1, touch_y = -1;
     int touched = touch_poll(&touch, &touch_x, &touch_y, 0);
     if (touched == 1) {
+      if (s->ui_debug) { printf("touched x: %d, y: %d\n", touch_x, touch_y); }
       if (!handle_dp_btn_touch(s, touch_x, touch_y)) {
       handle_sidebar_touch(s, touch_x, touch_y);
-      handle_vision_touch(s, touch_x, touch_y);
+      if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
+        handle_vision_touch(s, touch_x, touch_y);
       }
     }
 
