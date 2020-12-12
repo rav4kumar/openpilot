@@ -301,26 +301,23 @@ static void ui_draw_world(UIState *s) {
 static void ui_draw_vision_maxspeed(UIState *s) {
   char maxspeed_str[32];
   float maxspeed = s->scene.controls_state.getVCruise();
+  int maxspeed_calc = maxspeed * 0.6225 + 0.5;
   float speedlimit = s->scene.speedlimit;
   int speedlim_calc = speedlimit * 2.2369363 + 0.5;
-  int maxspeed_calc = maxspeed * 0.6225 + 0.5;
   if (s->is_metric) {
     maxspeed_calc = maxspeed + 0.5;
     speedlim_calc = speedlimit * 3.6 + 0.5;
-
   }
-
+  int speed_lim_off = speedlim_calc * (1 + s->speed_lim_off / 100.0);
   bool is_cruise_set = (maxspeed != 0 && maxspeed != SET_SPEED_NA);
   bool is_speedlim_valid = s->scene.speedlimit_valid;
   bool is_set_over_limit = is_speedlim_valid && s->scene.controls_state.getEnabled() &&
                        is_cruise_set && maxspeed_calc > (speedlim_calc + speed_lim_off);
-
   int viz_maxspeed_w = 184;
   int viz_maxspeed_h = 202;
-  int viz_maxspeed_x = (s->video_rect.x + (bdr_s*2));
-  int viz_maxspeed_y = (s->video_rect.y + (bdr_s*1.5));
+  int viz_maxspeed_x = (s->video_rect.x + (bdr_is*2));
+  int viz_maxspeed_y = (s->video_rect.y + (bdr_is*1.5));
   int viz_maxspeed_xo = 180;
-
   viz_maxspeed_w += viz_maxspeed_xo;
   viz_maxspeed_x += viz_maxspeed_w - (viz_maxspeed_xo * 2);
   //viz_maxspeed_xo = 0;
@@ -340,13 +337,13 @@ static void ui_draw_vision_maxspeed(UIState *s) {
 
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
   const int text_x = viz_maxspeed_x + (viz_maxspeed_xo / 2) + (viz_maxspeed_w / 2);
-  ui_draw_text(s->vg, text_x, 148, "MAX", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), s->font_sans_regular);
+  ui_draw_text(s->vg, text_x, 148-border_shifter, "MAX", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), s->font_sans_regular);
 
   if (is_cruise_set) {
     snprintf(maxspeed_str, sizeof(maxspeed_str), "%d", maxspeed_calc);
-    ui_draw_text(s->vg, text_x, 242, maxspeed_str, 48 * 2.5, COLOR_WHITE, s->font_sans_bold);
+    ui_draw_text(s->vg, text_x, 242-border_shifter, maxspeed_str, 48 * 2.5, COLOR_WHITE, s->font_sans_bold);
   } else {
-    ui_draw_text(s->vg, text_x, 242, "N/A", 42 * 2.5, COLOR_WHITE_ALPHA(100), s->font_sans_semibold);
+    ui_draw_text(s->vg, text_x, 242-border_shifter, "-", 42 * 2.5, COLOR_WHITE_ALPHA(100), s->font_sans_semibold);
   }
 }
 
@@ -367,8 +364,8 @@ static void ui_draw_vision_speedlimit(UIState *s) {
 
   int viz_speedlim_w = 180;
   int viz_speedlim_h = 202;
-  int viz_speedlim_x = (s->video_rect.x + (bdr_s*2));
-  int viz_speedlim_y = (s->video_rect.y + (bdr_s*1.5));
+  int viz_speedlim_x = (s->video_rect.x + (bdr_is*2));
+  int viz_speedlim_y = (s->video_rect.y + (bdr_is*1.5));
   if (!is_speedlim_valid) {
     viz_speedlim_w -= 5;
     viz_speedlim_h -= 10;
