@@ -476,7 +476,6 @@ void pigeon_thread() {
 
   // ubloxRaw = 8042
   PubMaster pm({"ubloxRaw"});
-  bool ignition_last = false;
 
 #ifdef QCOM2
   Pigeon * pigeon = Pigeon::connect("/dev/ttyHS0");
@@ -484,30 +483,23 @@ void pigeon_thread() {
   Pigeon * pigeon = Pigeon::connect(panda);
 #endif
 
+  pigeon->init();
+
   // dp
   #ifdef DisableRelay
   panda->set_safety_model(cereal::CarParams::SafetyModel::TOYOTA);
   #endif
+
   while (!do_exit && panda->connected) {
     std::string recv = pigeon->receive();
     if (recv.length() > 0) {
       if (recv[0] == (char)0x00){
-        if (ignition) {
-          LOGW("received invalid ublox message while onroad, resetting panda GPS");
-          pigeon->init();
-        }
+        LOGW("received invalid ublox message, resetting panda GPS");
+        pigeon->init();
       } else {
         pigeon_publish_raw(pm, recv);
       }
     }
-
-    // init pigeon on rising ignition edge
-    // since it was turned off in low power mode
-    if(ignition && !ignition_last) {
-      pigeon->init();
-    }
-
-    ignition_last = ignition;
 
     // 10ms - 100 Hz
     usleep(10*1000);

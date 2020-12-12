@@ -69,10 +69,12 @@ class Controls:
       self.can_sock = messaging.sub_sock('can', timeout=can_timeout)
 
     # wait for one health and one CAN packet
+    hw_type = messaging.recv_one(self.sm.sock['health']).health.hwType
+    has_relay = hw_type in [HwType.blackPanda, HwType.uno, HwType.dos]
     print("Waiting for CAN messages...")
     get_one_can(self.can_sock)
 
-    self.CI, self.CP = get_car(self.can_sock, self.pm.sock['sendcan'])
+    self.CI, self.CP = get_car(self.can_sock, self.pm.sock['sendcan'], has_relay)
 
     # read params
     params = Params()
@@ -149,6 +151,8 @@ class Controls:
       self.events.add(EventName.communityFeatureDisallowed, static=True)
     if not car_recognized:
       self.events.add(EventName.carUnrecognized, static=True)
+    # if hw_type == HwType.whitePanda:
+    #   self.events.add(EventName.whitePandaUnsupportedDEPRECATED, static=True)
 
     # controlsd is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)
@@ -160,8 +164,8 @@ class Controls:
     self.sm['dragonConf'].dpAtl = False
     self.sm['dragonConf'].dpCameraOffset = 6
 
-    self.dp_lead_away_alert = params.get('dp_driver_monitor') == b'0' and params.get('dp_steering_monitor') == b'0'
-    self.dp_lead_away_min_speed = 40 # kph
+    self.dp_lead_away_alert = params.get('dp_lead_car_away_alert') == b'1'
+    self.dp_lead_away_min_speed = 80 # kph
     self.dp_lead_away_alert_lead_count = 0
     self.dp_lead_away_alert_nolead_count = 0
 
@@ -275,7 +279,7 @@ class Controls:
         self.dp_lead_away_state = LEAD_AWAY_STATE_OFF
 
       if current_speed >= self.dp_lead_away_min_speed:
-        nolead_count = interp(current_speed, [self.dp_lead_away_min_speed, 100], [500, 250])
+        nolead_count = interp(current_speed, [self.dp_lead_away_min_speed, 100], [300, 100])
         # when car had lead for 5 more secs and lead move away for 3 secs
         if self.dp_lead_away_state == LEAD_AWAY_STATE_OFF and self.sm['plan'].hasLead:
           self.dp_lead_away_alert_lead_count += 1

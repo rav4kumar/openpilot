@@ -55,6 +55,7 @@ confs = [
   {'name': 'dp_allow_gas', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_max_ctrl_speed', 'default': 92., 'type': 'Float32', 'conf_type': ['param', 'struct']},
   {'name': 'dp_lead_car_alert', 'default': False, 'type': 'Bool', 'conf_type': ['param', 'struct']},
+  {'name': 'dp_lead_car_away_alert', 'default': True, 'type': 'Bool', 'conf_type': ['param']},
   {'name': 'dp_dynamic_follow', 'default': 0, 'type': 'UInt8', 'min': 0, 'max': 4, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_dynamic_follow_multiplier', 'default': 0.85, 'type': 'Float32', 'min': 0.85, 'max': 1.2, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param']},
   {'name': 'dp_dynamic_follow_min_tr', 'default': 0.9, 'type': 'Float32', 'min': 0.85, 'max': 1.6, 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param']},
