@@ -18,7 +18,7 @@ from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
 
-offset = 0
+offset = 4.47
 osm = True
 
 MAX_SPEED = 255.0
