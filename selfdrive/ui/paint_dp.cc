@@ -354,11 +354,11 @@ void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w ) {
 
 void ui_draw_bbui(UIState *s) {
     const int bb_dml_w = 184;
-    const int bb_dml_x = s->scene.viz_rect.x + (bdr_s*2);
-    const int bb_dml_y = s->scene.viz_rect.y + (bdr_s*1.5) + 220;
+    const int bb_dml_x = s->scene.viz_rect.x + (bdr_is*2);
+    const int bb_dml_y = s->scene.viz_rect.y + (bdr_is*1.5) + 220;
     const int bb_dmr_w = 184;
-    const int bb_dmr_x =s->scene.viz_rect.x + s->scene.viz_rect.w - bb_dmr_w - (bdr_s * 2);
-    const int bb_dmr_y = s->scene.viz_rect.y + (bdr_s*1.5) + 220;
+    const int bb_dmr_x =s->scene.viz_rect.x + s->scene.viz_rect.w - bb_dmr_w - (bdr_is * 2);
+    const int bb_dmr_y = s->scene.viz_rect.y + (bdr_is*1.5) + 220;
 
     bb_ui_draw_measures_right(s, bb_dml_x, bb_dml_y, bb_dml_w);
     bb_ui_draw_measures_left(s, bb_dmr_x, bb_dmr_y, bb_dmr_w);
