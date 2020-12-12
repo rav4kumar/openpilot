@@ -34,6 +34,7 @@
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
 #define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
+#define COLOR_OCHRE nvgRGBA(218, 111, 37, 255)
 
 #define UI_BUF_COUNT 4
 
@@ -48,7 +49,8 @@ typedef struct Rect {
 } Rect;
 
 const int sbr_w = 300;
-const int bdr_s = 30;
+const int bdr_s = 10;
+const int bdr_is = 30;
 const int header_h = 420;
 const int footer_h = 280;
 const Rect settings_btn = {50, 35, 200, 117};
@@ -106,6 +108,11 @@ typedef struct UIScene {
 
   mat4 extrinsic_matrix;      // Last row is 0 so we can use mat4.
   bool world_objects_visible;
+  float speedlimit;
+  bool speedlimit_valid;
+  float speedlimitaheaddistance;
+  bool speedlimitahead_valid;
+  bool map_valid;
 
   bool is_rhd;
   bool frontview;
@@ -219,6 +226,8 @@ typedef struct UIState {
   int img_battery;
   int img_battery_charging;
   int img_network[6];
+  int img_map;
+  int img_speed;
 
   SubMaster *sm;
 
@@ -250,6 +259,9 @@ typedef struct UIState {
   bool ignition;
   bool is_metric;
   bool longitudinal_control;
+  bool limit_set_speed;
+  bool is_ego_over_limit;
+  float speed_lim_off;
   uint64_t last_athena_ping;
   uint64_t started_frame;
 
