@@ -25,7 +25,7 @@ int write_param_float(float param, const char* param_name, bool persistent_param
 }
 
 void ui_init(UIState *s) {
-  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "liveMapData",
+  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
                          "health", "carParams", "ubloxGnss", "driverState", "dMonitoringState", "sensorEvents",
                          "dragonConf", "carState"});
 
@@ -204,13 +204,6 @@ void update_sockets(UIState *s) {
   if (sm.updated("thermal")) {
     scene.thermal = sm["thermal"].getThermal();
   }
-  if (sm.updated("liveMapData")) {
-    scene.map_valid = sm["liveMapData"].getLiveMapData().getMapValid();
-    scene.speedlimit = sm["liveMapData"].getLiveMapData().getSpeedLimit();
-    scene.speedlimit_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitValid();
-    scene.speedlimitahead_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadValid();
-    scene.speedlimitaheaddistance = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadDistance();
-  }
   if (sm.updated("ubloxGnss")) {
     auto data = sm["ubloxGnss"].getUbloxGnss();
     if (data.which() == cereal::UbloxGnss::MEASUREMENT_REPORT) {
@@ -339,10 +332,6 @@ void ui_update(UIState *s) {
   // Read params
   if ((s->sm)->frame % (5*UI_FREQ) == 0) {
     read_param(&s->is_metric, "IsMetric");
-  } else if ((s->sm)->frame % (7*UI_FREQ) == 0) {
-    read_param(&s->speed_lim_off, "SpeedLimitOffset");
-  } else if ((s->sm)->frame % (11*UI_FREQ) == 0) {
-    read_param(&s->limit_set_speed, "LimitSetSpeed");
   } else if ((s->sm)->frame % (6*UI_FREQ) == 0) {
     int param_read = read_param(&s->last_athena_ping, "LastAthenaPingTime");
     if (param_read != 0) { // Failed to read param
