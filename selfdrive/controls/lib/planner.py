@@ -22,6 +22,7 @@ offset = 0
 osm = True
 
 MAX_SPEED = 255.0
+NO_CURVATURE_SPEED = 90.0
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distracted
