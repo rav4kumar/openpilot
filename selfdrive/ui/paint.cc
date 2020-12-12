@@ -1,3 +1,8 @@
+#include <assert.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <unistd.h>
 #include "ui.hpp"
 #include <assert.h>
 #include <map>
@@ -18,6 +23,8 @@ extern "C"{
 #include "paint.hpp"
 #include "sidebar.hpp"
 #include "paint_dp.hpp"
+
+int border_shifter = 20;
 
 
 // TODO: this is also hardcoded in common/transformations/camera.py
@@ -303,8 +310,8 @@ static void ui_draw_vision_maxspeed(UIState *s) {
 
   int viz_maxspeed_w = 184;
   int viz_maxspeed_h = 202;
-  int viz_maxspeed_x = s->scene.viz_rect.x + (bdr_s*2);
-  int viz_maxspeed_y = s->scene.viz_rect.y + (bdr_s*1.5);
+  int viz_maxspeed_x = s->scene.viz_rect.x + (bdr_is*2);
+  int viz_maxspeed_y = s->scene.viz_rect.y + (bdr_is*1.5);
   int viz_maxspeed_xo = 180;
 
   viz_maxspeed_xo = 0;
@@ -318,13 +325,13 @@ static void ui_draw_vision_maxspeed(UIState *s) {
 
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
   const int text_x = viz_maxspeed_x + (viz_maxspeed_xo / 2) + (viz_maxspeed_w / 2);
-  ui_draw_text(s->vg, text_x, 148, "MAX", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), s->font_sans_regular);
+  ui_draw_text(s->vg, text_x, 148-border_shifter, "MAX", 26 * 2.5, COLOR_WHITE_ALPHA(is_cruise_set ? 200 : 100), s->font_sans_regular);
 
   if (is_cruise_set) {
     snprintf(maxspeed_str, sizeof(maxspeed_str), "%d", maxspeed_calc);
-    ui_draw_text(s->vg, text_x, 242, maxspeed_str, 48 * 2.5, COLOR_WHITE, s->font_sans_bold);
+    ui_draw_text(s->vg, text_x, 242-border_shifter, maxspeed_str, 48 * 2.5, COLOR_WHITE, s->font_sans_bold);
   } else {
-    ui_draw_text(s->vg, text_x, 242, "N/A", 42 * 2.5, COLOR_WHITE_ALPHA(100), s->font_sans_semibold);
+    ui_draw_text(s->vg, text_x, 242-border_shifter, "-", 42 * 2.5, COLOR_WHITE_ALPHA(100), s->font_sans_semibold);
   }
 }
 
@@ -377,12 +384,12 @@ static void ui_draw_vision_speed(UIState *s) {
 
 static void ui_draw_vision_event(UIState *s) {
   const int viz_event_w = 220;
-  const int viz_event_x = s->scene.viz_rect.right() - (viz_event_w + bdr_s*2);
-  const int viz_event_y = s->scene.viz_rect.y + (bdr_s*1.5);
+  const int viz_event_x = s->scene.viz_rect.right() - (viz_event_w + bdr_is*2);
+  const int viz_event_y = s->scene.viz_rect.y + (bdr_is*1.5);
   if (s->scene.controls_state.getDecelForModel() && s->scene.controls_state.getEnabled()) {
     // draw winding road sign
-    const int img_turn_size = 160*1.5;
-    ui_draw_image(s->vg, viz_event_x - (img_turn_size / 4), viz_event_y + bdr_s - 25, img_turn_size, img_turn_size, s->img_turn, 1.0f);
+    const int img_turn_size = 160*1.5*0.82;
+    ui_draw_image(s->vg, viz_event_x - (img_turn_size / 4), viz_event_y + bdr_is - 25, img_turn_size, img_turn_size, s->img_turn, 1.0f);
   } else if (s->scene.controls_state.getEngageable()) {
     // draw steering wheel
     const int bg_wheel_size = 96;
@@ -396,7 +403,7 @@ static void ui_draw_vision_event(UIState *s) {
 
 static void ui_draw_vision_face(UIState *s) {
   const int face_size = 96;
-  const int face_x = (s->scene.viz_rect.x + face_size + (bdr_s * 2));
+  const int face_x = (s->scene.viz_rect.x + face_size + (bdr_is * 2));
   const int face_y = (s->scene.viz_rect.bottom() - footer_h + ((footer_h - face_size) / 2));
   ui_draw_circle_image(s->vg, face_x, face_y, face_size, s->img_face, s->scene.dmonitoring_state.getFaceDetected());
 }
@@ -510,9 +517,9 @@ void ui_draw_vision_alert(UIState *s, cereal::ControlsState::AlertSize va_size, 
   color.a *= s->alert_blinking_alpha;
   int alr_s = alert_size_map[va_size];
 
-  const int alr_x = scene->viz_rect.x - bdr_s + 100;
-  const int alr_w = scene->viz_rect.w + (bdr_s*2) - 200;
-  const int alr_h = alr_s+(va_size==cereal::ControlsState::AlertSize::NONE?0:bdr_s) - 100;
+  const int alr_x = scene->viz_rect.x - bdr_is + 100;
+  const int alr_w = scene->viz_rect.w + (bdr_is*2) - 200;
+  const int alr_h = alr_s+(va_size==cereal::ControlsState::AlertSize::NONE?0:bdr_is) - 100;
   const int alr_y = s->fb_h-alr_h - 100;
 
   ui_draw_rect(s->vg, alr_x, alr_y, alr_w, alr_h, color, 20);
