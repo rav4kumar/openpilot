@@ -212,6 +212,7 @@ def thermald_thread():
   should_start_prev = False
   handle_fan = None
   is_uno = False
+  has_relay = False
 
   pm = PowerMonitoring()
   no_panda_cnt = 0
@@ -262,6 +263,7 @@ def thermald_thread():
       # Setup fan handler on first connect to panda
       if handle_fan is None and health.health.hwType != log.HealthData.HwType.unknown:
         is_uno = health.health.hwType == log.HealthData.HwType.uno
+        has_relay = health.health.hwType in [log.HealthData.HwType.blackPanda, log.HealthData.HwType.uno, log.HealthData.HwType.dos]
 
         if (not EON) or is_uno:
           cloudlog.info("Setting up UNO fan handler")

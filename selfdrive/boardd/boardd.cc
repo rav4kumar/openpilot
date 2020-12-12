@@ -484,10 +484,13 @@ void pigeon_thread() {
   Pigeon * pigeon = Pigeon::connect(panda);
 #endif
 
+  pigeon->init();
+
   // dp
   #ifdef DisableRelay
   panda->set_safety_model(cereal::CarParams::SafetyModel::TOYOTA);
   #endif
+
   while (!do_exit && panda->connected) {
     std::string recv = pigeon->receive();
     if (recv.length() > 0) {

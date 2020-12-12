@@ -89,27 +89,6 @@ class LanePlanner:
     prob_mods = []
     for t_check in [0.0, 1.5, 3.0]:
       width_at_t = eval_poly(width_poly, t_check * (v_ego + 7))
-      # dp note
-      # [3.5, 4.5] = from 3m to 4m (lane width)
-      # [1.0, 0.0] = "use lane line" to "not use lane line at all"
-      prob_mods.append(interp(width_at_t, [3.5, 4.5], [1.0, 0.0]))
-    mod = min(prob_mods)
-    l_prob *= mod
-    r_prob *= mod
-
-    # Reduce reliance on uncertain lanelines
-    l_std_mod = interp(self.l_std, [.15, .3], [1.0, 0.0])
-    r_std_mod = interp(self.r_std, [.15, .3], [1.0, 0.0])
-    l_prob *= l_std_mod
-    r_prob *= r_std_mod
-
-    # Reduce reliance on lanelines that are too far apart or
-    # will be in a few seconds
-    l_prob, r_prob = self.l_prob, self.r_prob
-    width_poly = self.l_poly - self.r_poly
-    prob_mods = []
-    for t_check in [0.0, 1.5, 3.0]:
-      width_at_t = eval_poly(width_poly, t_check * (v_ego + 7))
       prob_mods.append(interp(width_at_t, [4.0, 5.0], [1.0, 0.0]))
     mod = min(prob_mods)
     l_prob *= mod
