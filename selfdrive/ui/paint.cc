@@ -317,8 +317,8 @@ static void ui_draw_vision_maxspeed(UIState *s) {
 
   int viz_maxspeed_w = 184;
   int viz_maxspeed_h = 202;
-  int viz_maxspeed_x = (s->scene.ui_viz_rx + (bdr_s*2));
-  int viz_maxspeed_y = (box_y + (bdr_s*1.5));
+  int viz_maxspeed_x = (s->video_rect.x + (bdr_s*2));
+  int viz_maxspeed_y = (s->video_rect.y + (bdr_s*1.5));
   int viz_maxspeed_xo = 180;
 
   viz_maxspeed_w += viz_maxspeed_xo;
@@ -367,8 +367,8 @@ static void ui_draw_vision_speedlimit(UIState *s) {
 
   int viz_speedlim_w = 180;
   int viz_speedlim_h = 202;
-  int viz_speedlim_x = (s->scene.ui_viz_rx + (bdr_s*2));
-  int viz_speedlim_y = (box_y + (bdr_s*1.5));
+  int viz_speedlim_x = (s->video_rect.x + (bdr_s*2));
+  int viz_speedlim_y = (s->video_rect.y + (bdr_s*1.5));
   if (!is_speedlim_valid) {
     viz_speedlim_w -= 5;
     viz_speedlim_h -= 10;
@@ -485,8 +485,8 @@ static void ui_draw_vision_event(UIState *s) {
 }
 
 static void ui_draw_vision_map(UIState *s) {
-  const int map_size = 96;
-  const int map_x = (s->scene.ui_viz_rx + (map_size * 3) + (bdr_s * 3));
+  const int map_x = (s->video_rect.x + (map_size * 3) + (bdr_s * 3));
+  const int map_y = (s->scene.viz_rect.bottom() + ((footer_h - map_size) / 2));
   const int map_y = (footer_y + ((footer_h - map_size) / 2));
   ui_draw_circle_image(s->vg, map_x, map_y, map_size, s->img_map, s->scene.map_valid);
 }

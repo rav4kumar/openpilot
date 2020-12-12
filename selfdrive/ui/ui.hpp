@@ -34,6 +34,8 @@
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
 #define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
+#define COLOR_OCHRE nvgRGBA(218, 111, 37, 255)
+#define COLOR_OCHRE_ALPHA(x) nvgRGBA(218, 111, 37, x)
 
 #define UI_BUF_COUNT 4
 
@@ -259,6 +261,9 @@ typedef struct UIState {
   bool ignition;
   bool is_metric;
   bool longitudinal_control;
+  bool limit_set_speed;
+  bool is_ego_over_limit;
+  float speed_lim_off;
   uint64_t last_athena_ping;
   uint64_t started_frame;
 
