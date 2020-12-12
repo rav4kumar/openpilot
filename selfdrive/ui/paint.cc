@@ -386,7 +386,18 @@ static void ui_draw_vision_event(UIState *s) {
   const int viz_event_w = 220;
   const int viz_event_x = s->scene.viz_rect.right() - (viz_event_w + bdr_is*2);
   const int viz_event_y = s->scene.viz_rect.y + (bdr_is*1.5);
-  if (s->scene.controls_state.getDecelForModel() && s->scene.controls_state.getEnabled()) {
+  if (s->scene.speedlimitahead_valid && s->scene.speedlimitaheaddistance < 300 && s->scene.controls_state.getEnabled() && s->limit_set_speed) {
+    const int img_turn_size = 160;
+    const int img_turn_x = viz_event_x-(img_turn_size/4)+80;
+    const int img_turn_y = viz_event_y+bdr_s-25;
+    float img_turn_alpha = 1.0f;
+    nvgBeginPath(s->vg);
+    NVGpaint imgPaint = nvgImagePattern(s->vg, img_turn_x, img_turn_y,
+      img_turn_size, img_turn_size, 0, s->img_speed, img_turn_alpha);
+    nvgRect(s->vg, img_turn_x, img_turn_y, img_turn_size, img_turn_size);
+    nvgFillPaint(s->vg, imgPaint);
+    nvgFill(s->vg);
+  } else if (s->scene.controls_state.getDecelForModel() && s->scene.controls_state.getEnabled()) {
     // draw winding road sign
     const int img_turn_size = 160*1.5*0.82;
     ui_draw_image(s->vg, viz_event_x - (img_turn_size / 4), viz_event_y + bdr_is - 25, img_turn_size, img_turn_size, s->img_turn, 1.0f);
@@ -399,6 +410,13 @@ static void ui_draw_vision_event(UIState *s) {
 
     ui_draw_circle_image(s->vg, bg_wheel_x, bg_wheel_y, bg_wheel_size, s->img_wheel, color, 1.0f, bg_wheel_y - 25);
   }
+}
+
+static void ui_draw_vision_map(UIState *s) {
+  const int map_size = 96;
+  const int map_x = (s->scene.ui_viz_rx + (map_size * 3) + (bdr_s * 3));
+  const int map_y = (footer_y + ((footer_h - map_size) / 2));
+  ui_draw_circle_image(s->vg, map_x, map_y, map_size, s->img_map, s->scene.map_valid);
 }
 
 static void ui_draw_vision_face(UIState *s) {
@@ -484,6 +502,7 @@ static void ui_draw_vision_header(UIState *s) {
 static void ui_draw_vision_footer(UIState *s) {
   if (s->scene.dpUiFace) {
   ui_draw_vision_face(s);
+  ui_draw_vision_map(s);
   }
   if ((int)s->scene.dpDynamicFollow > 0) {
     ui_draw_df_button(s);
@@ -709,6 +728,10 @@ void ui_nvg_init(UIState *s) {
 
   s->img_wheel = nvgCreateImage(s->vg, "../assets/img_chffr_wheel.png", 1);
   assert(s->img_wheel != 0);
+  s->img_map = nvgCreateImage(s->vg, "../assets/img_map.png", 1);
+  assert(s->img_map != 0);
+  s->img_speed = nvgCreateImage(s->vg, "../assets/img_trafficSign_speedahead.png", 1);
+  assert(s->img_speed != 0);
   s->img_turn = nvgCreateImage(s->vg, "../assets/img_trafficSign_turn.png", 1);
   assert(s->img_turn != 0);
   s->img_face = nvgCreateImage(s->vg, "../assets/img_driver_face.png", 1);
