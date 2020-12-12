@@ -25,7 +25,7 @@ int write_param_float(float param, const char* param_name, bool persistent_param
 }
 
 void ui_init(UIState *s) {
-  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal",
+  s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "liveMapData",
                          "health", "carParams", "ubloxGnss", "driverState", "dMonitoringState", "sensorEvents",
                          "dragonConf", "carState"});
 
@@ -203,6 +203,13 @@ void update_sockets(UIState *s) {
   }
   if (sm.updated("thermal")) {
     scene.thermal = sm["thermal"].getThermal();
+  }
+  if (sm.updated("liveMapData")) {
+    scene.map_valid = sm["liveMapData"].getLiveMapData().getMapValid();
+    scene.speedlimit = sm["liveMapData"].getLiveMapData().getSpeedLimit();
+    scene.speedlimit_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitValid();
+    scene.speedlimitahead_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadValid();
+    scene.speedlimitaheaddistance = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadDistance();
   }
   if (sm.updated("ubloxGnss")) {
     auto data = sm["ubloxGnss"].getUbloxGnss();

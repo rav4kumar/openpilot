@@ -108,6 +108,12 @@ typedef struct UIScene {
   mat4 extrinsic_matrix;      // Last row is 0 so we can use mat4.
   bool world_objects_visible;
 
+  float speedlimit;
+  bool speedlimit_valid;
+  float speedlimitaheaddistance;
+  bool speedlimitahead_valid;
+  bool map_valid;
+
   bool is_rhd;
   bool frontview;
   bool uilayout_sidebarcollapsed;
@@ -220,6 +226,8 @@ typedef struct UIState {
   int img_battery;
   int img_battery_charging;
   int img_network[6];
+  int img_map;
+  int img_speed;
 
   SubMaster *sm;
 
