@@ -202,6 +202,26 @@ class Planner():
     if lead2_check:
       self.v_acc_future = min([self.mpc2.v_mpc_future, self.v_acc_future, self.mpc_model.v_mpc_future ])
 
+  def parse_modelV2_data(self, sm):
+    modelV2 = sm['modelV2']
+    distances, speeds, accelerations = [], [], []
+    if not sm.updated['modelV2'] or len(modelV2.position.x) == 0:
+      return distances, speeds, accelerations
+
+    model_t = modelV2.position.t
+    mpc_times = list(range(10))
+
+    model_t_idx = [sorted(range(len(model_t)), key=[abs(idx - t) for t in model_t].__getitem__)[0] for idx in mpc_times]  # matches 0 to 9 interval to idx from t
+
+    for t in model_t_idx:  # everything is derived from x position since velocity is outputting weird values
+      speeds.append(modelV2.velocity.x[t])
+      distances.append(modelV2.position.x[t])
+      if model_t_idx.index(t) > 0:  # skip first since we can't calculate (and don't want to use v_ego)
+        accelerations.append((speeds[-1] - speeds[-2]) / model_t[t])
+
+    accelerations.insert(0, accelerations[1] - (accelerations[2] - accelerations[1]))  # extrapolate back first accel from second and third, less weight
+    return distances, speeds, accelerations
+
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
     cur_time = sec_since_boot()
@@ -375,10 +395,12 @@ class Planner():
 
     self.mpc1.update(pm, sm['carState'], lead_1)
     self.mpc2.update(pm, sm['carState'], lead_2)
+
+    distances, speeds, accelerations = self.parse_modelV2_data(sm)
     self.mpc_model.update(sm['carState'].vEgo, sm['carState'].aEgo,
-                          sm['model'].longitudinal.distances,
-                          sm['model'].longitudinal.speeds,
-                          sm['model'].longitudinal.accelerations)
+                          distances,
+                          speeds,
+                          accelerations)
 
     self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle, sm['modelLongButton'].enabled)
 
