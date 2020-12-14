@@ -205,7 +205,7 @@ managed_processes = {
   "rtshield": "selfdrive.rtshield",
   "systemd": "selfdrive.dragonpilot.systemd",
   "appd": "selfdrive.dragonpilot.appd",
-  "gpxd": "selfdrive.dragonpilot.gpxd",
+  #"gpxd": "selfdrive.dragonpilot.gpxd",
 }
 
 daemon_processes = {
