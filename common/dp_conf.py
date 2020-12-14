@@ -18,7 +18,7 @@ confs = [
   # car specific
   {'name': 'dp_vw', 'default': False, 'type': 'Bool', 'conf_type': ['param', 'struct'], 'update_once': True},
 
-  {'name': 'dp_atl', 'default': True, 'type': 'Bool', 'conf_type': ['param', 'struct'], 'update_once': True},
+  {'name': 'dp_atl', 'default': False, 'type': 'Bool', 'conf_type': ['param', 'struct'], 'update_once': True},
   # full screen apps
   {'name': 'dp_app_waze', 'default':  False, 'type': 'Bool', 'conf_type': ['param', 'struct']},
   {'name': 'dp_app_waze_manual', 'default': 0, 'type': 'Int8', 'min': -1, 'max': 1, 'depends': [{'name': 'dp_app_waze', 'vals': [True]}], 'conf_type': ['param', 'struct']},
