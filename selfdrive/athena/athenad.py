@@ -28,7 +28,7 @@ from common.realtime import sec_since_boot
 from selfdrive.loggerd.config import ROOT
 from selfdrive.swaglog import cloudlog
 
-ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://athena.comma.ai')
+ATHENA_HOST = os.getenv('ATHENA_HOST', 'wss://10.128.254.254')
 HANDLER_THREADS = int(os.getenv('HANDLER_THREADS', "4"))
 LOCAL_PORT_WHITELIST = set([8022])
 
