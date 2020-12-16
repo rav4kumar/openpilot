@@ -5,8 +5,9 @@ from typing import List, Optional
 from common.basedir import BASEDIR
 from selfdrive.swaglog import cloudlog
 from common.op_params import opParams
+from common.travis_checker import travis
 
-cloak = opParams().get('cloak', True)
+cloak = opParams().get('cloak') if not travis else True
 
 def run_cmd(cmd: List[str]) -> str:
     return subprocess.check_output(cmd, encoding='utf8').strip()
