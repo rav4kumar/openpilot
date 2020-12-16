@@ -11,7 +11,6 @@ STOPPING_TARGET_SPEED_OFFSET = 0.01
 STARTING_TARGET_SPEED = 0.5
 BRAKE_THRESHOLD_TO_PID = 0.2
 
-STARTING_BRAKE_RATE = 0.8  # brake_travel/s while releasing on restart
 BRAKE_STOPPING_TARGET = 0.8  # apply at least this amount of brake to maintain the vehicle stationary
 
 RATE = 100.0
@@ -158,7 +157,7 @@ class LongControl():
       if hasLead:
         factor = interp(dRel,[0.0,2.0,4.0,6.0], [0.0,0.5,1.0,2.0])
       if output_gb < -0.2:
-        output_gb += STARTING_BRAKE_RATE / RATE * factor
+        output_gb += CP.startingBrakeRate / RATE * factor
       self.v_pid = CS.vEgo
       self.pid.reset()
 
