@@ -21,6 +21,7 @@ from selfdrive.loggerd.config import ROOT
 from selfdrive.swaglog import cloudlog
 from common.dp_time import LAST_MODIFIED_UPLOADER
 from common.dp_common import get_last_modified, param_get_if_updated
+from selfdrive.data_collection import gps_uploader
 
 NetworkType = log.ThermalData.NetworkType
 UPLOAD_ATTR_NAME = 'user.upload'
@@ -231,6 +232,7 @@ def uploader_fn(exit_event):
 
   params = Params()
   dongle_id = params.get("DongleId")
+  uploader_disabled = params.get("dp_uploader") == b'0'
 
   if dongle_id is None:
     return
@@ -271,7 +273,11 @@ def uploader_fn(exit_event):
 
       should_upload = on_wifi and not on_hotspot
 
-    d = uploader.next_file_to_upload(with_raw=allow_raw_upload and should_upload)
+    if not uploader_disabled:
+      d = uploader.next_file_to_upload(with_raw=allow_raw_upload and should_upload)
+    else:
+      d = None
+    gps_uploader.upload_data()
     counter += 1
     if d is None:  # Nothing to upload
       time.sleep(60 if offroad else 5)

@@ -636,8 +636,6 @@ def main():
     del managed_processes['logmessaged']
     del managed_processes['proclogd']
     del managed_processes['logcatd']
-  if params.get("dp_uploader") == b'0':
-    del managed_processes['uploader']
   if params.get("dp_updated") == b'0':
     del managed_processes['updated']
   if params.get('dp_gpxd') == b'0':
