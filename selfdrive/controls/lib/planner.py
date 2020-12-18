@@ -144,16 +144,27 @@ class Planner():
     self.v_model = 0.0
     self.a_model = 0.0
 
-  def choose_solution(self, v_cruise_setpoint, enabled):
+  def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngle):
+    center_x = -2.5 # Wheel base 2.5m
+    lead1_check = True
+    lead2_check = True
+    if steeringAngle > 100: # only at high angles
+      center_y = -1+2.5/math.tan(steeringAngle/1800.*math.pi) # Car Width 2m. Left side considered in left hand turn
+      lead1_check = math.sqrt((lead_1.dRel-center_x)**2+(lead_1.yRel-center_y)**2) < abs(2.5/math.sin(steeringAngle/1800.*math.pi))+1. # extra meter clearance to car
+      lead2_check = math.sqrt((lead_2.dRel-center_x)**2+(lead_2.yRel-center_y)**2) < abs(2.5/math.sin(steeringAngle/1800.*math.pi))+1.
+    elif steeringAngle < -100: # only at high angles
+      center_y = +1+2.5/math.tan(steeringAngle/1800.*math.pi) # Car Width 2m. Right side considered in right hand turn
+      lead1_check = math.sqrt((lead_1.dRel-center_x)**2+(lead_1.yRel-center_y)**2) < abs(2.5/math.sin(steeringAngle/1800.*math.pi))+1.
+      lead2_check = math.sqrt((lead_2.dRel-center_x)**2+(lead_2.yRel-center_y)**2) < abs(2.5/math.sin(steeringAngle/1800.*math.pi))+1.
     if enabled:
       # dp - slow on curve from 0.7.6.1
       if self.dp_slow_on_curve:
         solutions = {'model': self.v_model, 'cruise': self.v_cruise}
       else:
         solutions = {'cruise': self.v_cruise}
-      if self.mpc1.prev_lead_status:
+      if self.mpc1.prev_lead_status and lead1_check:
         solutions['mpc1'] = self.mpc1.v_mpc
-      if self.mpc2.prev_lead_status:
+      if self.mpc2.prev_lead_status and lead2_check:
         solutions['mpc2'] = self.mpc2.v_mpc
 
       slowest = min(solutions, key=solutions.get)
@@ -174,7 +185,11 @@ class Planner():
         self.v_acc = self.v_model
         self.a_acc = self.a_model
 
-    self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
+    self.v_acc_future = v_cruise_setpoint
+    if lead1_check:
+      self.v_acc_future = min([self.mpc1.v_mpc_future, self.v_acc_future])
+    if lead2_check:
+      self.v_acc_future = min([self.mpc2.v_mpc_future, self.v_acc_future])
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
@@ -206,7 +221,8 @@ class Planner():
     lead_2 = sm['radarState'].leadTwo
 
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
-    following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
+
+    following = (lead_1.status and lead_1.dRel < 45.0 and lead_1.vRel < 0.0) or (lead_2.status and lead_2.dRel < 45.0 and lead_2.vRel < 0.0) #lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
 
     speed_ahead_distance = default_brake_distance
 
@@ -292,7 +308,7 @@ class Planner():
       if self.dp_profile == DP_OFF:
         accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following)]
       else:
-        accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, self.dp_profile)]
+        accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, self.dp_profile and (self.longitudinalPlanSource == 'mpc1' or self.longitudinalPlanSource == 'mpc2'))]
       jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
       accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngle, accel_limits, self.CP)
 
@@ -348,7 +364,7 @@ class Planner():
     self.mpc1.update(pm, sm['carState'], lead_1)
     self.mpc2.update(pm, sm['carState'], lead_2)
 
-    self.choose_solution(v_cruise_setpoint, enabled)
+    self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle)
 
     # determine fcw
     if self.mpc1.new_lead:
