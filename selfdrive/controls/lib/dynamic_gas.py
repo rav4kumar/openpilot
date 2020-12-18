@@ -51,7 +51,7 @@ class DynamicGas:
     return float(clip(gas, 0.0, 1.0))
 
   def set_profile(self):
-    self.x_lead_mod_y = [1.0, 0.75, 0.5, 0.25, 0.0] # as lead gets further from car, lessen gas mod/reduction
+    self.x_lead_mod_y = [1.0, 0.75, 0.5, 0.35, 0.25] # as lead gets further from car, lessen gas mod/reduction
     x = [0.0, 1.4082, 2.80311, 4.22661, 5.38271, 6.16561, 7.24781, 8.28308, 10.24465, 12.96402, 15.42303, 18.11903, 20.11703, 24.46614, 29.05805, 32.71015, 35.76326]
     if self.dp_profile == DP_ECO:
       #km/h[0,   5,    10,   15,   19,   22,   25,   29,   36,   43,   54,   64,   72,   87,   104,  117,  128   144]
