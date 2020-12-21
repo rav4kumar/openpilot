@@ -127,7 +127,6 @@ class Planner():
     self.v_cruise = 0.0
     self.a_cruise = 0.0
     self.osm = True
-    self.last_time = 0
 
     self.longitudinalPlanSource = 'cruise'
     self.fcw_checker = FCWChecker()
@@ -136,6 +135,7 @@ class Planner():
     self.params = Params()
     self.first_loop = True
     self.offset = 0
+    self.last_time = 0
 
     # dp
     self.dp_profile = DP_OFF
