@@ -8,8 +8,8 @@ from libc.stdint cimport uint32_t, uint64_t, uint16_t
 from libcpp.map cimport map
 from libcpp cimport bool
 
-from common cimport CANParser as cpp_CANParser
-from common cimport SignalParseOptions, MessageParseOptions, dbc_lookup, SignalValue, DBC
+from .common cimport CANParser as cpp_CANParser
+from .common cimport SignalParseOptions, MessageParseOptions, dbc_lookup, SignalValue, DBC
 
 import os
 import numbers
@@ -150,7 +150,7 @@ cdef class CANDefine():
     self.dbc = dbc_lookup(dbc_name)
     if not self.dbc:
       raise RuntimeError("Can't lookup" + dbc_name)
-      
+
     num_vals = self.dbc[0].num_vals
 
     address_to_msg_name = {}
