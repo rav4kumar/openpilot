@@ -51,13 +51,15 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3045. * CV.LB_TO_KG + STD_CARGO_KG
       ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 4.0
-      ret.lateralTuning.indi.outerLoopGainBP = []
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [4.0]
+      ret.lateralTuning.indi.outerLoopGainBP = [0]
       ret.lateralTuning.indi.outerLoopGainV = [3.0]
-      ret.lateralTuning.indi.timeConstantBP = []
+      ret.lateralTuning.indi.timeConstantBP = [0]
       ret.lateralTuning.indi.timeConstantV = [1.0]
-      ret.lateralTuning.indi.actuatorEffectiveness = 1.0
-       ret.steerActuatorDelay = 0.5
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [1.0]
+      ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
       #ret.longitudinalTuning.kpV = [0.4, 0.36, 0.325]  # braking tune from rav4h
@@ -78,12 +80,14 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kf = 0.00009531750004645412
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGain = 4.0
+        ret.lateralTuning.indi.innerLoopGainBP = [0]
+        ret.lateralTuning.indi.innerLoopGainV = [4.0]
         ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 25, 26]
         ret.lateralTuning.indi.outerLoopGainV = [3.0, 4.0, 5.0, 6.0]
         ret.lateralTuning.indi.timeConstantBP = [12, 16, 20, 24]
         ret.lateralTuning.indi.timeConstantV = [1.0, 2.0, 3.0, 4.0]
-        ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+        ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+        ret.lateralTuning.indi.actuatorEffectivenessV = [1.0]
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -219,12 +223,14 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.12
       ret.steerLimitTimer = 5.0
       ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 15.0
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
       ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 24, 25]
       ret.lateralTuning.indi.outerLoopGainV = [9.5, 16, 16, 21]
       ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
       ret.lateralTuning.indi.timeConstantV = [5.0, 5.5, 6.0, 6.5]
-      ret.lateralTuning.indi.actuatorEffectiveness = 15.0
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate == CAR.RAV4H_TSS2:
       stop_and_go = True
@@ -238,12 +244,14 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.12
       ret.steerLimitTimer = 5.0
       ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 15.0
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
       ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 24, 25]
       ret.lateralTuning.indi.outerLoopGainV = [9.5, 16, 16, 21]
       ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
       ret.lateralTuning.indi.timeConstantV = [5.0, 5.5, 6.0, 6.5]
-      ret.lateralTuning.indi.actuatorEffectiveness = 15.0
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate in [CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2]:
       stop_and_go = True
@@ -255,12 +263,14 @@ class CarInterface(CarInterfaceBase):
       ret.steerActuatorDelay = 0.68
       ret.steerLimitTimer = 5.0
       ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 15.0
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
       ret.lateralTuning.indi.outerLoopGainBP = [5.5, 20, 21, 25, 26]
       ret.lateralTuning.indi.outerLoopGainV = [3.75, 4.25, 8.5, 9.5, 14.99]
       ret.lateralTuning.indi.timeConstantBP = [4.5, 15, 20, 26]
       ret.lateralTuning.indi.timeConstantV = [2.8, 3.7, 4.0, 4.0]
-      ret.lateralTuning.indi.actuatorEffectiveness = 15.0
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
       
     elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
