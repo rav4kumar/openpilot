@@ -4,13 +4,14 @@ import numpy as np
 from cereal import log
 from common.realtime import DT_CTRL
 from common.numpy_fast import clip, interp
+from common.op_params import opParams
 from selfdrive.car.toyota.values import SteerLimitParams
 from selfdrive.car import apply_toyota_steer_torque_limits
 from selfdrive.controls.lib.drive_helpers import get_steer_max
 
 
 class LatControlINDI():
-  def __init__(self, CP):
+  def __init__(self, CP, OP=None):
     self.angle_steers_des = 0.
 
     A = np.array([[1.0, DT_CTRL, 0.0],
@@ -34,15 +35,11 @@ class LatControlINDI():
 
     self.enforce_rate_limit = CP.carName == "toyota"
 
-    self.RC = interp(0, CP.lateralTuning.indi.timeConstantBP, CP.lateralTuning.indi.timeConstantV)
-    self.G = CP.lateralTuning.indi.actuatorEffectiveness
-    self.outer_loop_gain = interp(0, CP.lateralTuning.indi.outerLoopGainBP, CP.lateralTuning.indi.outerLoopGainV)
-    self.inner_loop_gain = CP.lateralTuning.indi.innerLoopGain
-    self.alpha = 1. - DT_CTRL / (self.RC + DT_CTRL)
+    if OP is None:
+      OP = opParams()
+    self.op_params = OP
 
     self.sat_count_rate = 1.0 * DT_CTRL
-    self.sat_limit = CP.steerLimitTimer
-
     self.reset()
 
   def reset(self):
@@ -63,9 +60,33 @@ class LatControlINDI():
     return self.sat_count > self.sat_limit
 
   def update(self, active, CS, CP, path_plan):
-    # Update params
-    self.outer_loop_gain = interp(CS.vEgo, CP.lateralTuning.indi.outerLoopGainBP, CP.lateralTuning.indi.outerLoopGainV)
-    self.RC = interp(CS.vEgo, CP.lateralTuning.indi.timeConstantBP, CP.lateralTuning.indi.timeConstantV) # Thanks to jamcar23 for the setup of timeConstantBP & V 
+    if self.op_params.get('enable_indi_live'):
+      self.sat_limit = self.op_params.get('steer_limit_timer')
+
+      act_bp = self.op_params.get('indi_actuator_effectiveness_bp')
+      act_v = self.op_params.get('indi_actuator_effectiveness_v')
+      outer_bp = self.op_params.get('indi_outer_gain_bp')
+      outer_v = self.op_params.get('indi_outer_gain_v')
+      inner_bp = self.op_params.get('indi_inner_gain_bp')
+      inner_v = self.op_params.get('indi_inner_gain_v')
+      time_bp = self.op_params.get('indi_time_constant_bp')
+      time_v = self.op_params.get('indi_time_constant_v')
+    elif CP.lateralTuning.which() == 'indi':
+      act_bp = CP.lateralTuning.indi.actuatorEffectivenessBP
+      act_v = CP.lateralTuning.indi.actuatorEffectivenessV
+      outer_bp = CP.lateralTuning.indi.outerLoopGainBP
+      outer_v = CP.lateralTuning.indi.outerLoopGainV
+      inner_bp = CP.lateralTuning.indi.innerLoopGainBP
+      inner_v = CP.lateralTuning.indi.innerLoopGainV
+      time_bp = CP.lateralTuning.indi.timeConstantBP
+      time_v = CP.lateralTuning.indi.timeConstantV
+
+      self.sat_limit = CP.steerLimitTimer
+    
+    self.G = interp(CS.vEgo, act_bp, act_v)
+    self.outer_loop_gain = interp(CS.vEgo, outer_bp, outer_v)
+    self.inner_loop_gain = interp(CS.vEgo, inner_bp, inner_v)
+    self.RC = interp(CS.vEgo, time_bp, time_v)
     self.alpha = 1. - DT_CTRL / (self.RC + DT_CTRL)
 
     # Update Kalman filter
