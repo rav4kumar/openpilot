@@ -83,14 +83,14 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kf = 0.00009531750004645412
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGainBP = [0]
-        ret.lateralTuning.indi.innerLoopGainV = [4.0]
-        ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 25, 26]
-        ret.lateralTuning.indi.outerLoopGainV = [3.0, 4.0, 5.0, 6.0]
-        ret.lateralTuning.indi.timeConstantBP = [12, 16, 20, 24]
-        ret.lateralTuning.indi.timeConstantV = [1.0, 2.0, 3.0, 4.0]
-        ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
-        ret.lateralTuning.indi.actuatorEffectivenessV = [1.0]
+        ret.lateralTuning.indi.innerLoopGainBP = [18, 22, 26]
+        ret.lateralTuning.indi.innerLoopGainV = [5, 10, 15]
+        ret.lateralTuning.indi.outerLoopGainBP = [18, 22, 26]
+        ret.lateralTuning.indi.outerLoopGainV = [9, 15, 21]
+        ret.lateralTuning.indi.timeConstantBP = [11, 11.01, 16, 16.01, 22, 22.01,  30, 30.01]
+        ret.lateralTuning.indi.timeConstantV = [3.0, 3.5, 3.5, 4.5, 4.5, 5.5, 5.5, 9]
+        ret.lateralTuning.indi.actuatorEffectivenessBP = [18, 22, 26]
+        ret.lateralTuning.indi.actuatorEffectivenessV = [5, 10, 15]
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -274,7 +274,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.indi.timeConstantV = [2.8, 3.7, 4.0, 4.0]
       ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
       ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
-      
+
     elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
       ret.safetyParam = 73
