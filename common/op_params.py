@@ -124,7 +124,7 @@ class opParams:
                         'indi_outer_gain_v': Param([4, 9, 14.99], [list, float, int], live=True, depends_on='enable_indi_live'),
                         'indi_time_constant_bp': Param([18, 22, 26], [list, float, int], live=True, depends_on='enable_indi_live'),
                         'indi_time_constant_v': Param([2, 4, 6], [list, float, int], live=True, depends_on='enable_indi_live'),
-                        'indi_actuator_effectiveness_bp': Param(18, 22, 26], [list, float, int], live=True, depends_on='enable_indi_live'),
+                        'indi_actuator_effectiveness_bp': Param([18, 22, 26], [list, float, int], live=True, depends_on='enable_indi_live'),
                         'indi_actuator_effectiveness_v': Param([5, 10, 15], [list, float, int], live=True, depends_on='enable_indi_live'),
                         'steer_limit_timer': Param(5.0, VT.number, live=True, depends_on='enable_indi_live')
                        }
