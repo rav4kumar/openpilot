@@ -84,14 +84,14 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.pid.kf = 0.00009531750004645412
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGainBP = [18, 22, 26]
-        ret.lateralTuning.indi.innerLoopGainV = [5, 10, 15]
-        ret.lateralTuning.indi.outerLoopGainBP = [18, 22, 26]
-        ret.lateralTuning.indi.outerLoopGainV = [9, 15, 21]
-        ret.lateralTuning.indi.timeConstantBP = [11, 11.01, 16, 16.01, 22, 22.01,  30, 30.01]
-        ret.lateralTuning.indi.timeConstantV = [3.0, 3.5, 3.5, 4.5, 4.5, 5.5, 5.5, 9]
-        ret.lateralTuning.indi.actuatorEffectivenessBP = [18, 22, 26]
-        ret.lateralTuning.indi.actuatorEffectivenessV = [5, 10, 15]
+        ret.lateralTuning.indi.innerLoopGainBP = [0]
+        ret.lateralTuning.indi.innerLoopGainV = [15.0]
+        ret.lateralTuning.indi.outerLoopGainBP = [19, 20, 24, 25]
+        ret.lateralTuning.indi.outerLoopGainV = [7.3, 10, 10, 14.99]
+        ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
+        ret.lateralTuning.indi.timeConstantV = [4.5, 5.0, 5.5, 5.5]
+        ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+        ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
