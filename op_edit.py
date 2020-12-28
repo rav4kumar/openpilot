@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import time
-from common.op_params import opParams
 import ast
 import difflib
+
+from common.op_params import opParams
 from common.colors import COLORS
+from collections import OrderedDict
 
 
 class opEdit:  # use by running `python /data/openpilot/op_edit.py`
@@ -57,9 +59,11 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
       if self.live_tuning:  # only display live tunable params
         self.params = {k: v for k, v in self.params.items() if self.op_params.param_info(k).live}
 
+      self.params = OrderedDict(sorted(self.params.items(), key=self.sort_params))
+
       values_list = []
       for k, v in self.params.items():
-        if len(str(v)) < 20:
+        if len(str(v)) < 30 or len(str(v)) <= len('{} ... {}'.format(str(v)[:30], str(v)[-15:])):
           v_color = ''
           if type(v) in self.type_colors:
             v_color = self.type_colors[type(v)]
@@ -74,14 +78,35 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
 
       to_print = []
       blue_gradient = [33, 39, 45, 51, 87]
+      last_key = ''
+      last_info = None
+      shown_dots = False
       for idx, param in enumerate(self.params):
-        line = '{}. {}: {}  {}'.format(idx + 1, param, values_list[idx], live[idx])
-        if idx == self.last_choice and self.last_choice is not None:
-          line = COLORS.OKGREEN + line
-        else:
-          _color = blue_gradient[min(round(idx / len(self.params) * len(blue_gradient)), len(blue_gradient) - 1)]
-          line = COLORS.BASE(_color) + line
-        to_print.append(line)
+        info = self.op_params.param_info(param)
+        indent = self.get_sort_key(param).count(',')
+        line = ''
+        if not info.depends_on or param in last_info.children and \
+          self.op_params.get(last_key) and self.op_params.get(info.depends_on):
+          line = '{}. {}: {}  {}'.format(idx + 1, param, values_list[idx], live[idx])
+          line = indent * '.' + line
+        elif not shown_dots and last_info and param in last_info.children:
+          line = '...'
+          shown_dots = True
+        if line:
+          if idx == self.last_choice and self.last_choice is not None:
+            line = COLORS.OKGREEN + line
+          else:
+            _color = blue_gradient[min(round(idx / len(self.params) * len(blue_gradient)), len(blue_gradient) - 1)]
+            line = COLORS.BASE(_color) + line
+          if last_info and len(last_info.children) and indent == 0:
+            line = '\n' + line
+            shown_dots = False
+          to_print.append(line)
+
+        if indent == 0:
+          last_key = param
+          last_info = info
+
 
       extras = {'a': ('Add new parameter', COLORS.OKGREEN),
                 'd': ('Delete parameter', COLORS.FAIL),
@@ -93,7 +118,7 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
       self.prompt('\nChoose a parameter to edit (by index or name):')
 
       choice = input('>> ').strip().lower()
-      parsed, choice = self.parse_choice(choice, len(to_print) - len(extras))
+      parsed, choice = self.parse_choice(choice, len(self.params) + len(extras))
       if parsed == 'continue':
         continue
       elif parsed == 'add':
@@ -153,7 +178,7 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
       if param_info.has_description:
         to_print.append(COLORS.OKGREEN + '>>  Description: {}'.format(param_info.description.replace('\n', '\n  > ')) + COLORS.ENDC)
       if param_info.has_allowed_types:
-        to_print.append(COLORS.RED + '>>  Allowed types: {}'.format(', '.join([at.__name__ for at in param_info.allowed_types])) + COLORS.ENDC)
+        to_print.append(COLORS.RED + '>>  Allowed types: {}'.format(', '.join([at.__name__ if isinstance(at, type) else at for at in param_info.allowed_types])) + COLORS.ENDC)
       if param_info.live:
         live_msg = '>>  This parameter supports live tuning!'
         if not self.live_tuning:
@@ -180,6 +205,10 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
           return
 
         new_value = self.str_eval(new_value)
+
+        if param_info.is_bool and type(new_value) is int:
+          new_value = bool(new_value)
+
         if not param_info.is_valid(new_value):
           self.error('The type of data you entered ({}) is not allowed with this parameter!'.format(type(new_value).__name__))
           continue
@@ -201,31 +230,58 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
   def change_param_list(self, old_value, param_info, chosen_key):
     while True:
       self.info('Current value: {} (type: {})'.format(old_value, type(old_value).__name__), sleep_time=0)
-      self.prompt('\nEnter index to edit (0 to {}):'.format(len(old_value) - 1))
-      choice_idx = self.str_eval(input('>> '))
+      self.prompt('\nEnter index to edit (0 to {}), or -i to remove index, or +value to append value:'.format(len(old_value) - 1))
+
+      append_val = False
+      remove_idx = False
+      choice_idx = input('>> ')
+
       if choice_idx == '':
         self.info('Exiting this parameter...', 0.5)
         return
 
-      if not isinstance(choice_idx, int) or choice_idx not in range(len(old_value)):
+      if isinstance(choice_idx, str):
+        if choice_idx[0] == '-':
+          remove_idx = True
+        if choice_idx[0] == '+':
+          append_val = True
+
+      if append_val or remove_idx:
+        choice_idx = choice_idx[1::]
+
+      choice_idx = self.str_eval(choice_idx)
+      is_list = isinstance(choice_idx, list)
+
+      if not append_val and not (is_list or (isinstance(choice_idx, int) and choice_idx in range(len(old_value)))):
         self.error('Must be an integar within list range!')
         continue
 
       while True:
-        self.info('Chosen index: {}'.format(choice_idx), sleep_time=0)
-        self.info('Value: {} (type: {})'.format(old_value[choice_idx], type(old_value[choice_idx]).__name__), sleep_time=0)
-        self.prompt('\nEnter your new value:')
-        new_value = input('>> ').strip()
+        if append_val or remove_idx or is_list:
+          new_value = choice_idx
+        else:
+          self.info('Chosen index: {}'.format(choice_idx), sleep_time=0)
+          self.info('Value: {} (type: {})'.format(old_value[choice_idx], type(old_value[choice_idx]).__name__), sleep_time=0)
+          self.prompt('\nEnter your new value:')
+          new_value = input('>> ').strip()
+          new_value = self.str_eval(new_value)
+
         if new_value == '':
           self.info('Exiting this list item...', 0.5)
           break
 
-        new_value = self.str_eval(new_value)
         if not param_info.is_valid(new_value):
           self.error('The type of data you entered ({}) is not allowed with this parameter!'.format(type(new_value).__name__))
-          continue
+          break
 
-        old_value[choice_idx] = new_value
+        if append_val:
+          old_value.append(new_value)
+        elif remove_idx:
+          del old_value[choice_idx]
+        elif is_list:
+          old_value = new_value
+        else:
+          old_value[choice_idx] = new_value
 
         self.op_params.put(chosen_key, old_value)
         self.success('Saved {} with value: {}! (type: {})'.format(chosen_key, new_value, type(new_value).__name__), end='\n')
@@ -302,9 +358,9 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
     except:
       if dat.lower() == 'none':
         dat = None
-      elif dat.lower() == 'false':
+      elif dat.lower() in ['false', 'f']:
         dat = False
-      elif dat.lower() == 'true':  # else, assume string
+      elif dat.lower() in ['true', 't']:  # else, assume string
         dat = True
     return dat
 
@@ -360,5 +416,19 @@ class opEdit:  # use by running `python /data/openpilot/op_edit.py`
         self.info('Not saved!')
       return
 
+  def sort_params(self, kv):
+    return self.get_sort_key(kv[0])
+
+  def get_sort_key(self, k):
+    p = self.op_params.param_info(k)
+
+    if not p.depends_on:
+      return f'{1 if not len(p.children) else 0}{k}'
+    else:
+      s = ''
+      while p.depends_on:
+        s = f'{p.depends_on},{s}'
+        p = self.op_params.param_info(p.depends_on)
+      return f'{0}{s}{k}'
 
 opEdit()

@@ -2,6 +2,7 @@
 from cereal import car
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import Ecu, ECU_FINGERPRINT, CAR, TSS2_CAR, FINGERPRINTS
+from selfdrive.car.toyota.carcontroller import ACCEL_SCALE
 from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, is_ecu_disconnected, gen_empty_fingerprint
 from selfdrive.swaglog import cloudlog
 from selfdrive.car.interfaces import CarInterfaceBase
@@ -27,7 +28,7 @@ class CarInterface(CarInterfaceBase):
 
   @staticmethod
   def compute_gb(accel, speed):
-    return float(accel) / 4.0
+    return float(accel) / ACCEL_SCALE
 
   @staticmethod
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=[]):  # pylint: disable=dangerous-default-value
@@ -50,12 +51,15 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 15.74   # unknown end-to-end spec
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3045. * CV.LB_TO_KG + STD_CARGO_KG
-
       ret.lateralTuning.init('indi')
-      ret.lateralTuning.indi.innerLoopGain = 4.0
-      ret.lateralTuning.indi.outerLoopGain = 3.0
-      ret.lateralTuning.indi.timeConstant = 1.0
-      ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [4.0]
+      ret.lateralTuning.indi.outerLoopGainBP = [0]
+      ret.lateralTuning.indi.outerLoopGainV = [3.0]
+      ret.lateralTuning.indi.timeConstantBP = [0]
+      ret.lateralTuning.indi.timeConstantV = [1.0]
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [1.0]
       ret.steerActuatorDelay = 0.5
 
     elif candidate == CAR.PRIUS_TSS2:
@@ -73,15 +77,21 @@ class CarInterface(CarInterfaceBase):
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
       ret.steerActuatorDelay = 0.5
+      ret.steerLimitTimer = 5.0
+      ret.lateralTuning.init('indi')
       if prius_pid:
         ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.21], [0.008]]
         ret.lateralTuning.pid.kf = 0.00009531750004645412
       else:
         ret.lateralTuning.init('indi')
-        ret.lateralTuning.indi.innerLoopGain = 4.0
-        ret.lateralTuning.indi.outerLoopGain = 3.0
-        ret.lateralTuning.indi.timeConstant = 0.1
-        ret.lateralTuning.indi.actuatorEffectiveness = 1.0
+        ret.lateralTuning.indi.innerLoopGainBP = [0]
+        ret.lateralTuning.indi.innerLoopGainV = [15.0]
+        ret.lateralTuning.indi.outerLoopGainBP = [19, 20, 24, 25]
+        ret.lateralTuning.indi.outerLoopGainV = [7.3, 10, 10, 14.99]
+        ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
+        ret.lateralTuning.indi.timeConstantV = [4.5, 5.0, 5.5, 5.5]
+        ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+        ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -207,45 +217,64 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate == CAR.RAV4_TSS2:
       stop_and_go = True
-      ret.safetyParam = 73
+      ret.safetyParam = 56
       ret.wheelbase = 2.68986
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.05]]
       ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kf = 0.00004
-
-      for fw in car_fw:
-        if fw.ecu == "eps" and fw.fwVersion == b"8965B42170\x00\x00\x00\x00\x00\x00":
-          ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
-          ret.lateralTuning.pid.kf = 0.00007818594
-          break
+      ret.longitudinalTuning.kpV = [2.1, 1.2, 0.34]
+      ret.longitudinalTuning.kiV = [0.54, 0.34]
+      ret.steerActuatorDelay = 0.12
+      ret.steerLimitTimer = 5.0
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
+      ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 24, 25]
+      ret.lateralTuning.indi.outerLoopGainV = [9.5, 16, 16, 21]
+      ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
+      ret.lateralTuning.indi.timeConstantV = [5.0, 5.5, 6.0, 6.5]
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate == CAR.RAV4H_TSS2:
       stop_and_go = True
-      ret.safetyParam = 73
+      ret.safetyParam = 56
       ret.wheelbase = 2.68986
       ret.steerRatio = 14.3
       tire_stiffness_factor = 0.7933
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.05]]
-      ret.mass = 3800. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kf = 0.00004
-
-      for fw in car_fw:
-        if fw.ecu == "eps" and fw.fwVersion == b"8965B42170\x00\x00\x00\x00\x00\x00":
-          ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
-          ret.lateralTuning.pid.kf = 0.00007818594
-          break
+      ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
+      ret.longitudinalTuning.kpV = [2.1, 1.2, 0.34]
+      ret.longitudinalTuning.kiV = [0.54, 0.34]
+      ret.steerActuatorDelay = 0.12
+      ret.steerLimitTimer = 5.0
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
+      ret.lateralTuning.indi.outerLoopGainBP = [20, 21, 24, 25]
+      ret.lateralTuning.indi.outerLoopGainV = [9.5, 16, 16, 21]
+      ret.lateralTuning.indi.timeConstantBP = [14, 18, 29, 30]
+      ret.lateralTuning.indi.timeConstantV = [5.0, 5.5, 6.0, 6.5]
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate in [CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2]:
       stop_and_go = True
-      ret.safetyParam = 73
+      ret.safetyParam = 53
       ret.wheelbase = 2.63906
-      ret.steerRatio = 13.9
-      tire_stiffness_factor = 0.444  # not optimized yet
+      ret.steerRatio = 15.33
+      tire_stiffness_factor = 0.996  # not optimized yet
       ret.mass = 3060. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
-      ret.lateralTuning.pid.kf = 0.00007818594
+      ret.steerActuatorDelay = 0.68
+      ret.steerLimitTimer = 5.0
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGainBP = [0]
+      ret.lateralTuning.indi.innerLoopGainV = [15.0]
+      ret.lateralTuning.indi.outerLoopGainBP = [5.5, 20, 21, 25, 26]
+      ret.lateralTuning.indi.outerLoopGainV = [3.75, 4.25, 8.5, 9.5, 14.99]
+      ret.lateralTuning.indi.timeConstantBP = [4.5, 15, 20, 26]
+      ret.lateralTuning.indi.timeConstantV = [2.8, 3.7, 4.0, 4.0]
+      ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
+      ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
 
     elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
