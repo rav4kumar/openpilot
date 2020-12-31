@@ -110,11 +110,11 @@ class QueryThread(LoggerThread):
         convert area ::id = id(), admin_level = t['admin_level'],
         name = t['name'], "ISO3166-1:alpha2" = t['ISO3166-1:alpha2'];out;
         """
-        self.logger.debug("build_way_query : %s" % str(q))
+        self.logger.debug('build_way_query : %s', str(q))
         return q, lat, lon
 
     def run(self):
-        self.logger.debug("run method started for thread %s" % self.name)
+        self.logger.debug('run method started for thread %s', self.name)
 
         # for now we follow old logic, will be optimized later
         start = time.time()
@@ -130,7 +130,7 @@ class QueryThread(LoggerThread):
 
             self.logger.debug("Starting after sleeping for 1 second ...")
             last_gps = self.sharedParams.get('last_gps', None)
-            self.logger.debug("last_gps = %s" % str(last_gps))
+            self.logger.debug('last_gps = %s', str(last_gps))
 
             if last_gps is not None:
                 fix_ok = last_gps.flags & 1
@@ -148,7 +148,7 @@ class QueryThread(LoggerThread):
                 dist = np.linalg.norm(cur_ecef - self.prev_ecef)
                 if dist < radius - self.distance_to_edge: #updated when we are close to the edge of the downloaded circle
                     continue
-                    self.logger.debug("parameters, cur_ecef = %s, prev_ecef = %s, dist=%s" % (str(cur_ecef), str(self.prev_ecef), str(dist)))
+                    self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', (str(cur_ecef), str(self.prev_ecef), str(dist)))
 
                 if dist > radius:
                     query_lock = self.sharedParams.get('query_lock', None)
@@ -178,7 +178,7 @@ class QueryThread(LoggerThread):
                     else:
                         continue
                     new_result = api.query(q)
-                    self.logger.debug("new_result = %s" % str(new_result))
+                    self.logger.debug('new_result = %s', str(new_result))
                     # Build kd-tree
                     nodes = []
                     real_nodes = []
@@ -202,7 +202,7 @@ class QueryThread(LoggerThread):
                     nodes = np.asarray(nodes)
                     nodes = geodetic2ecef(nodes)
                     tree = spatial.KDTree(nodes)
-                    self.logger.debug("query thread, ... %s %s" % (str(nodes), str(tree)))
+                    self.logger.debug('query thread, ... %s %s', (str(nodes), str(tree)))
 
                     # write result
                     query_lock = self.sharedParams.get('query_lock', None)
@@ -241,7 +241,7 @@ class MapsdThread(LoggerThread):
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
         self.pm = messaging.PubMaster(['liveMapData'])
-        self.logger.debug("entered mapsd_thread, ... %s" % ( str(self.pm)))
+        self.logger.debug('entered mapsd_thread, ... %s', ( str(self.pm)))
     def run(self):
         self.logger.debug("Entered run method for thread :" + str(self.name))
         cur_way = None
@@ -258,7 +258,7 @@ class MapsdThread(LoggerThread):
         start = time.time()
         while True:
             if time.time() - start > 0.2:
-                print("Mapd MapsdThread lagging by: %s" % str(time.time() - start - 0.1))
+                print('Mapd MapsdThread lagging by: %s', str(time.time() - start - 0.1))
             if time.time() - start < 0.1:
                 time.sleep(0.01)
                 continue
@@ -301,7 +301,7 @@ class MapsdThread(LoggerThread):
             elif not had_good_gps:
                 had_good_gps = True
             if not fix_ok or self.sharedParams['last_query_result'] is None or not self.sharedParams['cache_valid']:
-                self.logger.debug("fix_ok %s" % fix_ok)
+                self.logger.debug('fix_ok %s', fix_ok)
                 self.logger.error("Error in fix_ok logic")
                 cur_way = None
                 curvature = None
@@ -462,7 +462,7 @@ class MessagedGPSThread(LoggerThread):
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
         self.sm = messaging.SubMaster(['gpsLocationExternal'])
-        self.logger.debug("entered messagedGPS_thread, ... %s" % (str(self.sm)))
+        self.logger.debug('entered messagedGPS_thread, ... %s', (str(self.sm)))
     def run(self):
         self.logger.debug("Entered run method for thread :" + str(self.name))
         gps = None
@@ -486,7 +486,7 @@ class MessagedGPSThread(LoggerThread):
             query_lock.acquire()
             self.sharedParams['last_gps'] = gps
             query_lock.release()
-            self.logger.debug("setting last_gps to %s" % str(gps))
+            self.logger.debug('setting last_gps to %s', str(gps))
 
 class MessagedThread(LoggerThread):
     def __init__(self, threadID, name, sharedParams={}):
