@@ -18,6 +18,9 @@ apk/ai.comma*.apk
 
 common/.gitignore
 common/__init__.py
+common/dp_common.py
+common/dp_conf.py
+common/dp_time.py
 common/hardware.py
 common/hardware_android.py
 common/hardware_tici.py
