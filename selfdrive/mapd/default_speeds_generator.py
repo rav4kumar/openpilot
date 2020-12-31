@@ -6,11 +6,11 @@ DEFAULT_OUTPUT_FILENAME = "default_speeds_by_region.json"
 def main(filename = DEFAULT_OUTPUT_FILENAME):
   countries = []
 
-  """
+  '''
   --------------------------------------------------
       US - United State of America
   --------------------------------------------------
-  """
+  '''
   US = Country("US") # First step, create the country using the ISO 3166 two letter code
   countries.append(US) # Second step, add the country to countries list
 
