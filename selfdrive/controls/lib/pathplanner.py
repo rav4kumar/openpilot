@@ -177,6 +177,9 @@ class PathPlanner():
         # 98% certainty
         if lane_change_prob < 0.02 and self.lane_change_ll_prob < 0.01:
           self.lane_change_state = LaneChangeState.laneChangeFinishing
+        if blindspot_detected:
+          self.lane_change_state = LaneChangeState.preLaneChange
+          self.lane_change_ll_prob = 1.0
 
       # finishing
       elif self.lane_change_state == LaneChangeState.laneChangeFinishing:
