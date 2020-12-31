@@ -240,7 +240,7 @@ class App():
   def system(self, cmd):
     try:
       subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
       cloudlog.event("running failed",
                      cmd=e.cmd,
                      output=e.output[-1024:],
@@ -486,7 +486,7 @@ def system(cmd):
   try:
     cloudlog.info("running %s" % cmd)
     subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError:
+  except subprocess.CalledProcessError as e:
     cloudlog.event("running failed",
                    cmd=e.cmd,
                    output=e.output[-1024:],
