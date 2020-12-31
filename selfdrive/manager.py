@@ -594,7 +594,6 @@ def main():
     ("OpenpilotEnabledToggle", "1"),
     ("LaneChangeEnabled", "1"),
     ("IsDriverViewEnabled", "0"),
-    ("dp_last_modified", str(floor(time.time()))),
   ]
 
   # set unset params
