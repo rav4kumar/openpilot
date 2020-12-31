@@ -54,52 +54,6 @@ jobs:
                 scons -j$(nproc) && \
                 $UNIT_TEST selfdrive/car"
 
-  build_mac:
-    name: build macos
-    runs-on: macos-10.15
-    timeout-minutes: 60
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Cache dependencies
-      id: dependency-cache
-      uses: actions/cache@v2
-      with:
-        path: |
-          ~/.pyenv
-          ~/Library/Caches/pip
-          ~/Library/Caches/pipenv
-          ~/Library/Caches/Homebrew
-        key: ${{ hashFiles('tools/mac_setup.sh') }}
-    - name: Install dependencies
-      run: ./tools/mac_setup.sh
-    - name: Build openpilot
-      run: eval "$(pyenv init -)" && scons -j$(nproc)
-    - name: Brew cleanup
-      run: brew cleanup || true # keeps our cache small
-
-  build_webcam:
-    name: build webcam
-    runs-on: ubuntu-20.04
-    timeout-minutes: 90
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Build Docker image
-      run: |
-        docker pull docker.io/commaai/openpilotwebcamci:latest
-        docker build --cache-from docker.io/commaai/openpilotwebcamci:latest -t tmppilotwebcam -f tools/webcam/Dockerfile .
-    - name: Build openpilot
-      run: docker run --shm-size 1G --rm tmppilotwebcam /bin/sh -c "cd /tmp/openpilot && USE_WEBCAM=1 scons -j$(nproc)"
-    - name: Push to dockerhub
-      if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request' && github.repository == 'commaai/openpilot'
-      run: |
-          docker login -u wmelching -p ${{ secrets.COMMA_DOCKERHUB_TOKEN}}
-          docker tag tmppilotwebcam docker.io/commaai/openpilotwebcamci:latest
-          docker push docker.io/commaai/openpilotwebcamci:latest
-
   docker_push:
     name: docker push
     runs-on: ubuntu-20.04
