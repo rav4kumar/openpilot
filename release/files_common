@@ -22,6 +22,7 @@ common/dp_common.py
 common/dp_conf.py
 common/dp_time.py
 common/op_params.py
+common/travis_checker.py
 common/hardware.py
 common/hardware_android.py
 common/hardware_tici.py
