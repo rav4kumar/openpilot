@@ -18,7 +18,7 @@ class ValueTypes:
 
 
 class Param:
-  def __init__(self, default=None, allowed_types=[], description=None, live=False, hidden=False):
+  def __init__(self, default=None, allowed_types=[], description=None, live=False, hidden=False):  # pylint: disable=dangerous-default-value
     self.default = default
     if not isinstance(allowed_types, list):
       allowed_types = [allowed_types]

@@ -50,7 +50,7 @@ class LoggerThread(threading.Thread):
         pass # will be overridden in the child class
 
 class QueryThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}): # sharedParams is dict of params shared between two threads
+    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
         # invoke parent constructor https://stackoverflow.com/questions/2399307/how-to-invoke-the-super-constructor-in-python
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
@@ -236,7 +236,7 @@ class QueryThread(LoggerThread):
             self.logger.debug("end of one cycle in endless loop ...")
 
 class MapsdThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):
+    def __init__(self, threadID, name, sharedParams={}): # pylint: disable=dangerous-default-value
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
@@ -457,7 +457,7 @@ class MapsdThread(LoggerThread):
             self.pm.send('liveMapData', dat)
 
 class MessagedGPSThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):
+    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
@@ -489,7 +489,7 @@ class MessagedGPSThread(LoggerThread):
             self.logger.debug('setting last_gps to %s', str(gps))
 
 class MessagedThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):
+    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
