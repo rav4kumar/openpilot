@@ -36,7 +36,7 @@ else:
     dongle_id = "None"
   try:
     ip = requests.get('https://checkip.amazonaws.com/', timeout=3).text.strip() if is_online() else '255.255.255.255'
-  except:
+  except Exception:
     ip = "255.255.255.255"
   error_tags = {'dirty': dirty, 'username': dongle_id, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin}
 

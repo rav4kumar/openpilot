@@ -148,7 +148,7 @@ if not prebuilt:
         try:
           result = subprocess.check_output(["ifconfig", "wlan0"], encoding='utf8')
           ip = re.findall(r"inet addr:((\d+\.){3}\d+)", result)[0][0]
-        except:
+        except Exception:
           ip = 'N/A'
 
         # Show TextWindow
@@ -163,7 +163,7 @@ if not prebuilt:
 import cereal
 import cereal.messaging as messaging
 
-from common.params import Params, put_nonblocking
+from common.params import Params
 import selfdrive.crash as crash
 from selfdrive.registration import register
 from selfdrive.version import version, dirty
@@ -666,7 +666,7 @@ if __name__ == "__main__":
     try:
       result = subprocess.check_output(["ifconfig", "wlan0"], encoding='utf8')
       ip = re.findall(r"inet addr:((\d+\.){3}\d+)", result)[0][0]
-    except:
+    except Exception:
       ip = 'N/A'
 
     # Show last 3 lines of traceback

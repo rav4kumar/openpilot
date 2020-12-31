@@ -43,7 +43,7 @@ class LoggerThread(threading.Thread):
             location = [gps.speed, gps.bearing, gps.latitude, gps.longitude, gps.altitude, gps.accuracy, time.time(), osm_way_id]
             with open("/data/openpilot/selfdrive/data_collection/gps-data", "a") as f:
                 f.write("{}\n".format(location))
-        except:
+        except Exception:
             self.logger.error("Unable to write gps data to external file")
 
     def run(self):
@@ -71,7 +71,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_LOCAL, timeout=timeout)
             self.logger.debug("connection local active")
             return True
-        except:
+        except Exception:
             self.logger.error("No local server available.")
             return False
 
@@ -80,7 +80,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_URL, timeout=timeout)
             self.logger.debug("connection 1 active")
             return True
-        except:
+        except Exception:
             self.logger.error("No internet connection available.")
             return False
 
@@ -89,7 +89,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_URL2, timeout=timeout)
             self.logger.debug("connection 2 active")
             return True
-        except:
+        except Exception:
             self.logger.error("No internet connection available.")
             return False
 
@@ -498,7 +498,7 @@ class MessagedThread(LoggerThread):
     def run(self):
         self.logger.debug("Entered run method for thread :" + str(self.name))
         last_not_none_signal = 'NONE'
-        last_not_none_signal_counter = 0
+        #last_not_none_signal_counter = 0
         traffic_confidence = 0
         traffic_status = 'NONE'
         speedLimittraffic = 0

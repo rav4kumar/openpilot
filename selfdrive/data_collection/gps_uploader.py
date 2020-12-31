@@ -23,7 +23,7 @@ def upload_data():
         auth = json.loads(auth['commaUser'])
         if auth and str(auth['username']) != "":
           username = str(auth['username'])
-      except:
+      except Exception:
         pass
 
       params = Params()
@@ -43,7 +43,7 @@ def upload_data():
       with open("/data/" + filename + ".gz", "rb") as f:
         try:
           ftp.mkd("/{}".format(username))
-        except:
+        except Exception:
           pass
         ftp.storbinary("STOR /{}/{}".format(username, filename + ".gz"), f)
       ftp.quit()
@@ -52,7 +52,7 @@ def upload_data():
       t = datetime.datetime.utcnow().isoformat()
       params.put("LastUpdateTime", t.encode('utf8'))
       return True
-    except:
+    except Exception:
       return False
   else:
     return False

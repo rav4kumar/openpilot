@@ -157,7 +157,7 @@ def to_gpx(logs, timestamp):
       zf = zipfile.ZipFile('%s%sZ.zip' % (GPX_LOG_PATH, filename), mode='w')
       zf.writestr(zi, str)
       zf.close()
-    except:
+    except Exception:
       pass
 
 if __name__ == "__main__":
