@@ -15,7 +15,7 @@ class CarInterface(CarInterfaceBase):
     if fingerprint is None:
       fingerprint = gen_empty_fingerprint()
 
-    ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
+    ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
     ret.carName = "chrysler"
     ret.safetyModel = car.CarParams.SafetyModel.chrysler
     ret.lateralTuning.init('pid')
