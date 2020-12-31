@@ -1,4 +1,3 @@
-import numpy as np
 from common.numpy_fast import clip, interp
 
 # dp
