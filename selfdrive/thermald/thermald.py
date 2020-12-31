@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import datetime
+#import             datetime used to check the internet connectivity
 import os
 import time
 from collections import namedtuple
