@@ -223,8 +223,8 @@ class Region(object):
     new_rule['tags'] = tag_conditions
     try:
       new_rule['speed'] = str(speed)
-    except ValueError:
-      raise ValueError("Rule speed must be string")
+  except ValueError as err:
+      raise ValueError("Rule speed must be string") from err
     self.rules.append(new_rule)
 
   def jsonify(self):
@@ -247,7 +247,7 @@ class Country(Region):
   def jsonify(self):
     ret_dict = {}
     ret_dict[self.name] = {}
-    for r_name, region in self.regions.items():
+    for region in self.regions.items():
       ret_dict[self.name].update(region.jsonify())
     ret_dict[self.name]['Default'] = self.rules
     return ret_dict
