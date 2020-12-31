@@ -143,16 +143,16 @@ class Controls:
 
     self.startup_event = get_startup_event(car_recognized, controller_available)
 
-    # if not sounds_available:
-    #   self.events.add(EventName.soundsUnavailable, static=True)
-    # if internet_needed:
-    #   self.events.add(EventName.internetConnectivityNeeded, static=True)
+    if not sounds_available:
+      self.events.add(EventName.soundsUnavailable, static=True)
+    if internet_needed:
+      self.events.add(EventName.internetConnectivityNeeded, static=True)
     if community_feature_disallowed:
       self.events.add(EventName.communityFeatureDisallowed, static=True)
     if not car_recognized:
       self.events.add(EventName.carUnrecognized, static=True)
-    # if hw_type == HwType.whitePanda:
-    #   self.events.add(EventName.whitePandaUnsupportedDEPRECATED, static=True)
+    if hw_type == HwType.whitePanda:
+      self.events.add(EventName.whitePandaUnsupported, static=True)
 
     # controlsd is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)
