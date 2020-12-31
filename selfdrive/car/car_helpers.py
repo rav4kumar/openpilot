@@ -19,8 +19,10 @@ EventName = car.CarEvent.EventName
 
 
 def get_startup_event(car_recognized, controller_available):
-  event = EventName.startup
-
+  if comma_remote and tested_branch:
+    event = EventName.startup
+  else:
+    event = EventName.startupMaster
   if not car_recognized:
     event = EventName.startupNoCar
   elif car_recognized and not controller_available:
