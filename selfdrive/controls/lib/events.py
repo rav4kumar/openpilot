@@ -102,6 +102,7 @@ class Events:
       ret.append(event)
     return ret
 
+@total_ordering
 class Alert:
   def __init__(self,
                alert_text_1: str,
