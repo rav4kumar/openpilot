@@ -71,7 +71,7 @@ class TestCarModel(unittest.TestCase):
 
     CarInterface, CarController, CarState = interfaces[cls.car_model]
 
-    cls.CP = CarInterface.get_params(cls.car_model, fingerprint, [])
+    cls.CP = CarInterface.get_params(cls.car_model, fingerprint, has_relay, [])
     assert cls.CP
 
     cls.CI = CarInterface(cls.CP, CarController, CarState)
