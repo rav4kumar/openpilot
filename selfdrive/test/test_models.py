@@ -59,6 +59,7 @@ class TestCarModel(unittest.TestCase):
         if seg == 0:
           raise
 
+    has_relay = False
     can_msgs = []
     fingerprint = {i: dict() for i in range(3)}
     for msg in lr:
@@ -67,6 +68,8 @@ class TestCarModel(unittest.TestCase):
           if m.src < 128:
             fingerprint[m.src][m.address] = len(m.dat)
         can_msgs.append(msg)
+      elif msg.which() == "health":
+        has_relay = msg.health.hwType in [HwType.blackPanda, HwType.uno, HwType.dos]
     cls.can_msgs = sorted(can_msgs, key=lambda msg: msg.logMonoTime)
 
     CarInterface, CarController, CarState = interfaces[cls.car_model]
