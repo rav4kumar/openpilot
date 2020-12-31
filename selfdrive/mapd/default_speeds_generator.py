@@ -223,7 +223,7 @@ class Region(object):
     new_rule['tags'] = tag_conditions
     try:
       new_rule['speed'] = str(speed)
-  except ValueError as err:
+    except ValueError as err:
       raise ValueError("Rule speed must be string") from err
     self.rules.append(new_rule)
 
