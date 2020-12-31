@@ -429,7 +429,7 @@ class CarInterface(CarInterfaceBase):
       ret.cruiseState.enabled = bool(self.CS.main_on)
 
     # events
-    events = self.create_common_events(ret)
+    events = self.create_common_events(ret, extra_gears)
 
     if longControlDisabled:
       events.add(EventName.longControlDisabled)
