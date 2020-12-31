@@ -27,6 +27,8 @@ NetworkType = log.ThermalData.NetworkType
 UPLOAD_ATTR_NAME = 'user.upload'
 UPLOAD_ATTR_VALUE = b'1'
 
+allow_sleep = bool(os.getenv("UPLOADER_SLEEP", "1"))
+force_wifi = os.getenv("FORCEWIFI") is not None
 fake_upload = os.getenv("FAKEUPLOAD") is not None
 
 
@@ -280,7 +282,8 @@ def uploader_fn(exit_event):
     gps_uploader.upload_data()
     counter += 1
     if d is None:  # Nothing to upload
-      time.sleep(60 if offroad else 5)
+      if allow_sleep:
+        time.sleep(60 if offroad else 5)
       continue
 
     key, fn = d
@@ -290,7 +293,7 @@ def uploader_fn(exit_event):
     success = uploader.upload(key, fn)
     if success:
       backoff = 0.1
-    else:
+    elif allow_sleep:
       cloudlog.info("backoff %r", backoff)
       time.sleep(backoff + random.uniform(0, backoff))
       backoff = min(backoff*2, 120)
