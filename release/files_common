@@ -283,6 +283,8 @@ selfdrive/controls/lib/longitudinal_mpc_model/generator.cpp
 selfdrive/controls/lib/longitudinal_mpc_model/libmpc_py.py
 selfdrive/controls/lib/longitudinal_mpc_model/longitudinal_mpc.c
 
+selfdrive/controls/lib/dynamic_gas
+
 selfdrive/locationd/__init__.py
 selfdrive/locationd/.gitignore
 selfdrive/locationd/SConscript
