@@ -5,7 +5,12 @@ from common.params import Params
 from common.realtime import sec_since_boot
 import os
 params = Params()
-PARAM_PATH = "/data/params/d/"
+from common.travis_checker import travis
+
+if travis:
+  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/"
+else:
+  PARAM_PATH = "/data/params/d/"
 LAST_MODIFIED = PARAM_PATH + "dp_last_modified"
 
 def is_online():
