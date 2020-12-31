@@ -9,7 +9,7 @@ from common.travis_checker import travis
 from common.dp_conf import init_params_vals
 
 if travis:
-  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/"
+  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
 else:
   PARAM_PATH = "/data/params/d/"
 LAST_MODIFIED = PARAM_PATH + "dp_last_modified"
