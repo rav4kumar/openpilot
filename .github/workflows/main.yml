@@ -279,7 +279,7 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 50
     if: github.repository == 'rav4kumar/openpilot'
-    needs: [static_analysis, unit_tests, process_replay, test_longitudinal, test_car_models]
+    needs: [static_analysis, unit_tests, test_longitudinal, test_car_models]
     env:
       BRANCH: ''
       TARGET_DIR: tmp_op_ci
