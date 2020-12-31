@@ -13,7 +13,6 @@ import os
 from common.dp_common import is_online
 from common.dp_conf import get_struct_name
 from common.realtime import sec_since_boot
-import psutil
 
 is_online = is_online()
 auto_update = params.get("dp_app_auto_update", encoding='utf8') == "1"
@@ -85,7 +84,7 @@ class App():
       result = subprocess.check_output(["dumpsys", "activity", "gb.xxy.hr"], encoding='utf8')
       print("is_crash = %s" % "ACTIVITY" in result)
       return "ACTIVITY" not in result
-    except (subprocess.CalledProcessError, IndexError) as e:
+    except (subprocess.CalledProcessError, IndexError):
       return False
 
   def get_remote_version(self):
@@ -93,7 +92,7 @@ class App():
     try:
       url = "https://raw.githubusercontent.com/dragonpilot-community/apps/%s/VERSION" % apk
       return subprocess.check_output(["curl", "-H", "'Cache-Control: no-cache'", "-s", url]).decode('utf8').rstrip()
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
       pass
     return None
 
@@ -103,7 +102,7 @@ class App():
       if local_version is not None:
         subprocess.check_output(["pm","uninstall", self.app])
         self.is_installed = False
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
       pass
 
   def update_app(self):
@@ -112,32 +111,32 @@ class App():
       try:
         subprocess.check_output(["pm","install","-r",self.own_apk])
         self.is_installed = True
-      except subprocess.CalledProcessError as e:
+      except subprocess.CalledProcessError:
         self.is_installed = False
     else:
       apk = self.app + ".apk"
       apk_path = "/sdcard/" + apk
       try:
         os.remove(apk_path)
-      except (OSError, FileNotFoundError) as e:
+      except (OSError, FileNotFoundError):
         pass
 
       self.uninstall_app()
       # if local_version is not None:
       #   try:
       #     subprocess.check_output(["pm","uninstall", self.app], stderr=subprocess.STDOUT, shell=True)
-      #   except subprocess.CalledProcessError as e:
+      #   except subprocess.CalledProcessError :
       #     pass
       try:
         url = "https://raw.githubusercontent.com/dragonpilot-community/apps/%s/%s" % (apk, apk)
         subprocess.check_output(["curl","-o", apk_path,"-LJO", url])
         subprocess.check_output(["pm","install","-r",apk_path])
         self.is_installed = True
-      except subprocess.CalledProcessError as e:
+      except subprocess.CalledProcessError:
         self.is_installed = False
       try:
         os.remove(apk_path)
-      except (OSError, FileNotFoundError) as e:
+      except (OSError, FileNotFoundError):
         pass
     put_nonblocking('dp_is_updating', '0')
 
@@ -146,7 +145,7 @@ class App():
       result = subprocess.check_output(["dumpsys", "package", self.app, "|", "grep", "versionName"], encoding='utf8')
       if len(result) > 12:
         return re.findall(r"versionName=(.*)", result)[0]
-    except (subprocess.CalledProcessError, IndexError) as e:
+    except (subprocess.CalledProcessError, IndexError):
       pass
     return None
 
@@ -241,7 +240,7 @@ class App():
   def system(self, cmd):
     try:
       subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
       cloudlog.event("running failed",
                      cmd=e.cmd,
                      output=e.output[-1024:],
@@ -487,7 +486,7 @@ def system(cmd):
   try:
     cloudlog.info("running %s" % cmd)
     subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-  except subprocess.CalledProcessError as e:
+  except subprocess.CalledProcessError:
     cloudlog.event("running failed",
                    cmd=e.cmd,
                    output=e.output[-1024:],
