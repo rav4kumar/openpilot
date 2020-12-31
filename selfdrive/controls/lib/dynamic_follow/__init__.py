@@ -6,7 +6,7 @@ from common.numpy_fast import interp, clip
 from selfdrive.config import Conversions as CV
 from common.params import Params
 from common.dp_time import LAST_MODIFIED_DYNAMIC_FOLLOW
-from common.dp_common import get_last_modified, param_get, param_get_if_updated
+from common.dp_common import get_last_modified, param_get_if_updated
 
 from selfdrive.controls.lib.dynamic_follow.auto_df import predict
 from selfdrive.controls.lib.dynamic_follow.support import LeadData, CarData, dfData, dfProfiles
