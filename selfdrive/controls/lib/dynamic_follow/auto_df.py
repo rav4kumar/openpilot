@@ -3,8 +3,12 @@
 """
 
 import numpy as np
+from common.travis_checker import travis
 
-wb = np.load('/data/openpilot/selfdrive/controls/lib/dynamic_follow/auto_df_weights.npz', allow_pickle=True)
+if travis:
+  wb = np.load('/tmp/openpilot/selfdrive/controls/lib/dynamic_follow/auto_df_weights.npz', allow_pickle=True)
+else:
+  wb = np.load('/data/openpilot/selfdrive/controls/lib/dynamic_follow/auto_df_weights.npz', allow_pickle=True)
 w, b = wb['wb']
 
 def softmax(x):
