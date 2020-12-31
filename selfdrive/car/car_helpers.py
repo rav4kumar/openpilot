@@ -1,4 +1,5 @@
 import os
+import threading
 from common.params import Params, put_nonblocking
 from common.basedir import BASEDIR
 from selfdrive.version import comma_remote, tested_branch
@@ -8,11 +9,11 @@ from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car
 from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
-
-from cereal import car, log
+from cereal import car
 from common.dp_common import is_online
-import threading
-import selfdrive.crash as crash
+from common.travis_checker import travis
+if not travis:
+    import selfdrive.crash as crash
 
 EventName = car.CarEvent.EventName
 
