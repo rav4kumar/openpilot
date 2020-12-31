@@ -18,7 +18,6 @@ class Dashcam():
     self.dashcam_next_time = 0
     self.started = False
     self.free_space = 1.
-    pass
 
   def run(self, started, free_space):
     self.started = started
