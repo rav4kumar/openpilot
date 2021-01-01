@@ -14,6 +14,7 @@ else:
   PARAM_PATH = "/data/params/d/"
 LAST_MODIFIED = PARAM_PATH + "dp_last_modified"
 if not os.path.exists(LAST_MODIFIED):
+  os.makedirs(os.environ.get('HOME') + "/.comma/params/d/", exist_ok=True)
   init_params_vals(params)
 
 def is_online():
