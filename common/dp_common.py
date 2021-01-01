@@ -5,6 +5,7 @@ from common.params import Params
 from common.realtime import sec_since_boot
 import os
 import time
+from math import floor
 params = Params()
 from common.travis_checker import travis
 from common.dp_conf import init_params_vals
