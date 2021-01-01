@@ -3,7 +3,7 @@ import numpy as np
 from cereal import log
 from common.dp_common import get_last_modified, param_get_if_updated
 from common.dp_time import LAST_MODIFIED_LANE_PLANNER
-
+from common.travis_checker import travis
 CAMERA_OFFSET = 0.06  # m from center car to camera
 
 
@@ -73,11 +73,14 @@ class LanePlanner:
 
   def update_d_poly(self, v_ego):
     # only offset left and right lane lines; offsetting p_poly does not make sense
-    self.last_modified_check, self.modified = get_last_modified(LAST_MODIFIED_LANE_PLANNER, self.last_modified_check, self.modified)
-    if self.last_modified != self.modified:
-      self.dp_camera_offset, self.last_modified_dp_camera_offset = param_get_if_updated("dp_camera_offset", "int", self.dp_camera_offset, self.last_modified_dp_camera_offset)
-      self.last_modified = self.modified
-    offset = self.dp_camera_offset * 0.01 if self.dp_camera_offset != 0 else 0
+    if travis:
+      offset = 0
+    else:
+      self.last_modified_check, self.modified = get_last_modified(LAST_MODIFIED_LANE_PLANNER, self.last_modified_check, self.modified)
+      if self.last_modified != self.modified:
+        self.dp_camera_offset, self.last_modified_dp_camera_offset = param_get_if_updated("dp_camera_offset", "int", self.dp_camera_offset, self.last_modified_dp_camera_offset)
+        self.last_modified = self.modified
+      offset = self.dp_camera_offset * 0.01 if self.dp_camera_offset != 0 else 0
     self.l_poly[3] += offset
     self.r_poly[3] += offset
     self.p_poly[3] += offset
