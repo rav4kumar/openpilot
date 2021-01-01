@@ -4,6 +4,7 @@ from cereal import car
 from common.params import Params
 from common.realtime import sec_since_boot
 import os
+import time
 params = Params()
 from common.travis_checker import travis
 from common.dp_conf import init_params_vals
@@ -15,6 +16,8 @@ else:
 LAST_MODIFIED = PARAM_PATH + "dp_last_modified"
 if not os.path.exists(LAST_MODIFIED):
   os.makedirs(os.environ.get('HOME') + "/.comma/params/d/", exist_ok=True)
+  print("dp_last_modified is " + str(floor(time.time())))
+  params.put('dp_last_modified',str(floor(time.time())))
   init_params_vals(params)
 
 def is_online():
