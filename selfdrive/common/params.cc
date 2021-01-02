@@ -102,6 +102,7 @@ int Params::write_db_value(std::string key, std::string dat){
 }
 
 int Params::write_db_value(const char* key, const char* value, size_t value_size) {
+  int size = snprintf(s, sizeof(s), "%f", param);
   // Information about safely and atomically writing a file: https://lwn.net/Articles/457667/
   // 1) Create temp file
   // 2) Write data to temp file
@@ -118,7 +119,7 @@ int Params::write_db_value(const char* key, const char* value, size_t value_size
 
   // Make sure params path exists
   result = ensure_dir_exists(params_path);
-    printf("ensure_dir_exists: %s\n", );
+   printf("result: %d\n")
   if (result < 0) {
     goto cleanup;
   }
