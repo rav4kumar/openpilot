@@ -22,10 +22,9 @@ if travis:
   PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
 else:
   PARAM_PATH = '/data/params/d/'
-if not os.path.exists(PARAM_PATH):
-  print("creating path structure")
-  os.makedirs(PARAM_PATH, exist_ok=True)
+if not os.path.exists(PARAM_PATH + "dp_last_modified"):
   params.put('dp_last_modified',str(floor(time.time())))
+  print("dp_last_modified read from file is " + params.get("dp_last_modified"))
   if os.path.exists(PARAM_PATH + "dp_last_modified"):
     print("dp_last_modified created succesfully" )
   init_params_vals(params)
