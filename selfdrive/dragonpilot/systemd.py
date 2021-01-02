@@ -17,9 +17,19 @@ from common.i18n import get_locale
 from common.dp_common import param_get, get_last_modified
 from common.dp_time import LAST_MODIFIED_SYSTEMD
 from selfdrive.dragonpilot.dashcam import Dashcam
-
-PARAM_PATH = '/data/params/d/'
-
+from common.travis_checker import travis
+if travis:
+  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
+else:
+  PARAM_PATH = '/data/params/d/'
+if not os.path.exists(PARAM_PATH):
+  print("creating path structure")
+  os.makedirs(PARAM_PATH, exist_ok=True)
+  params.put('dp_last_modified',str(floor(time.time())))
+  if os.path.exists(PARAM_PATH + "dp_last_modified"):
+    print("dp_last_modified created succesfully" )
+  init_params_vals(params)
+  
 DELAY = 0.5 # 2hz
 HERTZ = 1/DELAY
 
