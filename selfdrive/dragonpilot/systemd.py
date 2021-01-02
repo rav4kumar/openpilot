@@ -22,6 +22,9 @@ if travis:
   PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
 else:
   PARAM_PATH = '/data/params/d/'
+files = os.listdir(PARAM_PATH)
+for file in files:
+  print(file)
 if not os.path.exists(PARAM_PATH + "dp_last_modified"):
   params.put('dp_last_modified',str(floor(time.time())))
   print("dp_last_modified read from file is " + params.get("dp_last_modified"))
