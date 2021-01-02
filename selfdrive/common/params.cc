@@ -98,6 +98,8 @@ Params::Params(std::string path) {
 }
 
 int Params::write_db_value(std::string key, std::string dat){
+  std::cout << key << "\n";
+  std::cout << dat << "\n";
   return write_db_value(key.c_str(), dat.c_str(), dat.length());
 }
 
@@ -118,7 +120,7 @@ int Params::write_db_value(const char* key, const char* value, size_t value_size
 
   // Make sure params path exists
   result = ensure_dir_exists(params_path);
-  std::cout << params_path;
+  std::cout << params_path << "\n";
   if (result < 0) {
     goto cleanup;
   }
