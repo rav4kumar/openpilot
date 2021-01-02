@@ -118,7 +118,7 @@ int Params::write_db_value(const char* key, const char* value, size_t value_size
 
   // Make sure params path exists
   result = ensure_dir_exists(params_path);
-  std::cout << params_path
+  std::cout << params_path;
   if (result < 0) {
     goto cleanup;
   }
