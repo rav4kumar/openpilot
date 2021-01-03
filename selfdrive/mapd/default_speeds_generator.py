@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#pylint: disable=W0105
 import json
 
 DEFAULT_OUTPUT_FILENAME = "default_speeds_by_region.json"
