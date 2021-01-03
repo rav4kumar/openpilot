@@ -236,9 +236,9 @@ def thermald_thread():
     # dp - load temp monitor conf
     last_modified_check, modified = get_last_modified(LAST_MODIFIED_THERMALD, last_modified_check, modified)
     if last_modified != modified:
-      dp_temp_monitor, dp_last_modified_temp_monitor = param_get_if_updated("dp_temp_monitor", "bool", dp_temp_monitor, dp_last_modified_temp_monitor)
-      dp_auto_shutdown, dp_last_modified_auto_shutdown = param_get_if_updated("dp_auto_shutdown", "bool", dp_auto_shutdown, dp_last_modified_auto_shutdown)
-      dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in = param_get_if_updated("dp_auto_shutdown_in", "int", dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in)
+      dp_temp_monitor, dp_last_modified_temp_monitor = param_get_if_updated("dp_temp_monitor", "bool", dp_temp_monitor, dp_last_modified_temp_monitor)  #pylint: disable=too-many-arguments
+      dp_auto_shutdown, dp_last_modified_auto_shutdown = param_get_if_updated("dp_auto_shutdown", "bool", dp_auto_shutdown, dp_last_modified_auto_shutdown)  #pylint: disable=too-many-arguments
+      dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in = param_get_if_updated("dp_auto_shutdown_in", "int", dp_auto_shutdown_in, dp_last_modified_auto_shutdown_in)  #pylint: disable=too-many-arguments
       last_modified = modified
 
     health = messaging.recv_sock(health_sock, wait=True)
