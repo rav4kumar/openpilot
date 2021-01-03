@@ -27,7 +27,7 @@ for file in files:
   print(file)
 if not os.path.exists(PARAM_PATH + "dp_last_modified"):
   params.put('dp_last_modified',str(floor(time.time())))
-  print("dp_last_modified read from file is " + params.get("dp_last_modified"))
+  print("dp_last_modified read from file is " + str(params.get("dp_last_modified")))
   if os.path.exists(PARAM_PATH + "dp_last_modified"):
     print("dp_last_modified created succesfully" )
   init_params_vals(params)
