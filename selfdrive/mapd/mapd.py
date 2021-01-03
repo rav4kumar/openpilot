@@ -146,9 +146,9 @@ class QueryThread(LoggerThread):
                     self.prev_ecef = geodetic2ecef((last_query_pos.latitude, last_query_pos.longitude, last_query_pos.altitude))
 
                 dist = np.linalg.norm(cur_ecef - self.prev_ecef)
-                
-                self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', (str(cur_ecef), str(self.prev_ecef), str(dist)))
-                
+
+                self.logger.debug('parameters, cur_ecef = %%s, prev_ecef = %%s, dist=%%s', (str(cur_ecef), str(self.prev_ecef), str(dist)))
+
                 if dist < radius - self.distance_to_edge: #updated when we are close to the edge of the downloaded circle
                     continue
 
@@ -204,7 +204,7 @@ class QueryThread(LoggerThread):
                     nodes = np.asarray(nodes)
                     nodes = geodetic2ecef(nodes)
                     tree = spatial.KDTree(nodes)
-                    self.logger.debug('query thread, ... %s %s', (str(nodes), str(tree)))
+                    self.logger.debug('query thread, ... %%s %%s', (str(nodes), str(tree)))
 
                     # write result
                     query_lock = self.sharedParams.get('query_lock', None)
@@ -585,7 +585,7 @@ def main():
     sharedParams = {'last_gps' : last_gps, 'query_lock' : query_lock, 'last_query_result' : last_query_result,
                     'last_query_pos' : last_query_pos, 'cache_valid' : cache_valid, 'traffic_status' : traffic_status,
                     'traffic_confidence' : traffic_confidence, 'last_not_none_signal' : last_not_none_signal,
-                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid, 
+                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid,
                     'speedLimittrafficAdvisory' : speedLimittrafficAdvisory, 'speedLimittrafficAdvisoryvalid' : speedLimittrafficAdvisoryvalid, 'osm_way_id' : osm_way_id}
 
     qt = QueryThread(1, "QueryThread", sharedParams=sharedParams)
