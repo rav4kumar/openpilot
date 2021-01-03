@@ -221,7 +221,7 @@ class QueryThread(LoggerThread):
                         self.logger.error("There is not query_lock")
 
                 except Exception as e:
-                    self.logger.error("ERROR :" + str(e))
+                    self.logger.error('ERROR %d', str(e))
                     print(str(e))
                     query_lock = self.sharedParams.get('query_lock', None)
                     query_lock.acquire()
@@ -243,7 +243,7 @@ class MapsdThread(LoggerThread):
         self.pm = messaging.PubMaster(['liveMapData'])
         self.logger.debug('entered mapsd_thread, ... %s', ( str(self.pm)))
     def run(self):
-        self.logger.debug("Entered run method for thread :" + str(self.name))
+        self.logger.debug('Entered run method for thread %d', str(self.name))
         cur_way = None
         curvature_valid = False
         curvature = None
@@ -279,7 +279,7 @@ class MapsdThread(LoggerThread):
             if gps is None:
                 continue
             fix_ok = gps.flags & 1
-            self.logger.debug("fix_ok = %s" % str(fix_ok))
+            self.logger.debug('fix_ok = %d', str(fix_ok))
 
             if gps.accuracy > 2.5:
                 if gps.accuracy > 5.0:
@@ -464,7 +464,7 @@ class MessagedGPSThread(LoggerThread):
         self.sm = messaging.SubMaster(['gpsLocationExternal'])
         self.logger.debug('entered messagedGPS_thread, ... %s', (str(self.sm)))
     def run(self):
-        self.logger.debug("Entered run method for thread :" + str(self.name))
+        self.logger.debug('Entered run method for thread %d', str(self.name))
         gps = None
         start = time.time()
         while True:
@@ -496,7 +496,7 @@ class MessagedThread(LoggerThread):
         self.sm = messaging.SubMaster(['liveTrafficData'])#,'trafficModelEvent'])
         #self.logger.debug("entered messageArned_thread, ... %s" % str(self.arne_sm))
     def run(self):
-        self.logger.debug("Entered run method for thread :" + str(self.name))
+        self.logger.debug('Entered run method for thread %d', str(self.name))
         last_not_none_signal = 'NONE'
         #last_not_none_signal_counter = 0
         traffic_confidence = 0
