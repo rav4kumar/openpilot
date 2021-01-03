@@ -147,7 +147,7 @@ class QueryThread(LoggerThread):
 
                 dist = np.linalg.norm(cur_ecef - self.prev_ecef)
 
-                self.logger.debug('parameters, cur_ecef = ' + str(cur_ecef) + ', prev_ecef = ' + str(self.prev_ecef) + ', dist=' + str(dist))
+                self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', str(cur_ecef), str(self.prev_ecef), str(dist))
 
                 if dist < radius - self.distance_to_edge: #updated when we are close to the edge of the downloaded circle
                     continue
@@ -204,7 +204,7 @@ class QueryThread(LoggerThread):
                     nodes = np.asarray(nodes)
                     nodes = geodetic2ecef(nodes)
                     tree = spatial.KDTree(nodes)
-                    self.logger.debug('query thread, ... ' + str(nodes) + ' ' + str(tree))
+                    self.logger.debug('query thread, ... %s %s', str(nodes), str(tree))
 
                     # write result
                     query_lock = self.sharedParams.get('query_lock', None)
