@@ -39,7 +39,7 @@ ignore_can_valid = [
 ]
 
 @parameterized_class(('car_model'), [(car,) for car in all_known_cars()])
-class TestCarModel(unittest.TestCase)
+class TestCarModel(unittest.TestCase):
 
   @classmethod
   def setUpClass(cls):
