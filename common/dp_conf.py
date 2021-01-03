@@ -80,7 +80,8 @@ confs = [
   {'name': 'dp_ui_max_speed', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_driving_ui', 'vals': [True]}, {'name': 'dp_ui_screen_off_driving', 'vals': [False]},
                                                                             {'name': 'dp_app_waze', 'vals': [False]}, {'name': 'dp_app_hr', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_ui_face', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_driving_ui', 'vals': [True]}, {'name': 'dp_driver_monitor', 'vals': [True]},
-                                                                        {'name': 'dp_ui_screen_off_driving', 'vals': [False]}, {'name': 'dp_app_waze', 'vals': [False]}, {'name': 'dp_app_hr', 'vals': [False]}], 'conf_type': ['param', 'struct']},
+                                                                        {'name': 'dp_ui_screen_off_driving', 'vals': [False]}, {'name': 'dp_app_waze', 'vals': [False]},
+                                                                        {'name': 'dp_app_hr', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_ui_lane', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_driving_ui', 'vals': [True]}, {'name': 'dp_ui_screen_off_driving', 'vals': [False]},
                                                                         {'name': 'dp_app_waze', 'vals': [False]}, {'name': 'dp_app_hr', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_ui_path', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_driving_ui', 'vals': [True]}, {'name': 'dp_ui_screen_off_driving', 'vals': [False]},
@@ -117,8 +118,10 @@ confs = [
   {'name': 'dp_toyota_zss', 'default': False, 'type': 'Bool', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']}], 'conf_type': ['param']},
   {'name': 'dp_toyota_lowest_cruise_override', 'default': False, 'type': 'Bool', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']}, {'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_toyota_lowest_cruise_override_vego', 'default': False, 'type': 'Bool', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']}, {'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
-  {'name': 'dp_toyota_lowest_cruise_override_at', 'default': 44, 'type': 'Float32', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']}, {'name': 'dp_toyota_lowest_cruise_override', 'vals': [True]}], 'min': 0, 'max': 255., 'conf_type': ['param', 'struct']},
-  {'name': 'dp_toyota_lowest_cruise_override_speed', 'default': 32, 'type': 'Float32', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']}, {'name': 'dp_toyota_lowest_cruise_override_speed', 'vals': [True]}], 'min': 0, 'max': 255., 'conf_type': ['param', 'struct']},
+  {'name': 'dp_toyota_lowest_cruise_override_at', 'default': 44, 'type': 'Float32', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']},
+                                                                                                {'name': 'dp_toyota_lowest_cruise_override', 'vals': [True]}], 'min': 0, 'max': 255., 'conf_type': ['param', 'struct']},
+  {'name': 'dp_toyota_lowest_cruise_override_speed', 'default': 32, 'type': 'Float32', 'depends': [{'name': 'dp_car_detected', 'vals': ['toyota']},
+                                                                                                   {'name': 'dp_toyota_lowest_cruise_override_speed', 'vals': [True]}], 'min': 0, 'max': 255., 'conf_type': ['param', 'struct']},
   # hyundai
   {'name': 'dp_hkg_smart_mdps', 'default': False, 'type': 'Bool', 'conf_type': ['param']},
   # honda
