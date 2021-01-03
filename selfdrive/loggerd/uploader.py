@@ -267,10 +267,8 @@ def uploader_fn(exit_event):
       # dp - load temp monitor conf
       last_modified_check, modified = get_last_modified(LAST_MODIFIED_UPLOADER, last_modified_check, modified)
       if last_modified != modified:
-        dp_upload_on_mobile = param_get_if_updated("dp_upload_on_mobile", "bool", dp_upload_on_mobile)
-        dp_last_modified_upload_on_mobile = param_get_if_updated("dp_upload_on_mobile", "bool", dp_last_modified_upload_on_mobile)
-        dp_upload_on_hotspot = param_get_if_updated("dp_upload_on_hotspot", "bool", dp_upload_on_hotspot)
-        dp_last_modified_upload_on_hotspot = param_get_if_updated("dp_upload_on_hotspot", "bool", dp_last_modified_upload_on_hotspot)
+        dp_upload_on_mobile, dp_last_modified_upload_on_mobile = param_get_if_updated("dp_upload_on_mobile", "bool", dp_upload_on_mobile, dp_last_modified_upload_on_mobile)
+        dp_upload_on_hotspot, dp_last_modified_upload_on_hotspot = param_get_if_updated("dp_upload_on_hotspot", "bool", dp_upload_on_hotspot, dp_last_modified_upload_on_hotspot)
         last_modified = modified
 
       should_upload = on_wifi and not on_hotspot
