@@ -40,6 +40,8 @@ ignore_can_valid = [
 
 @parameterized_class(('car_model'), [(car,) for car in all_known_cars()])
 class TestCarModel(unittest.TestCase):
+  def __init__(self)
+    self.sm = messaging.SubMaster(['dragonConf'])
 
   @classmethod
   def setUpClass(cls):
@@ -105,8 +107,6 @@ class TestCarModel(unittest.TestCase):
   def test_car_interface(self):
     # TODO: also check for checkusm and counter violations from can parser
     can_invalid_cnt = 0
-    if self.sm is None:
-      self.sm = messaging.SubMaster(['dragonConf'])
     CC = car.CarControl.new_message()
     for i, msg in enumerate(self.can_msgs):
       self.sm.update(0)
