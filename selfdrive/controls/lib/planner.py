@@ -243,7 +243,7 @@ class Planner():
       else:
         speed_limit = None
       if sm['liveMapData'].speedLimitAheadValid and osm and self.osm and sm['liveMapData'].speedLimitAheadDistance < speed_ahead_distance and \
-        ((sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000 and \
+        ((sm['liveMapData'].lastGps.timestamp -time.mktime(now.timetuple()) * 1000) < 10000 and
         (smart_speed or smart_speed_max_vego > v_ego)):
         distanceatlowlimit = 50
         if sm['liveMapData'].speedLimitAhead < 21/3.6:
@@ -255,7 +255,7 @@ class Planner():
           speed_ahead_distance = min(speed_ahead_distance,300)
           speed_ahead_distance = max(speed_ahead_distance,50)
         if speed_limit is not None and sm['liveMapData'].speedLimitAheadDistance > distanceatlowlimit and \
-            ((v_ego + 3 < sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)) * \
+            ((v_ego + 3 < sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)) * 
             sm['liveMapData'].speedLimitAheadDistance/speed_ahead_distance):
           speed_limit_ahead = sm['liveMapData'].speedLimitAhead + (speed_limit - sm['liveMapData'].speedLimitAhead)*(sm['liveMapData'].speedLimitAheadDistance - distanceatlowlimit)/(speed_ahead_distance - distanceatlowlimit)
         else:
