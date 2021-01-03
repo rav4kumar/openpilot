@@ -1,4 +1,5 @@
 #!/usr/bin/env python3.7
+#pylint: disable=E501
 import os
 import json
 import time
