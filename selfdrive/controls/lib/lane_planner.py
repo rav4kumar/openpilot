@@ -78,8 +78,7 @@ class LanePlanner:
     else:
       self.last_modified_check, self.modified = get_last_modified(LAST_MODIFIED_LANE_PLANNER, self.last_modified_check, self.modified)
       if self.last_modified != self.modified:
-        self.dp_camera_offset= param_get_if_updated("dp_camera_offset", "int", self.dp_camera_offset)
-        self.last_modified_dp_camera_offset = param_get_if_updated("dp_camera_offset", "int", self.last_modified_dp_camera_offset)  
+        self.dp_camera_offset, self.last_modified_dp_camera_offset = param_get_if_updated("dp_camera_offset", "int", self.dp_camera_offset, self.last_modified_dp_camera_offset)
         self.last_modified = self.modified
       offset = self.dp_camera_offset * 0.01 if self.dp_camera_offset != 0 else 0
     self.l_poly[3] += offset
