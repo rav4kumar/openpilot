@@ -146,9 +146,11 @@ class QueryThread(LoggerThread):
                     self.prev_ecef = geodetic2ecef((last_query_pos.latitude, last_query_pos.longitude, last_query_pos.altitude))
 
                 dist = np.linalg.norm(cur_ecef - self.prev_ecef)
+                
+                self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', (str(cur_ecef), str(self.prev_ecef), str(dist)))
+                
                 if dist < radius - self.distance_to_edge: #updated when we are close to the edge of the downloaded circle
                     continue
-                    self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', (str(cur_ecef), str(self.prev_ecef), str(dist)))
 
                 if dist > radius:
                     query_lock = self.sharedParams.get('query_lock', None)
