@@ -58,7 +58,6 @@ class TestCarModel(unittest.TestCase):
       except Exception:
         if seg == 0:
           raise
-    self.sm = messaging.SubMaster(['dragonConf'])
     has_relay = False
     can_msgs = []
     fingerprint = {i: dict() for i in range(3)}
@@ -106,6 +105,8 @@ class TestCarModel(unittest.TestCase):
   def test_car_interface(self):
     # TODO: also check for checkusm and counter violations from can parser
     can_invalid_cnt = 0
+    if self.sm is None:
+      self.sm = messaging.SubMaster(['dragonConf'])
     CC = car.CarControl.new_message()
     for i, msg in enumerate(self.can_msgs):
       self.sm.update(0)
