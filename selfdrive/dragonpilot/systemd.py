@@ -4,7 +4,7 @@ This is a service that broadcast dp config values to openpilot's messaging queue
 '''
 import cereal.messaging as messaging
 import time
-
+from math import floor
 from common.dp_conf import confs, get_struct_name, to_struct_val
 from common.params import Params, put_nonblocking
 import subprocess
@@ -31,7 +31,7 @@ if not os.path.exists(PARAM_PATH + "dp_last_modified"):
   if os.path.exists(PARAM_PATH + "dp_last_modified"):
     print("dp_last_modified created succesfully" )
   init_params_vals(params)
-  
+
 DELAY = 0.5 # 2hz
 HERTZ = 1/DELAY
 
