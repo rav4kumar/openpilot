@@ -40,7 +40,7 @@ ignore_can_valid = [
 
 @parameterized_class(('car_model'), [(car,) for car in all_known_cars()])
 class TestCarModel(unittest.TestCase):
-  def __init__(self)
+  def __init__(self):
     self.sm = messaging.SubMaster(['dragonConf'])
 
   @classmethod
