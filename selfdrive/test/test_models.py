@@ -5,7 +5,7 @@ import importlib
 import unittest
 from collections import Counter
 from parameterized import parameterized_class
-
+import cereal.messaging as messaging
 from cereal import log, car
 from selfdrive.car.fingerprints import all_known_cars
 from selfdrive.car.car_helpers import interfaces
@@ -58,7 +58,7 @@ class TestCarModel(unittest.TestCase):
       except Exception:
         if seg == 0:
           raise
-
+    self.sm = messaging.SubMaster(['dragonConf'])
     has_relay = False
     can_msgs = []
     fingerprint = {i: dict() for i in range(3)}
@@ -108,7 +108,8 @@ class TestCarModel(unittest.TestCase):
     can_invalid_cnt = 0
     CC = car.CarControl.new_message()
     for i, msg in enumerate(self.can_msgs):
-      CS = self.CI.update(CC, (msg.as_builder().to_bytes(),))
+      self.sm.update(0)
+      CS = self.CI.update(CC, (msg.as_builder().to_bytes(),), self.sm['dragonConf'])
       self.CI.apply(CC)
 
       # wait 2s for low frequency msgs to be seen
