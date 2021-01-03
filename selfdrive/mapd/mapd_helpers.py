@@ -186,6 +186,7 @@ class Way:
 
   @classmethod
   def closest(cls, query_results, lat, lon, heading, prev_way=None):
+    #pylint: disable=unused-argument
     if query_results is None:
       return None
     else:
@@ -197,7 +198,7 @@ class Way:
     #      if way is not None and way.on_way(lat, lon, heading):
     #        return way
 
-      results, tree, real_nodes, node_to_way, location_info = query_results  #pylint: disable=unused-argument
+      results, tree, real_nodes, node_to_way, location_info = query_results
 
     cur_pos = geodetic2ecef((lat, lon, 0))
     nodes = tree.query_ball_point(cur_pos, 150)
@@ -625,7 +626,8 @@ class Way:
     return points_carframe
 
   def next_way(self, heading):
-    results, tree, real_nodes, node_to_way, location_info = self.query_results  #pylint: disable=unused-argument
+    #pylint: disable=unused-argument
+    results, tree, real_nodes, node_to_way, location_info = self.query_results
     #print "way.id"
     #print self.id
     #print "node0.id"
