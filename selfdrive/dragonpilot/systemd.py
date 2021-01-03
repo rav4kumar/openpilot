@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#pylint: disable=W0105
 '''
 This is a service that broadcast dp config values to openpilot's messaging queues
 '''
