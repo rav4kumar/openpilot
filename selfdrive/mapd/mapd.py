@@ -580,10 +580,10 @@ def main():
     speedLimittrafficAdvisory = 0
     osm_way_id = 0
     speedLimittrafficAdvisoryvalid = False
-    sharedParams = {'last_gps' : last_gps, 'query_lock' : query_lock, 'last_query_result' : last_query_result, \
-                    'last_query_pos' : last_query_pos, 'cache_valid' : cache_valid, 'traffic_status' : traffic_status, \
-                    'traffic_confidence' : traffic_confidence, 'last_not_none_signal' : last_not_none_signal, \
-                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid, \
+    sharedParams = {'last_gps' : last_gps, 'query_lock' : query_lock, 'last_query_result' : last_query_result,
+                    'last_query_pos' : last_query_pos, 'cache_valid' : cache_valid, 'traffic_status' : traffic_status,
+                    'traffic_confidence' : traffic_confidence, 'last_not_none_signal' : last_not_none_signal,
+                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid, 
                     'speedLimittrafficAdvisory' : speedLimittrafficAdvisory, 'speedLimittrafficAdvisoryvalid' : speedLimittrafficAdvisoryvalid, 'osm_way_id' : osm_way_id}
 
     qt = QueryThread(1, "QueryThread", sharedParams=sharedParams)
