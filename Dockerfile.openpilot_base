@@ -42,7 +42,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     valgrind \
     wget \
-    overpy \ 
   && rm -rf /var/lib/apt/lists/*
 
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
@@ -62,3 +61,4 @@ RUN pyenv install 3.8.2 && \
     cd /tmp && \
     pipenv install --system --deploy --dev --clear && \
     pip uninstall -y pipenv
+RUN pip install overpy
