@@ -66,13 +66,13 @@ def get_last_modified(delay, old_check, old_modified):
   else:
     return old_check, old_modified
 
-def param_get_if_updated(param, type, old_val, old_modified):
+def param_get_if_updated(param, old_val, old_modified):
   try:
     modified = os.stat(PARAM_PATH + param).st_mtime
   except OSError:
     return old_val, old_modified
   if old_modified != modified:
-    new_val = param_get(param, type, old_val)
+    new_val = param_get(param, old_val)
     new_modified = modified
   else:
     new_val = old_val
