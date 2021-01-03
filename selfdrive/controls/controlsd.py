@@ -60,7 +60,7 @@ class Controls:
     if self.sm is None:
       socks = ['thermal', 'health', 'model', 'liveCalibration', 'radarState', 'frontFrame',
                                      'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'dragonConf']
-      ignore_alive = None if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState']
+      ignore_alive = ['dragonConf'] if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState', 'dragonConf']
       self.sm = messaging.SubMaster(socks, ignore_alive=ignore_alive)
 
     self.can_sock = can_sock
