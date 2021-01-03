@@ -33,7 +33,7 @@ def rate_curvature_points(p2,p3,curvature2,curvature3):
     return abs((curvature3-curvature2)/(np.sqrt((x3-x2)**2+(y3-y2)**2)))
   else:
     return 0
-  
+
 def distance(x0,y0,x1,y1,x2,y2):
   return abs((x2-x1)*(y1-y0) - (x1-x0)*(y2-y1)) / np.sqrt(np.square(x2-x1) + np.square(y2-y1))
 
@@ -95,7 +95,7 @@ def parse_speed_tags(tags):
         weekday = False
         #TODO Check if road is wet waybe if wipers are on.
       cond = cond[1:-1]
-      
+
       now = datetime.now()  # TODO: Get time and timezone from gps fix so this will work correctly on replays
       if cond.find('Mo-Fr') > -0.5:
         cond = cond.replace('Mo-Fr','')
@@ -196,8 +196,8 @@ class Way:
     #      way = prev_way.next_way(heading)
     #      if way is not None and way.on_way(lat, lon, heading):
     #        return way
-        
-      results, tree, real_nodes, node_to_way, location_info = query_results
+
+      results, tree, real_nodes, node_to_way, location_info = query_results  #pylint: disable=unused-argument
 
     cur_pos = geodetic2ecef((lat, lon, 0))
     nodes = tree.query_ball_point(cur_pos, 150)
@@ -273,10 +273,10 @@ class Way:
       if closest_way is None or score < best_score:
         closest_way = way
         best_score = score
-        
+
     if best_score is None:
       return None
-    
+
     # Normal score is < 5
     if best_score > 50:
       return None
@@ -323,7 +323,7 @@ class Way:
     speed_ahead_dist = None
     lookahead_ways = 5
     way = self
-    for i in range(lookahead_ways):
+    for _ in range(lookahead_ways):
       way_pts = way.points_in_car_frame(lat, lon, heading, True)
       #print way_pts
       # Check current lookahead distance
@@ -335,7 +335,7 @@ class Way:
         max_dist = np.linalg.norm(way_pts[0, :])
       else:
         max_dist = min(np.linalg.norm(way_pts[1, :]),np.linalg.norm(way_pts[0, :]),np.linalg.norm(way_pts[-1, :]))
-         
+
 
       if max_dist > 2 * lookahead:
         #print "max_dist break"
@@ -406,7 +406,7 @@ class Way:
           speed_ahead_dist = min_dist
           #print "slower speed found"
           #print min_dist
-          
+
           break
       way_pts = way.points_in_car_frame(lat, lon, heading, False)
       #print(way_pts)
@@ -585,7 +585,7 @@ class Way:
     #  factor = max(111132.954*math.cos(float(lat)/180*3.141592), 111132.954 - 559.822 * math.cos( 2 * float(lat)/180*3.141592) + 1.175 * math.cos( 4 * float(lat)/180*3.141592))
     #  for n in range(len(self.way.nodes)-1):
     #    if factor * distance(lat,lon,float(self.way.nodes[n].lat),float(self.way.nodes[n].lon),float(self.way.nodes[n+1].lat),float(self.way.nodes[n+1].lon)) < 10.0:
-    #      maybe = True 
+    #      maybe = True
     #  if not maybe:
     #    return False
     if points is None:
@@ -617,14 +617,14 @@ class Way:
 
     # Rotate with heading of car
     points_carframe = np.dot(rot, points_carframe[(1, 0, 2), :]).T
-    
+
     if points_carframe[-1,0] < points_carframe[0,0] and flip:
       points_carframe = np.flipud(points_carframe)
-      
+
     return points_carframe
 
   def next_way(self, heading):
-    results, tree, real_nodes, node_to_way, location_info = self.query_results
+    results, tree, real_nodes, node_to_way, location_info = self.query_results  #pylint: disable=unused-argument
     #print "way.id"
     #print self.id
     #print "node0.id"
@@ -734,8 +734,8 @@ class Way:
     pnts = None
     way = self
     valid = False
-    
-    for i in range(5):
+
+    for _ in range(5):
       # Get new points and append to list
       new_pnts = way.points_in_car_frame(lat, lon, heading, True)
 
