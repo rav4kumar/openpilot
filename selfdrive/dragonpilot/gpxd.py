@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.7
-#pylint: disable=W0105
+#pylint: skip-file
 '''
 GPS cord converter: https://gist.github.com/jp1017/71bd0976287ce163c11a7cb963b04dd8
 '''

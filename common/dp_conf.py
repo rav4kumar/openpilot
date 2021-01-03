@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.7
-#pylint: disable=W0105, E501
+#pylint: skip-file
 import os
 import json
 import time

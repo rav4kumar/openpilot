@@ -1,3 +1,4 @@
+#pylint: skip-file
 import math
 import json
 import numpy as np
