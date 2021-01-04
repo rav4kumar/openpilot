@@ -408,10 +408,10 @@ routes = {
     'enableCamera': True,
     'enableDsu': False,
   },
-  #"76b83eb0245de90e|2019-10-20--15-42-29": {
-  #  'carFingerprint': VOLKSWAGEN.GENERICPQ,
-  #  'enableCamera': True,
-  #},
+  "76b83eb0245de90e|2019-10-20--15-42-29": {
+    'carFingerprint': VOLKSWAGEN.GENERICPQ,
+    'enableCamera': True,
+  },
   "3c8f0c502e119c1c|2020-06-30--12-58-02": {
     'carFingerprint': SUBARU.ASCENT,
     'enableCamera': True,
