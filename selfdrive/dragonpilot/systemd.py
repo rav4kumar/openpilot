@@ -11,6 +11,7 @@ from common.params import Params, put_nonblocking
 import subprocess
 import re
 import os
+from typing import Dict, Any
 from selfdrive.thermald.power_monitoring import set_battery_charging, get_battery_charging
 params = Params()
 from common.realtime import sec_since_boot
@@ -35,7 +36,7 @@ if not os.path.exists(PARAM_PATH + "dp_last_modified"):
 DELAY = 0.5 # 2hz
 HERTZ = 1/DELAY
 
-last_modified_confs = {}
+last_modified_confs: Dict[str, Any] = {}
 
 def confd_thread():
   sm = messaging.SubMaster(['thermal'])
