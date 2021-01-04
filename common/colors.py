@@ -32,12 +32,12 @@ class COLORS:
     return '\33[48;5;{}m'.format(col)
 
 
-COLORS = COLORS()
+COLOURS = COLORS()
 
 
 def opParams_warning(msg):
-  print('{}opParams WARNING: {}{}'.format(COLORS.WARNING, msg, COLORS.ENDC))
+  print('{}opParams WARNING: {}{}'.format(COLOURS.WARNING, msg, COLOURS.ENDC))
 
 
 def opParams_error(msg):
-  print('{}opParams ERROR: {}{}'.format(COLORS.FAIL, msg, COLORS.ENDC))
+  print('{}opParams ERROR: {}{}'.format(COLOURS.FAIL, msg, COLOURS.ENDC))
