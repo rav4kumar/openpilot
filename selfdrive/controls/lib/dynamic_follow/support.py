@@ -1,3 +1,5 @@
+from typing import List
+
 class LeadData:
   v_lead = None
   x_lead = None
@@ -16,8 +18,8 @@ class CarData:
 
 
 class dfData:
-  v_egos = []
-  v_rels = []
+  v_egos: List[Any]
+  v_rels: List[Any]
 
 
 class dfProfiles:
