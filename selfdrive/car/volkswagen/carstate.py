@@ -70,7 +70,6 @@ class CarState(CarStateBase):
     elif trans_type == TRANS.manual:
       ret.clutchPressed = not pt_cp.vl["Motor_14"]['MO_Kuppl_schalter']
       reverse_light = bool(pt_cp.vl["Gateway_72"]['BCM1_Rueckfahrlicht_Schalter'])
-      # TODO: consider gating an OP minimum engage speed on whether the clutch is pressed, to prevent stalling
       if reverse_light:
         ret.gearShifter = GEAR.reverse
       else:
@@ -104,7 +103,7 @@ class CarState(CarStateBase):
     ret.leftBlindspot = any([bool(acc_cp.vl["SWA_01"]["SWA_Infostufe_SWA_li"]),
                              bool(acc_cp.vl["SWA_01"]["SWA_Warnung_SWA_li"])])
     ret.rightBlindspot = any([bool(acc_cp.vl["SWA_01"]["SWA_Infostufe_SWA_re"]),
-                              bool(acc_cp.vl["SWA_01"]["SWA_Warnung_SWA_re"])])
+                             bool(acc_cp.vl["SWA_01"]["SWA_Warnung_SWA_re"])])
 
     # Consume SWA (Lane Change Assist) relevant info from factory LDW message
     # to pass along to the blind spot radar controller
@@ -201,16 +200,8 @@ class CarState(CarStateBase):
     elif trans_type == TRANS.manual:
       ret.clutchPressed = not pt_cp.vl["Motor_1"]['Kupplungsschalter']
       reverse_light = bool(pt_cp.vl["Gate_Komf_1"]['GK1_Rueckfahr'])
-      # TODO: verify this synthesis has the desired behavior.
-      # In particular, should we neutral disengage during normal gear changes?
-      # Also, what happens if we're rolling backwards with the clutch pressed
-      # in a gear other than reverse?
       if reverse_light:
         ret.gearShifter = GEAR.reverse
-      elif ret.standstill and self.parkingBrakeSet:
-        ret.gearShifter = GEAR.park
-      elif ret.clutchPressed:
-        ret.gearShifter = GEAR.neutral
       else:
         ret.gearShifter = GEAR.drive
 
@@ -359,11 +350,7 @@ class CarState(CarStateBase):
                  #("SWA_01", 20),  # From J1086 Lane Change Assist module
                  ("ACC_02", 17)]  # From J428 ACC radar control module
 
-    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.pt)
-
-  # A single signal is monitored from the camera CAN bus, and then ignored,
-  # so the presence of CAN traffic can be verified with cam_cp.valid.
 
   @staticmethod
   def get_pq_can_parser(CP):
@@ -437,7 +424,6 @@ class CarState(CarStateBase):
       signals += [("ACA_V_Wunsch", "ACC_GRA_Anziege", 0)]  # ACC set speed
       checks += [("ACC_GRA_Anziege", 25)]  # From J428 ACC radar control module
 
-    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.pt)
 
   @staticmethod
@@ -476,7 +462,6 @@ class CarState(CarStateBase):
                  #("SWA_01", 20),  # From J1086 Lane Change Assist module
                  ("ACC_02", 17)]  # From J428 ACC radar control module
 
-    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.cam)
 
   @staticmethod
@@ -490,5 +475,4 @@ class CarState(CarStateBase):
       signals += [("ACA_V_Wunsch", "ACC_GRA_Anziege", 0)]  # ACC set speed
       checks += [("ACC_GRA_Anziege", 25)]  # From J428 ACC radar control module
 
-    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.cam)
