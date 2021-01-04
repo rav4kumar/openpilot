@@ -51,8 +51,8 @@ MQB_LDW_MESSAGES = {
 }
 
 class CAR:
-  GENERICMQB = "Generic Volkswagen MQB Platform Vehicle"
-  GENERICPQ = "Generic Volkswagen PQ35/PQ46/NMS Platform Vehicle"
+  GENERICMQB = "VOLKSWAGEN MQB"
+  GENERICPQ = "VOLKSWAGEN GOLF"
 
 FINGERPRINTS = {
   CAR.GENERICMQB: [
