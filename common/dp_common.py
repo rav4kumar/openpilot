@@ -16,7 +16,7 @@ else:
   PARAM_PATH = "/data/params/d/"
 LAST_MODIFIED = str(PARAM_PATH) + "dp_last_modified"
 if not os.path.exists(LAST_MODIFIED):
-  os.makedirs(os.environ.get('HOME') + "/.comma/params/d/", exist_ok=True)
+  os.makedirs(str(os.environ.get('HOME')) + "/.comma/params/d/", exist_ok=True)
   print("dp_last_modified is " + str(floor(time.time())))
   params.put('dp_last_modified',str(floor(time.time())))
   init_params_vals(params)
