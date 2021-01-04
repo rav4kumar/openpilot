@@ -51,8 +51,8 @@ MQB_LDW_MESSAGES = {
 }
 
 class CAR:
-  GENERICMQB = "Generic Volkswagen MQB Platform Vehicle"
-  GENERICPQ = "Generic Volkswagen PQ35/PQ46/NMS Platform Vehicle"
+  GENERICMQB = "VOLKSWAGEN MQB"
+  GENERICPQ = "VOLKSWAGEN GOLF"
 
 # Mega-fingerprint used to identify any and all MQB platform vehicles. Specific
 # make and model characteristics are looked up from the VIN later.
