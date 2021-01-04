@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 
 class LeadData:
   v_lead = None
