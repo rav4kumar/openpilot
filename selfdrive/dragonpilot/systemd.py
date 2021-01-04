@@ -20,7 +20,7 @@ from common.dp_time import LAST_MODIFIED_SYSTEMD
 from selfdrive.dragonpilot.dashcam import Dashcam
 from common.travis_checker import travis
 if travis:
-  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
+  PARAM_PATH = str(os.environ.get('HOME')) + "/.comma/params/d/"
 else:
   PARAM_PATH = '/data/params/d/'
 files = os.listdir(PARAM_PATH)
