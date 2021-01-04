@@ -11,10 +11,10 @@ from common.travis_checker import travis
 from common.dp_conf import init_params_vals
 
 if travis:
-  PARAM_PATH = os.environ.get('HOME') + "/.comma/params/d/"
+  PARAM_PATH = str(os.environ.get('HOME')) + "/.comma/params/d/"
 else:
   PARAM_PATH = "/data/params/d/"
-LAST_MODIFIED = PARAM_PATH + "dp_last_modified"
+LAST_MODIFIED = str(PARAM_PATH) + "dp_last_modified"
 if not os.path.exists(LAST_MODIFIED):
   os.makedirs(os.environ.get('HOME') + "/.comma/params/d/", exist_ok=True)
   print("dp_last_modified is " + str(floor(time.time())))
