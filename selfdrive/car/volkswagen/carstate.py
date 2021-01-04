@@ -219,8 +219,8 @@ class CarState(CarStateBase):
 
     # Update ACC radar status.
     # FIXME: This is unfinished and not fully correct, need to improve further
-    #ret.cruiseState.available = bool(pt_cp.vl["GRA_neu"]['Hauptschalter'])
-    #ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
+    ret.cruiseState.available = bool(pt_cp.vl["GRA_neu"]['GRA_Hauptschalt'])
+    ret.cruiseState.enabled = True if pt_cp.vl["Motor_2"]['GRA_Status'] in [1, 2] else False
 
     # Update ACC setpoint. When the setpoint reads as 255, the driver has not
     # yet established an ACC setpoint, so treat it as zero.
@@ -384,7 +384,7 @@ class CarState(CarStateBase):
       ("MFA_v_Einheit_02", "Einheiten_1", 0),       # MPH vs KMH speed display
       ("Bremsinfo", "Kombi_1", 0),                  # Manual handbrake applied
       ("GRA_Status", "Motor_2", 0),                 # ACC engagement status
-      ("Hauptschalter", "GRA_neu", 0),              # ACC button, on/off
+      ("GRA_Hauptschalt", "GRA_neu", 0),              # ACC button, on/off
       ("Abbrechen", "GRA_neu", 0),                  # ACC button, cancel
       ("Setzen", "GRA_neu", 0),                     # ACC button, set
       ("Lang_Tip_up", "GRA_neu", 0),                # ACC button, increase or accel, long press
