@@ -222,23 +222,20 @@ class CarState(CarStateBase):
     # active if the partial braking or target braking release bits are set.
     # Ref: VW SSP 890253 "Volkswagen Driver Assistance Systems V2", "Front
     # Assist with Braking: Golf Family" (applies to all MQB)
-    ret.stockFcw = bool(acc_cp.vl["ACC_10"]["AWV2_Freigabe"])
-    ret.stockAeb = any([bool(acc_cp.vl["ACC_10"]["ANB_Teilbremsung_Freigabe"]),
-                        bool(acc_cp.vl["ACC_10"]["ANB_Zielbremsung_Freigabe"])])
+    ret.stockFcw = False
+    ret.stockAeb = False
 
     # Consume blind-spot radar info/warning LED states, if available
-    ret.leftBlindspot = any([bool(acc_cp.vl["SWA_01"]["SWA_Infostufe_SWA_li"]),
-                             bool(acc_cp.vl["SWA_01"]["SWA_Warnung_SWA_li"])])
-    ret.rightBlindspot = any([bool(acc_cp.vl["SWA_01"]["SWA_Infostufe_SWA_re"]),
-                             bool(acc_cp.vl["SWA_01"]["SWA_Warnung_SWA_re"])])
+    ret.leftBlindspot = False
+    ret.rightBlindspot = False
 
     # Consume SWA (Lane Change Assist) relevant info from factory LDW message
     # to pass along to the blind spot radar controller
-    self.ldw_lane_warning_left = bool(cam_cp.vl["LDW_02"]["LDW_SW_Warnung_links"])
-    self.ldw_lane_warning_right = bool(cam_cp.vl["LDW_02"]["LDW_SW_Warnung_rechts"])
-    self.ldw_side_dlc_tlc = bool(cam_cp.vl["LDW_02"]["LDW_Seite_DLCTLC"])
-    self.ldw_dlc = cam_cp.vl["LDW_02"]["LDW_DLC"]
-    self.ldw_tlc = cam_cp.vl["LDW_02"]["LDW_TLC"]
+    self.ldw_lane_warning_left = False
+    self.ldw_lane_warning_right = False
+    self.ldw_side_dlc_tlc = False
+    self.ldw_dlc = 0
+    self.ldw_tlc = 0
 
     # Update ACC radar status.
     # FIXME: This is unfinished and not fully correct, need to improve further
