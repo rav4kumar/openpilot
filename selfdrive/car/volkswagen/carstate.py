@@ -1,3 +1,4 @@
+#pylint: skip-file
 import numpy as np
 from cereal import car
 from selfdrive.config import Conversions as CV
