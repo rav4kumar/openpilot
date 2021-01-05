@@ -94,7 +94,7 @@ class TestCarModel(unittest.TestCase):
     elif tuning == 'lqr':
       self.assertTrue(len(self.CP.lateralTuning.lqr.a))
     elif tuning == 'indi':
-      self.assertGreater(self.CP.lateralTuning.indi.outerLoopGain, 1e-3)
+      self.assertGreater(self.CP.lateralTuning.indi.outerLoopGain, 1e-1)
 
     self.assertTrue(self.CP.enableCamera)
 
