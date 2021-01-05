@@ -64,8 +64,12 @@ class CarInterface(CarInterfaceBase):
     elif candidate == CAR.PRIUS_TSS2:
       #ret.longitudinalTuning.kpV = [0.4, 0.36, 0.325]  # braking tune from rav4h
       #ret.longitudinalTuning.kiV = [0.195, 0.10]
-      ret.longitudinalTuning.kpV = [1.8, 0.75, 0.31]
-      ret.longitudinalTuning.kiV = [0.18, 0.13]
+      ret.longitudinalTuning.deadzoneBP = [0., 8.05]
+      ret.longitudinalTuning.deadzoneV = [.0, .14]
+      ret.longitudinalTuning.kpBP = [0., 5., 20.]
+      ret.longitudinalTuning.kpV = [1.3, 1.0, 0.7]
+      ret.longitudinalTuning.kiBP = [0., 5., 12., 20., 27.] # 0, 11, 27, 45, 60
+      ret.longitudinalTuning.kiV = [.35, .23, .20, .17, .1]
       stop_and_go = True
       ret.safetyParam = 55
       ret.wheelbase = 2.70002
@@ -271,7 +275,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.indi.timeConstantV = [2.8, 3.7, 4.0, 4.0]
       ret.lateralTuning.indi.actuatorEffectivenessBP = [0]
       ret.lateralTuning.indi.actuatorEffectivenessV = [15.0]
-      
+
     elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
       ret.safetyParam = 73
