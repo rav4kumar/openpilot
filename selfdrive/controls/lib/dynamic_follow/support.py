@@ -1,5 +1,4 @@
-from typing import List, Any
-
+#pylint: skip-file
 class LeadData:
   v_lead = None
   x_lead = None
@@ -18,8 +17,8 @@ class CarData:
 
 
 class dfData:
-  v_egos: List[Any]
-  v_rels: List[Any]
+  v_egos = []
+  v_rels = []
 
 
 class dfProfiles:
