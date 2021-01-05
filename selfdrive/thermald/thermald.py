@@ -386,7 +386,6 @@ def thermald_thread():
 
     startup_conditions["not_uninstalling"] = not params.get("DoUninstall") == b"1"
     startup_conditions["accepted_terms"] = params.get("HasAcceptedTerms") == terms_version
-    completed_training = params.get("CompletedTrainingVersion") == training_version
 
     #panda_signature = params.get("PandaFirmware")
     #startup_conditions["fw_version_match"] = (panda_signature is None) or (panda_signature == FW_SIGNATURE)   # don't show alert is no panda is connected (None)
