@@ -71,7 +71,7 @@ class CarInterfaceBase():
     ret.brakeMaxBP = [0.]
     ret.brakeMaxV = [1.]
     ret.openpilotLongitudinalControl = False
-    ret.startAccel = 0.0
+    ret.startAccel = 1.2
     ret.stoppingControl = False
     ret.longitudinalTuning.deadzoneBP = [0.]
     ret.longitudinalTuning.deadzoneV = [0.]

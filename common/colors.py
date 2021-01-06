@@ -1,3 +1,4 @@
+#pylint: skip-file
 class COLORS:
   def __init__(self):
     self.HEADER = '\033[95m'
@@ -18,7 +19,8 @@ class COLORS:
     self.BLUE_GREEN = self.BASE(85)
 
     self.FAIL = self.RED
-    self.INFO = self.PURPLE_BG
+    # self.INFO = self.PURPLE_BG
+    self.INFO = self.BASE(207)
     self.SUCCESS = self.OKGREEN
     self.PROMPT = self.YELLOW
     self.DBLUE = '\033[36m'
@@ -32,12 +34,12 @@ class COLORS:
     return '\33[48;5;{}m'.format(col)
 
 
-COLOURS = COLORS()
+COLORS = COLORS()
 
 
 def opParams_warning(msg):
-  print('{}opParams WARNING: {}{}'.format(COLOURS.WARNING, msg, COLOURS.ENDC))
+  print('{}opParams WARNING: {}{}'.format(COLORS.WARNING, msg, COLORS.ENDC))
 
 
 def opParams_error(msg):
-  print('{}opParams ERROR: {}{}'.format(COLOURS.FAIL, msg, COLOURS.ENDC))
+  print('{}opParams ERROR: {}{}'.format(COLORS.FAIL, msg, COLORS.ENDC))
