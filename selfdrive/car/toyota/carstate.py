@@ -6,6 +6,8 @@ from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_STOP_TIMER_CAR
 from common.params import Params
+import cereal.messaging as messaging
+from common.travis_checker import travis
 
 
 class CarState(CarStateBase):
@@ -23,7 +25,9 @@ class CarState(CarStateBase):
     self.pcm_acc_active = False
     self.main_on = False
     self.distance = 0
-
+    if not travis:
+      self.pm = messaging_arne.PubMaster(['liveTrafficData'])
+      self.sm = messaging.SubMaster(['latControl', 'liveMapData'])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
     # Need to apply an offset as soon as the steering angle measurements are both received
@@ -131,6 +135,54 @@ class CarState(CarStateBase):
       ret.leftBlindspot = (cp.vl["BSM"]['L_ADJACENT'] == 1) or (cp.vl["BSM"]['L_APPROACHING'] == 1)
       ret.rightBlindspot = (cp.vl["BSM"]['R_ADJACENT'] == 1) or (cp.vl["BSM"]['R_APPROACHING'] == 1)
 
+
+    self.tsgn1 = cp_cam.vl["RSA1"]['TSGN1']
+    if self.spdval1 != cp_cam.vl["RSA1"]['SPDVAL1']:
+      self.rsa_ignored_speed = 0
+    self.spdval1 = cp_cam.vl["RSA1"]['SPDVAL1']
+
+    self.splsgn1 = cp_cam.vl["RSA1"]['SPLSGN1']
+    self.tsgn2 = cp_cam.vl["RSA1"]['TSGN2']
+    #self.spdval2 = cp_cam.vl["RSA1"]['SPDVAL2']
+
+    self.splsgn2 = cp_cam.vl["RSA1"]['SPLSGN2']
+    self.tsgn3 = cp_cam.vl["RSA2"]['TSGN3']
+    self.splsgn3 = cp_cam.vl["RSA2"]['SPLSGN3']
+    self.tsgn4 = cp_cam.vl["RSA2"]['TSGN4']
+    self.splsgn4 = cp_cam.vl["RSA2"]['SPLSGN4']
+    self.noovertake = self.tsgn1 == 65 or self.tsgn2 == 65 or self.tsgn3 == 65 or self.tsgn4 == 65 or self.tsgn1 == 66 or self.tsgn2 == 66 or self.tsgn3 == 66 or self.tsgn4 == 66
+    if (self.spdval1 > 0) and not (self.spdval1 == 35 and self.tsgn1 == 1) and self.rsa_ignored_speed != self.spdval1:
+      dat = messaging.message('liveTrafficData')
+      if self.spdval1 > 0:
+        dat.liveTrafficData.speedLimitValid = True
+        if self.tsgn1 == 36:
+          dat.liveTrafficData.speedLimit = self.spdval1 * 1.60934
+        elif self.tsgn1 == 1:
+          dat.liveTrafficData.speedLimit = self.spdval1
+        else:
+          dat.liveTrafficData.speedLimit = 0
+      else:
+        dat.liveTrafficData.speedLimitValid = False
+      #if self.spdval2 > 0:
+      #  dat.liveTrafficData.speedAdvisoryValid = True
+      #  dat.liveTrafficData.speedAdvisory = self.spdval2
+      #else:
+      dat.liveTrafficData.speedAdvisoryValid = False
+      if limit_rsa and rsa_max_speed < ret.vEgo:
+        dat.liveTrafficData.speedLimitValid = False
+      if not travis:
+        self.pm.send('liveTrafficData', dat)
+    if ret.gasPressed and not self.gas_pressed:
+      self.engaged_when_gas_was_pressed = self.pcm_acc_active
+    if ((ret.gasPressed) or (self.gas_pressed and not ret.gasPressed)) and self.engaged_when_gas_was_pressed and ret.vEgo > self.smartspeed:
+      self.rsa_ignored_speed = self.spdval1
+      dat = messaging.message('liveTrafficData')
+      dat.liveTrafficData.speedLimitValid = True
+      dat.liveTrafficData.speedLimit = ret.vEgo * 3.6
+      if not travis:
+        self.pm.send('liveTrafficData', dat)
+    self.gas_pressed = ret.gasPressed
+
     return ret
 
   @staticmethod
@@ -236,6 +288,16 @@ class CarState(CarStateBase):
     signals = [
       ("FORCE", "PRE_COLLISION", 0),
       ("PRECOLLISION_ACTIVE", "PRE_COLLISION", 0),
+      ("TSGN1", "RSA1", 0),
+      ("SPDVAL1", "RSA1", 0),
+      ("SPLSGN1", "RSA1", 0),
+      ("TSGN2", "RSA1", 0),
+      #("SPDVAL2", "RSA1", 0),
+      ("SPLSGN2", "RSA1", 0),
+      ("TSGN3", "RSA2", 0),
+      ("SPLSGN3", "RSA2", 0),
+      ("TSGN4", "RSA2", 0),
+      ("SPLSGN4", "RSA2", 0),
       ("DISTANCE", "ACC_CONTROL", 0),
     ]
 
