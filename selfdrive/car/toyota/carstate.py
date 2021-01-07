@@ -8,6 +8,11 @@ from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_
 from common.params import Params
 import cereal.messaging as messaging
 from common.travis_checker import travis
+from common.op_params import opParams
+
+op_params = opParams()
+rsa_max_speed = op_params.get('rsa_max_speed')
+limit_rsa = op_params.get('limit_rsa')
 
 
 class CarState(CarStateBase):
@@ -26,7 +31,7 @@ class CarState(CarStateBase):
     self.main_on = False
     self.distance = 0
     if not travis:
-      self.pm = messaging_arne.PubMaster(['liveTrafficData'])
+      self.pm = messaging.PubMaster(['liveTrafficData'])
       self.sm = messaging.SubMaster(['latControl', 'liveMapData'])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
