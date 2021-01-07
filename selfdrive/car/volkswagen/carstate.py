@@ -6,10 +6,9 @@ from opendbc.can.parser import CANParser
 from opendbc.can.can_define import CANDefine
 from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, TRANS, GEAR, BUTTON_STATES, CarControllerParams
 
-class CarState(CarStateBase):
-  def __init__(self, CP):
-    super().__init__(CP)
-    can_define = CANDefine(DBC[CP.carFingerprint]['pt'])
+class CarInterface(CarInterfaceBase):
+  def __init__(self, CP, CarController, CarState):
+    super().__init__(CP, CarController, CarState)
 
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
       # Configure for PQ35/PQ46/NMS network messaging
