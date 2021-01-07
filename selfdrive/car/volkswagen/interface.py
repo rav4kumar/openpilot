@@ -33,6 +33,8 @@ class CarInterface(CarInterfaceBase):
   def get_params(candidate, fingerprint=gen_empty_fingerprint(), has_relay=False, car_fw=None):
     ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
+    ret.communityFeature = True
+
     # Set global default parameters
     ret.radarOffCan = True
     ret.enableCamera = True  # Stock camera detection doesn't apply to VW
