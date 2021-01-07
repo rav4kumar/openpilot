@@ -557,7 +557,8 @@ class Way:
                 loop_must_break = True
                 break
           count += 1
-        if loop_must_break: break
+        if loop_must_break:
+          break
       except (KeyError, IndexError, ValueError):
         pass
       # Find next way
