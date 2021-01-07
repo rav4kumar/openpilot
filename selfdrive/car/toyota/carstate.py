@@ -95,7 +95,7 @@ class CarState(CarStateBase):
 
     if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
       self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
-      msg_df = messaging.new_message('dpDynamicFollow')
+      msg_df = messaging.new_message('DragonConf')
       msg_df.dpDynamicFollow.status = max(self.read_distance_lines - 1, 0)
       self.pm.send('dpDynamicFollow', msg_df)
 
