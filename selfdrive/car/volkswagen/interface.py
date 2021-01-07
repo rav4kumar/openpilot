@@ -9,7 +9,6 @@ EventName = car.CarEvent.EventName
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
     super().__init__(CP, CarController, CarState)
-    can_define = CANDefine(DBC[CP.carFingerprint]['pt'])
 
     self.displayMetricUnitsPrev = None
     self.gas_pressed_prev = False

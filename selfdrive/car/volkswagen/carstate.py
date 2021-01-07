@@ -9,6 +9,7 @@ from selfdrive.car.volkswagen.values import DBC, CANBUS, NWL, TRANS, GEAR, BUTTO
 class CarInterface(CarInterfaceBase):
   def __init__(self, CP, CarController, CarState):
     super().__init__(CP, CarController, CarState)
+    can_define = CANDefine(DBC[CP.carFingerprint]['pt'])
 
     if CP.safetyModel == car.CarParams.SafetyModel.volkswagenPq:
       # Configure for PQ35/PQ46/NMS network messaging
