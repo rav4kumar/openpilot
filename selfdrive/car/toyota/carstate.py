@@ -33,8 +33,9 @@ class CarState(CarStateBase):
     self.smartspeed = 0
     self.spdval1 = 0
     self.distance = 0
+    self.read_distance_lines = 0
     if not travis:
-      self.pm = messaging.PubMaster(['liveTrafficData'])
+      self.pm = messaging.PubMaster(['liveTrafficData', 'dpDynamicFollow'])
       self.sm = messaging.SubMaster(['liveMapData'])#',latControl',])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
@@ -91,6 +92,12 @@ class CarState(CarStateBase):
     ret.steeringRate = cp.vl["STEER_ANGLE_SENSOR"]['STEER_RATE']
     can_gear = int(cp.vl["GEAR_PACKET"]['GEAR'])
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
+
+    if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
+      self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
+      msg_df = messaging.new_message('dpDynamicFollow')
+      msg_df.dpDynamicFollow.status = max(self.read_distance_lines - 1, 0)
+      self.pm.send('dpDynamicFollow', msg_df)
 
     if not travis:
       self.sm.update(0)
