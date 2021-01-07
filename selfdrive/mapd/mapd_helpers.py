@@ -187,7 +187,6 @@ class Way:
 
   @classmethod
   def closest(cls, query_results, lat, lon, heading, prev_way=None):
-    #pylint: disable=unused-argument
     if query_results is None:
       return None
     else:
@@ -325,7 +324,7 @@ class Way:
     speed_ahead_dist = None
     lookahead_ways = 5
     way = self
-    for _ in range(lookahead_ways):
+    for i in range(lookahead_ways):
       way_pts = way.points_in_car_frame(lat, lon, heading, True)
       #print way_pts
       # Check current lookahead distance
@@ -558,8 +557,7 @@ class Way:
                 loop_must_break = True
                 break
           count += 1
-        if loop_must_break:
-          break
+        if loop_must_break: break
       except (KeyError, IndexError, ValueError):
         pass
       # Find next way
@@ -627,7 +625,6 @@ class Way:
     return points_carframe
 
   def next_way(self, heading):
-    #pylint: disable=unused-argument
     results, tree, real_nodes, node_to_way, location_info = self.query_results
     #print "way.id"
     #print self.id
@@ -739,7 +736,7 @@ class Way:
     way = self
     valid = False
 
-    for _ in range(5):
+    for i in range(5):
       # Get new points and append to list
       new_pnts = way.points_in_car_frame(lat, lon, heading, True)
 

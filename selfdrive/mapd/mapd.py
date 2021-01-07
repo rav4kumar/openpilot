@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+#pylint: skip-file
 import time
 import math
 import overpy
@@ -43,14 +43,14 @@ class LoggerThread(threading.Thread):
             location = [gps.speed, gps.bearing, gps.latitude, gps.longitude, gps.altitude, gps.accuracy, time.time(), osm_way_id]
             with open("/data/openpilot/selfdrive/data_collection/gps-data", "a") as f:
                 f.write("{}\n".format(location))
-        except Exception:
+        except:
             self.logger.error("Unable to write gps data to external file")
 
     def run(self):
         pass # will be overridden in the child class
 
 class QueryThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
+    def __init__(self, threadID, name, sharedParams={}): # sharedParams is dict of params shared between two threads
         # invoke parent constructor https://stackoverflow.com/questions/2399307/how-to-invoke-the-super-constructor-in-python
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
@@ -71,7 +71,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_LOCAL, timeout=timeout)
             self.logger.debug("connection local active")
             return True
-        except Exception:
+        except:
             self.logger.error("No local server available.")
             return False
 
@@ -80,7 +80,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_URL, timeout=timeout)
             self.logger.debug("connection 1 active")
             return True
-        except Exception:
+        except:
             self.logger.error("No internet connection available.")
             return False
 
@@ -89,7 +89,7 @@ class QueryThread(LoggerThread):
             requests.get(self.OVERPASS_API_URL2, timeout=timeout)
             self.logger.debug("connection 2 active")
             return True
-        except Exception:
+        except:
             self.logger.error("No internet connection available.")
             return False
 
@@ -110,11 +110,11 @@ class QueryThread(LoggerThread):
         convert area ::id = id(), admin_level = t['admin_level'],
         name = t['name'], "ISO3166-1:alpha2" = t['ISO3166-1:alpha2'];out;
         """
-        self.logger.debug('build_way_query : %s', str(q))
+        self.logger.debug("build_way_query : %s" % str(q))
         return q, lat, lon
 
     def run(self):
-        self.logger.debug('run method started for thread %s', self.name)
+        self.logger.debug("run method started for thread %s" % self.name)
 
         # for now we follow old logic, will be optimized later
         start = time.time()
@@ -130,7 +130,7 @@ class QueryThread(LoggerThread):
 
             self.logger.debug("Starting after sleeping for 1 second ...")
             last_gps = self.sharedParams.get('last_gps', None)
-            self.logger.debug('last_gps = %s', str(last_gps))
+            self.logger.debug("last_gps = %s" % str(last_gps))
 
             if last_gps is not None:
                 fix_ok = last_gps.flags & 1
@@ -146,11 +146,9 @@ class QueryThread(LoggerThread):
                     self.prev_ecef = geodetic2ecef((last_query_pos.latitude, last_query_pos.longitude, last_query_pos.altitude))
 
                 dist = np.linalg.norm(cur_ecef - self.prev_ecef)
-
-                self.logger.debug('parameters, cur_ecef = %s, prev_ecef = %s, dist=%s', str(cur_ecef), str(self.prev_ecef), str(dist))
-
                 if dist < radius - self.distance_to_edge: #updated when we are close to the edge of the downloaded circle
                     continue
+                    self.logger.debug("parameters, cur_ecef = %s, prev_ecef = %s, dist=%s" % (str(cur_ecef), str(self.prev_ecef), str(dist)))
 
                 if dist > radius:
                     query_lock = self.sharedParams.get('query_lock', None)
@@ -180,7 +178,7 @@ class QueryThread(LoggerThread):
                     else:
                         continue
                     new_result = api.query(q)
-                    self.logger.debug('new_result = %s', str(new_result))
+                    self.logger.debug("new_result = %s" % str(new_result))
                     # Build kd-tree
                     nodes = []
                     real_nodes = []
@@ -204,7 +202,7 @@ class QueryThread(LoggerThread):
                     nodes = np.asarray(nodes)
                     nodes = geodetic2ecef(nodes)
                     tree = spatial.KDTree(nodes)
-                    self.logger.debug('query thread, ... %s %s', str(nodes), str(tree))
+                    self.logger.debug("query thread, ... %s %s" % (str(nodes), str(tree)))
 
                     # write result
                     query_lock = self.sharedParams.get('query_lock', None)
@@ -223,7 +221,7 @@ class QueryThread(LoggerThread):
                         self.logger.error("There is not query_lock")
 
                 except Exception as e:
-                    self.logger.error('ERROR %d', str(e))
+                    self.logger.error("ERROR :" + str(e))
                     print(str(e))
                     query_lock = self.sharedParams.get('query_lock', None)
                     query_lock.acquire()
@@ -238,14 +236,14 @@ class QueryThread(LoggerThread):
             self.logger.debug("end of one cycle in endless loop ...")
 
 class MapsdThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}): # pylint: disable=dangerous-default-value
+    def __init__(self, threadID, name, sharedParams={}):
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
         self.pm = messaging.PubMaster(['liveMapData'])
-        self.logger.debug('entered mapsd_thread, ... %s', ( str(self.pm)))
+        self.logger.debug("entered mapsd_thread, ... %s" % ( str(self.pm)))
     def run(self):
-        self.logger.debug('Entered run method for thread %d', str(self.name))
+        self.logger.debug("Entered run method for thread :" + str(self.name))
         cur_way = None
         curvature_valid = False
         curvature = None
@@ -260,7 +258,7 @@ class MapsdThread(LoggerThread):
         start = time.time()
         while True:
             if time.time() - start > 0.2:
-                print('Mapd MapsdThread lagging by: %s', str(time.time() - start - 0.1))
+                print("Mapd MapsdThread lagging by: %s" % str(time.time() - start - 0.1))
             if time.time() - start < 0.1:
                 time.sleep(0.01)
                 continue
@@ -281,7 +279,7 @@ class MapsdThread(LoggerThread):
             if gps is None:
                 continue
             fix_ok = gps.flags & 1
-            self.logger.debug('fix_ok = %d', str(fix_ok))
+            self.logger.debug("fix_ok = %s" % str(fix_ok))
 
             if gps.accuracy > 2.5:
                 if gps.accuracy > 5.0:
@@ -303,7 +301,7 @@ class MapsdThread(LoggerThread):
             elif not had_good_gps:
                 had_good_gps = True
             if not fix_ok or self.sharedParams['last_query_result'] is None or not self.sharedParams['cache_valid']:
-                self.logger.debug('fix_ok %s', fix_ok)
+                self.logger.debug("fix_ok %s" % fix_ok)
                 self.logger.error("Error in fix_ok logic")
                 cur_way = None
                 curvature = None
@@ -459,14 +457,14 @@ class MapsdThread(LoggerThread):
             self.pm.send('liveMapData', dat)
 
 class MessagedGPSThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
+    def __init__(self, threadID, name, sharedParams={}):
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
         self.sm = messaging.SubMaster(['gpsLocationExternal'])
-        self.logger.debug('entered messagedGPS_thread, ... %s', (str(self.sm)))
+        self.logger.debug("entered messagedGPS_thread, ... %s" % (str(self.sm)))
     def run(self):
-        self.logger.debug('Entered run method for thread %d', str(self.name))
+        self.logger.debug("Entered run method for thread :" + str(self.name))
         gps = None
         start = time.time()
         while True:
@@ -488,19 +486,19 @@ class MessagedGPSThread(LoggerThread):
             query_lock.acquire()
             self.sharedParams['last_gps'] = gps
             query_lock.release()
-            self.logger.debug('setting last_gps to %s', str(gps))
+            self.logger.debug("setting last_gps to %s" % str(gps))
 
 class MessagedThread(LoggerThread):
-    def __init__(self, threadID, name, sharedParams={}):  # pylint: disable=dangerous-default-value
+    def __init__(self, threadID, name, sharedParams={}):
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
         self.sharedParams = sharedParams
         self.sm = messaging.SubMaster(['liveTrafficData'])#,'trafficModelEvent'])
         #self.logger.debug("entered messageArned_thread, ... %s" % str(self.arne_sm))
     def run(self):
-        self.logger.debug('Entered run method for thread %d', str(self.name))
+        self.logger.debug("Entered run method for thread :" + str(self.name))
         last_not_none_signal = 'NONE'
-        #last_not_none_signal_counter = 0
+        last_not_none_signal_counter = 0
         traffic_confidence = 0
         traffic_status = 'NONE'
         speedLimittraffic = 0
@@ -582,10 +580,10 @@ def main():
     speedLimittrafficAdvisory = 0
     osm_way_id = 0
     speedLimittrafficAdvisoryvalid = False
-    sharedParams = {'last_gps' : last_gps, 'query_lock' : query_lock, 'last_query_result' : last_query_result,
-                    'last_query_pos' : last_query_pos, 'cache_valid' : cache_valid, 'traffic_status' : traffic_status,
-                    'traffic_confidence' : traffic_confidence, 'last_not_none_signal' : last_not_none_signal,
-                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid,
+    sharedParams = {'last_gps' : last_gps, 'query_lock' : query_lock, 'last_query_result' : last_query_result, \
+                    'last_query_pos' : last_query_pos, 'cache_valid' : cache_valid, 'traffic_status' : traffic_status, \
+                    'traffic_confidence' : traffic_confidence, 'last_not_none_signal' : last_not_none_signal, \
+                    'speedLimittraffic' : speedLimittraffic, 'speedLimittrafficvalid' : speedLimittrafficvalid, \
                     'speedLimittrafficAdvisory' : speedLimittrafficAdvisory, 'speedLimittrafficAdvisoryvalid' : speedLimittrafficAdvisoryvalid, 'osm_way_id' : osm_way_id}
 
     qt = QueryThread(1, "QueryThread", sharedParams=sharedParams)
