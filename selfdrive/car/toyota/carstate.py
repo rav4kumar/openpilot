@@ -35,7 +35,7 @@ class CarState(CarStateBase):
     self.distance = 0
     if not travis:
       self.pm = messaging.PubMaster(['liveTrafficData'])
-      self.sm = messaging.SubMaster(['latControl', 'liveMapData'])
+      self.sm = messaging.SubMaster(['liveMapData'])#',latControl',])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
     # Need to apply an offset as soon as the steering angle measurements are both received
