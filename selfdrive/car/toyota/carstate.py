@@ -29,6 +29,9 @@ class CarState(CarStateBase):
     self.setspeedcounter = 0
     self.pcm_acc_active = False
     self.main_on = False
+    self.gas_pressed = False
+    self.smartspeed = 0
+    self.spdval1 = 0
     self.distance = 0
     if not travis:
       self.pm = messaging.PubMaster(['liveTrafficData'])
