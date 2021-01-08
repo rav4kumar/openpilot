@@ -35,7 +35,7 @@ class CarState(CarStateBase):
     self.distance = 0
     self.read_distance_lines = 0
     if not travis:
-      self.pm = messaging.PubMaster(['liveTrafficData', 'DragonConf'])
+      self.pm = messaging.PubMaster(['liveTrafficData')
       self.sm = messaging.SubMaster(['liveMapData'])#',latControl',])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
@@ -95,9 +95,7 @@ class CarState(CarStateBase):
 
     if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
       self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
-      msg_df = messaging.new_message('DragonConf')
-      msg_df.dpDynamicFollow = max(self.read_distance_lines - 1, 0)
-      self.pm.send('dpDynamicFollow', msg_df)
+      Params().put('dp_dynamic_follow', max(self.read_distance_lines - 1, 0))
 
     if not travis:
       self.sm.update(0)
