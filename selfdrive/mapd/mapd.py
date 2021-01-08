@@ -489,7 +489,7 @@ class MessagedGPSThread(LoggerThread):
             query_lock.release()
             self.logger.debug("setting last_gps to %s" % str(gps))
 
-class MessagedThread(LoggerThread):
+class MessagedArneThread(LoggerThread):
     def __init__(self, threadID, name, sharedParams={}):
         # invoke parent constructor
         LoggerThread.__init__(self, threadID, name)
@@ -590,12 +590,12 @@ def main():
     qt = QueryThread(1, "QueryThread", sharedParams=sharedParams)
     mt = MapsdThread(2, "MapsdThread", sharedParams=sharedParams)
     mggps = MessagedGPSThread(3, "MessagedGPSThread", sharedParams=sharedParams)
-    #mgarne = MessagedArneThread(4, "MessagedArneThread", sharedParams=sharedParams)
+    mgarne = MessagedArneThread(4, "MessagedArneThread", sharedParams=sharedParams)
 
     qt.start()
     mt.start()
     mggps.start()
-    #mgarne.start()
+    mgarne.start()
 
 if __name__ == "__main__":
     main()
