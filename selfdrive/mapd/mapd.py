@@ -516,7 +516,7 @@ class MessagedThread(LoggerThread):
             else:
                 start = time.time()
             self.logger.debug("starting new cycle in endless loop")
-            #self.arne_sm.update(0)
+            self.sm.update(0)
             #if self.arne_sm.updated['trafficModelEvent']:
              # traffic_status = self.arne_sm['trafficModelEvent'].status
               #traffic_confidence = round(self.arne_sm['trafficModelEvent'].confidence * 100, 2)
