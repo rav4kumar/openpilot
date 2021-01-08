@@ -95,7 +95,7 @@ class CarState(CarStateBase):
 
     if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
       self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
-      Params().put('dp_dynamic_follow', int(max(self.read_distance_lines - 1, 0)))
+      Params().put('dp_dynamic_follow', str(int(max(self.read_distance_lines - 1, 0))))
 
     if not travis:
       self.sm.update(0)
