@@ -71,15 +71,15 @@ class CarController():
       apply_accel = actuators.gas - actuators.brake
 
     # dynamic acceleration
-    dynamic_accel_max = ACCEL_MAX
-    if CS.out.vEgo > 5.5:
-      if CS.out.vEgo >= 20:
-        dynamic_accel_max = 0.5
-      else:
-        dynamic_accel_max = ACCEL_MAX - (((CS.out.vEgo - 5.5)/ 14.5))
+    #dynamic_accel_max = ACCEL_MAX
+    #if CS.out.vEgo > 5.5:
+      #if CS.out.vEgo >= 20:
+        #dynamic_accel_max = 0.5
+      #else:
+        #dynamic_accel_max = ACCEL_MAX - (((CS.out.vEgo - 5.5)/ 14.5))
 
     apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled)
-    apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, dynamic_accel_max)
+    apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
 
     if CS.CP.enableGasInterceptor:
       if CS.out.gasPressed:
