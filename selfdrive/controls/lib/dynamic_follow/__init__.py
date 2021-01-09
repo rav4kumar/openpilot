@@ -13,11 +13,11 @@ from selfdrive.controls.lib.dynamic_follow.support import LeadData, CarData, dfD
 travis = False
 
 # dp
-PROFILE_AUTO = 3
-PROFILE_LONG = 2
-PROFILE_NORMAL = 1
-PROFILE_SHORT = 0
-PROFILE_OFF = 4
+PROFILE_AUTO = 4
+PROFILE_LONG = 3
+PROFILE_NORMAL = 2
+PROFILE_SHORT = 1
+PROFILE_OFF = 0
 
 class DynamicFollow:
   def __init__(self, mpc_id):
