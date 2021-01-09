@@ -33,7 +33,7 @@ class CarState(CarStateBase):
     self.smartspeed = 0
     self.spdval1 = 0
     self.distance = 0
-    self.read_distance_lines = 0
+    #self.read_distance_lines = 0
     if not travis:
       self.pm = messaging.PubMaster(['liveTrafficData'])
       self.sm = messaging.SubMaster(['liveMapData'])#',latControl',])
@@ -93,9 +93,9 @@ class CarState(CarStateBase):
     can_gear = int(cp.vl["GEAR_PACKET"]['GEAR'])
     ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(can_gear, None))
 
-    if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
-      self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
-      Params().put('dp_dynamic_follow', str(int(max(self.read_distance_lines - 1, 0))))
+    #if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
+      #self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
+      #Params().put('dp_dynamic_follow', str(int(max(self.read_distance_lines - 1, 0))))
 
     if not travis:
       self.sm.update(0)
