@@ -67,7 +67,7 @@ class PathPlanner():
     # dp
     self.dragon_auto_lc_allowed = False
     self.dragon_auto_lc_timer = None
-    self.dragon_auto_lc_delay = 2.
+    self.dragon_auto_lc_delay = 1.
     self.dp_continuous_auto_lc = False
     self.dp_did_auto_lc = False
     self.op_params = opParams()
