@@ -5,7 +5,7 @@ import time
 from raven import Client
 from raven.transport.http import HTTPTransport
 
-from selfdrive.version import version, dirty
+from selfdrive.version import version, origin, branch, dirty
 from selfdrive.swaglog import cloudlog
 
 MAX_SIZE = 100000 * 10  # Normal size is 40-100k, allow up to 1M

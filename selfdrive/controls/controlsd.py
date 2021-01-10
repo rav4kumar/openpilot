@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 from cereal import car, log
-from common.hardware import HARDWARE
 from common.numpy_fast import clip, interp
 from common.realtime import sec_since_boot, config_realtime_process, Priority, Ratekeeper, DT_CTRL
 from common.profiler import Profiler
@@ -21,6 +20,7 @@ from selfdrive.controls.lib.alertmanager import AlertManager
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.controls.lib.planner import LON_MPC_STEP
 from selfdrive.locationd.calibrationd import Calibration
+from selfdrive.hardware import HARDWARE
 
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -60,7 +60,7 @@ class Controls:
     if self.sm is None:
       socks = ['thermal', 'health', 'model', 'liveCalibration', 'radarState', 'frontFrame',
                                      'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'dragonConf']
-      ignore_alive = ['dragonConf'] if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState', 'dragonConf']
+      ignore_alive = None if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState']
       self.sm = messaging.SubMaster(socks, ignore_alive=ignore_alive)
 
     self.can_sock = can_sock
@@ -143,16 +143,16 @@ class Controls:
 
     self.startup_event = get_startup_event(car_recognized, controller_available)
 
-    if not sounds_available:
-      self.events.add(EventName.soundsUnavailable, static=True)
-    if internet_needed:
-      self.events.add(EventName.internetConnectivityNeeded, static=True)
+    # if not sounds_available:
+    #   self.events.add(EventName.soundsUnavailable, static=True)
+    # if internet_needed:
+    #   self.events.add(EventName.internetConnectivityNeeded, static=True)
     if community_feature_disallowed:
       self.events.add(EventName.communityFeatureDisallowed, static=True)
     if not car_recognized:
       self.events.add(EventName.carUnrecognized, static=True)
-    if hw_type == HwType.whitePanda:
-      self.events.add(EventName.whitePandaUnsupported, static=True)
+    # if hw_type == HwType.whitePanda:
+    #   self.events.add(EventName.whitePandaUnsupportedDEPRECATED, static=True)
 
     # controlsd is driven by can recv, expected at 100Hz
     self.rk = Ratekeeper(100, print_delay_threshold=None)

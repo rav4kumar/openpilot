@@ -7,7 +7,6 @@
 #define nvgCreate nvgCreateGL3
 #else
 #include <GLES3/gl3.h>
-#include <EGL/egl.h>
 #define NANOVG_GLES3_IMPLEMENTATION
 #define nvgCreate nvgCreateGLES3
 #endif
@@ -75,6 +74,11 @@ const int ap_btn_w = 180;
 const int ap_btn_x = 1450;
 const int ap_btn_y = 750;
 const int info_bar_h = 80;
+// dp - rec btn
+const int rec_btn_h = 130;
+const int rec_btn_w = 180;
+const int rec_btn_x = 870;
+const int rec_btn_y = 800;
 
 typedef enum NetStatus {
   NET_CONNECTED,
@@ -121,7 +125,6 @@ typedef struct UIScene {
   bool uilayout_sidebarcollapsed;
   // responsive layout
   Rect viz_rect;
-  int ui_viz_ro;
 
   std::string alert_text1;
   std::string alert_text2;
@@ -151,6 +154,7 @@ typedef struct UIScene {
 
   // dp
   bool dpDashcam;
+  bool dpDashcamUi;
   bool dpFullScreenApp;
   bool dpDrivingUi;
   bool dpUiScreenOffReversing;

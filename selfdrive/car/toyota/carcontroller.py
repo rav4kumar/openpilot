@@ -39,7 +39,6 @@ class CarController():
     self.last_standstill = False
     self.standstill_req = False
 
-    self.last_fault_frame = -200
     self.steer_rate_limited = False
 
     self.fake_ecus = set()

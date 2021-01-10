@@ -27,6 +27,10 @@ class Dashcam():
       self.record()
       self.clean_up()
 
+  def stop(self):
+    os.system("killall -SIGINT screenrecord")
+    self.dashcam_next_time = 0
+
   def make_folder(self):
     if not self.dashcam_folder_exists and self.dashcam_mkdir_retry <= 5:
       # create dashcam folder if not exist

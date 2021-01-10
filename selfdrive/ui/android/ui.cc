@@ -70,6 +70,7 @@ static void handle_display_state(UIState *s, bool user_input) {
 }
 
 static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
+  bool update_dp_last_modified = false ;
   //dfButton manager  // code below thanks to kumar: https://github.com/arne182/openpilot/commit/71d5aac9f8a3f5942e89634b20cbabf3e19e3e78
   if (s->started && s->active_app != cereal::UiLayoutState::App::SETTINGS) {
     if (s->scene.dpDynamicFollow > 0 && touch_x >= df_btn_x && touch_x <= (df_btn_x + df_btn_w) && touch_y >= df_btn_y && touch_y <= (df_btn_y + df_btn_h)) {
@@ -82,11 +83,8 @@ static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
       char str[2] = {0};
       sprintf(str, "%d", val);
       Params().write_db_value("dp_dynamic_follow", str, 1);
+      update_dp_last_modified = true;
 
-      char time_str[11];
-      snprintf(time_str, 11, "%lu", time(NULL));
-      Params().write_db_value("dp_last_modified", time_str, 11);
-      return true;
     } else if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
       int val = s->scene.dpAccelProfile;
       val++;
@@ -97,13 +95,23 @@ static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
       char str[2] = {0};
       sprintf(str, "%d", val);
       Params().write_db_value("dp_accel_profile", str, 1);
+      update_dp_last_modified = true;
 
+    } else if (s->scene.dpDashcamUi && touch_x >= rec_btn_x && touch_x <= (rec_btn_x + rec_btn_w) && touch_y >= rec_btn_y && touch_y <= (rec_btn_y + rec_btn_h)) {
+      char str[2] = {0};
+      sprintf(str, "%d", !s->scene.dpDashcam);
+      Params().write_db_value("dp_dashcam", str, 1);
+      update_dp_last_modified = true;
+    }
+  }
+
+  if ( update_dp_last_modified ) {
       char time_str[11];
       snprintf(time_str, 11, "%lu", time(NULL));
       Params().write_db_value("dp_last_modified", time_str, 11);
       return true;
-    }
   }
+
   return false;
 }
 
@@ -175,7 +183,7 @@ int main(int argc, char* argv[]) {
   float brightness_b = 0, brightness_m = 0;
   int result = read_param(&brightness_b, "BRIGHTNESS_B", true);
   result += read_param(&brightness_m, "BRIGHTNESS_M", true);
-  if(result != 0) {
+  if (result != 0) {
     brightness_b = LEON ? 10.0 : 5.0;
     brightness_m = LEON ? 2.6 : 1.3;
     write_param_float(brightness_b, "BRIGHTNESS_B", true);

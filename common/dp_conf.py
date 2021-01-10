@@ -27,7 +27,7 @@ confs = [
   {'name': 'dp_app_hr_manual', 'default': 0, 'type': 'Int8', 'min': -1, 'max': 1, 'depends': [{'name': 'dp_app_hr', 'vals': [True]}], 'conf_type': ['param', 'struct']},
   # dashcam related
   {'name': 'dp_dashcam', 'default': 0, 'type': 'Bool', 'conf_type': ['param', 'struct']},
-  {'name': 'dp_dashcam_hours_stored', 'default': 24, 'type': 'UInt8', 'min': 1, 'max': 255, 'depends': [{'name': 'dp_dashcam', 'vals': [True]}], 'conf_type': ['param', 'struct']},
+  {'name': 'dp_dashcam_ui', 'default': 0, 'type': 'Bool', 'conf_type': ['param', 'struct']},
   # auto shutdown
   {'name': 'dp_auto_shutdown', 'default': False, 'type': 'Bool', 'conf_type': ['param', 'struct']},
   {'name': 'dp_auto_shutdown_in', 'default': 90, 'type': 'UInt16', 'min': 1, 'max': 65535, 'depends': [{'name': 'dp_auto_shutdown', 'vals': [True]}], 'conf_type': ['param']},

@@ -11,8 +11,7 @@ from common.params import Params, put_nonblocking
 import subprocess
 import re
 import os
-from typing import Dict, Any
-from selfdrive.thermald.power_monitoring import set_battery_charging, get_battery_charging
+from selfdrive.hardware import HARDWARE
 params = Params()
 from common.realtime import sec_since_boot
 from common.i18n import get_locale
@@ -55,6 +54,7 @@ def confd_thread():
   last_charging_ctrl = False
   last_started = False
   dashcam = Dashcam()
+  last_dashcam_recorded = False
 
   while True:
     start_sec = sec_since_boot()
@@ -160,6 +160,10 @@ def confd_thread():
     '''
     if msg.dragonConf.dpDashcam and frame % HERTZ == 0:
       dashcam.run(started, free_space)
+      last_dashcam_recorded = True
+    if last_dashcam_recorded and not msg.dragonConf.dpDashcam:
+      dashcam.stop()
+      last_dashcam_recorded = False
     '''
     ===================================================
     finalise
@@ -203,12 +207,12 @@ def update_conf_all(confs, msg, first_run = False):
 def process_charging_ctrl(msg, last_charging_ctrl, battery_percent):
   charging_ctrl = msg.dragonConf.dpChargingCtrl
   if last_charging_ctrl != charging_ctrl:
-    set_battery_charging(True)
+    HARDWARE.set_battery_charging(True)
   if charging_ctrl:
-    if battery_percent >= msg.dragonConf.dpDischargingAt and get_battery_charging():
-      set_battery_charging(False)
-    elif battery_percent <= msg.dragonConf.dpChargingAt and not get_battery_charging():
-      set_battery_charging(True)
+    if battery_percent >= msg.dragonConf.dpDischargingAt and HARDWARE.get_battery_charging():
+      HARDWARE.set_battery_charging(False)
+    elif battery_percent <= msg.dragonConf.dpChargingAt and not HARDWARE.get_battery_charging():
+      HARDWARE.set_battery_charging(True)
   return charging_ctrl
 
 

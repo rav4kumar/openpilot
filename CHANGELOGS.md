@@ -1,3 +1,8 @@
+2020-12-23 (0.8.1.0)
+========================
+* 基於最新 openpilot 0.8.1 devel.
+* Based on latest openpilot 0.8.1 devel.
+
 2020-12-07 (0.8.0.0)
 ========================
 * 錯誤修正。
@@ -10,18 +15,13 @@
 
 2020-12-02 (0.8.0.0)
 ========================
-* 加入 git 錯誤修正。(感謝 @toyboxZ 提供)
-* Added git error fix. (Thanks to @toyboxZ)
-
-2020-12-02 (0.8.0.0)
-========================
 * 基於最新 openpilot 0.8.0 devel.
 * Based on latest openpilot 0.8.0 devel.
 
 2020-11-28 (0.7.10.0)
 ========================
 * 加入來自 afa 的 Honda inspire, accord, crv SnG 優化。(感謝 @menwenliang 提供)
-* Added Honda inspire, accord, crv SnG optimisation from afa fork. (Thanks to @menwenliang) 
+* Added Honda inspire, accord, crv SnG optimisation from afa fork. (Thanks to @menwenliang)
 * 加入 dp_toyota_lowest_cruise_override_vego。(感謝 @toyboxZ 提供)
 * Added dp_toyota_lowest_cruise_override_vego. (Thanks to @toyboxZ)
 
@@ -55,8 +55,8 @@
 2020-11-05 (0.7.10.0)
 ========================
 * HYUNDAI_GENESIS 加入 Cruise 按紐 和 lkMode 支援。(感謝 @donfyffe 建議)
-* HYUNDAI_GENESIS added Cruise button event and lkMode feature. (Thanks to @donfyffe) 
- 
+* HYUNDAI_GENESIS added Cruise button event and lkMode feature. (Thanks to @donfyffe)
+
 2020-11-04 (0.7.10.0)
 ========================
 * HYUNDAI_GENESIS 使用 INDI 控制器。(感謝 @donfyffe 提供)
@@ -69,7 +69,7 @@
 * 修正 EON 接 PC/USB 充電器時仍會自動關機的錯誤。(感謝 @小愛 回報)
 * Fixed auto shutdown issue when EON connect to PC/USB Charger. (Thanks to @LOVEChen)
 * 新增大陸版 2018 Inspire 指紋。(感謝 @)
-* Added China Camry Hybrid FPv2. (Thanks to @杜子腾) 
+* Added China Camry Hybrid FPv2. (Thanks to @杜子腾)
 
 2020-10-23 (0.7.9.0)
 ========================
@@ -140,7 +140,7 @@
 * 將警示訊息更改為類似於概念 UI 的設計。
 * Alert messages changed to concept UI alike design.
 * 當 manager 出現錯誤後，按 Exit 按鈕會執行 reset_update 腳本。
-* Added ability to execute reset_update.sh when press "Exit" button once manager returned errors. 
+* Added ability to execute reset_update.sh when press "Exit" button once manager returned errors.
 
 2020-08-18 (0.7.7.0)
 ========================
@@ -203,7 +203,7 @@
 * 修正 steer ratio learner 關閉。(感謝 @Mojo 回報, @ShaneSmiskol 提供代碼)
 * Fixed steer ratio learner toggle. (Thanks to @Mojo, @ShaneSmiskol)
 * 加入 "dp_lqr" 設定來強制使用 RAV4 的 lqr 調校。(感謝 @eisenheim)
-* Added "dp_lqr" setting to force enable lqr tuning from RAV4. (Thanks to eisenheim) 
+* Added "dp_lqr" setting to force enable lqr tuning from RAV4. (Thanks to eisenheim)
 
 2020-07-28 (0.7.7.0)
 ========================
@@ -319,7 +319,7 @@
 * C2 支援自動關機「DragonAutoShutdownAt」參數。(感謝 @cgw1968 建議)
 * C2 to support auto shutdown "DragonAutoShutDownAt" param. (Thanks to @cgw1968)
 * 修正出現「pedalPressed」的錯誤。(感謝 @Wei 回報)
-* Fixed issue showing "pedalPressed" error. (Thanks to @Wei) 
+* Fixed issue showing "pedalPressed" error. (Thanks to @Wei)
 
 2020-05-26 (0.7.5)
 ========================
@@ -330,7 +330,7 @@
 * 加入「方向燈取消控制」延遲控制設。(感謝 @wabes 建議)
 * Added delay config to "Disable Lat Control on Blinker". (Thanks to @wabes)
 * 加入巴西版 2020 Corolla Hybrid 指紋v2。(感謝 @berno22 提供)
-* Added Brazil 2020 Corolla Hybrid FPv2. (Thanks to @berno22) 
+* Added Brazil 2020 Corolla Hybrid FPv2. (Thanks to @berno22)
 
 2020-05-25 (0.7.5)
 ========================
@@ -348,7 +348,7 @@
 * 修正「位智模式」無法顯示警示的問題。(感謝 @axandres 回報)
 * Fixed alert issue in waze mode. (Thanks to @axandres)
 * 修正無法顯示更新中圖示的問題。
-* Fixed unable to display "UPDATING" icon issue. 
+* Fixed unable to display "UPDATING" icon issue.
 
 2020-05-20 (0.7.5)
 ========================
@@ -400,14 +400,14 @@
 * 簡/繁中文版和 i18n 整合成為單一版本。  
 * Merged zhs/zht/i18n versions into one.
 * 新增大陸版 CAMRY HYBRID 指紋v2。(感謝 @杜子腾)
-* Added China Camry Hybrid FPv2. (Thanks to @杜子腾) 
+* Added China Camry Hybrid FPv2. (Thanks to @杜子腾)
 * 新增台灣版 Altis HYBRID 指紋v1。(感謝 @Fish)
 * Added Taiwan Altis Hybrid FPv1. (Thanks to @Fish)
 * 新增行駛時關閉畫面功能。
 * Added Screen off while driving feature.
 * 新增倒車時關閉畫面功能。
 * Added Screen off while reversing feature.
-* 新增駕駛介面加入「加速模式」切換鈕。 
+* 新增駕駛介面加入「加速模式」切換鈕。
 * Added acceleration profile toggle onto driving UI.
 * 新增自定車型功能，取代指紋暫存功能。
 * Replaced fingerprint cache with custom car model selector.

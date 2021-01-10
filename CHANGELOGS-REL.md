@@ -1,3 +1,8 @@
+dragonpilot 0.8.1
+========================
+* 基於最新 openpilot 0.8.1 devel.
+* Based on latest openpilot 0.8.1 devel.
+
 dragonpilot 0.8.0
 ========================
 * 基於最新 openpilot 0.8.0 devel.
@@ -27,7 +32,7 @@ dragonpilot 0.7.10.0
 * HYUNDAI_GENESIS 使用 INDI 控制器。(感謝 @donfyffe 提供)
 * HYUNDAI_GENESIS uses INDI controller. (Thanks to @donfyffe)
 * HYUNDAI_GENESIS 加入 Cruise 按紐 和 lkMode 支援。(感謝 @donfyffe 建議)
-* HYUNDAI_GENESIS added Cruise button event and lkMode feature. (Thanks to @donfyffe) 
+* HYUNDAI_GENESIS added Cruise button event and lkMode feature. (Thanks to @donfyffe)
 * 支援台灣版 2018 Huyndai IONIQ + smart MDPS (dp_hkg_smart_mdps) (感謝 @andy741217 提供)
 * Support 2018 Taiwan Hyundai IONIQ + smart MDPS (dp_hkg_smart_mdps) (Thanks to @andy741217)
 * 使用 openpilot v0.8 的模型。(感謝 @eisenheim)
@@ -45,7 +50,7 @@ dragonpilot 0.7.10.0
 * 加入 Dynamic gas Lite。(感謝 @toyboxZ 提供)
 * Added Dynamic Gas Lite. (Thanks to @toyboxZ)
 * 加入來自 afa 的 Honda inspire, accord, crv SnG 優化。(感謝 @menwenliang 提供)
-* Added Honda inspire, accord, crv SnG optimisation from afa fork. (Thanks to @menwenliang) 
+* Added Honda inspire, accord, crv SnG optimisation from afa fork. (Thanks to @menwenliang)
 * 加入 dp_toyota_lowest_cruise_override_vego。(感謝 @toyboxZ 提供)
 * Added dp_toyota_lowest_cruise_override_vego. (Thanks to @toyboxZ)
 
@@ -58,7 +63,7 @@ dragonpilot 0.7.8
 * 將警示訊息更改為類似於概念 UI 的設計。
 * Alert messages changed to concept UI alike design.
 * 當 manager 出現錯誤後，按 Exit 按鈕會執行 reset_update 腳本。
-* Added ability to execute reset_update.sh when press "Exit" button once manager returned errors. 
+* Added ability to execute reset_update.sh when press "Exit" button once manager returned errors.
 * 加入 ko-KR 翻譯。
 * Added ko-KR translation.
 * 加入 Honda Jade 支援。(感謝 @李俊灝)
@@ -104,7 +109,7 @@ dragonpilot 0.7.6
 * 加入 2020 Toyota Prius 指紋v2。(感謝 @Trae)
 * Added Toyota Prius 2020 FPv2. (Thanks to @Trae)
 * 優化 Honda CR-V Hybrid 轉向。(感謝 @martint1980)
-× Optomised Honda CR-V Hybrid lateral control. (Thanks to @martint1980) 
+× Optomised Honda CR-V Hybrid lateral control. (Thanks to @martint1980)
 
 dragonpilot 0.7.5
 ========================
@@ -117,7 +122,7 @@ dragonpilot 0.7.5
 * 加入「方向燈取消控制」延遲控制設。(感謝 @wabes 建議)
 * Added delay config to "Disable Lat Control on Blinker". (Thanks to @wabes)
 * 加入巴西版 2020 Corolla Hybrid 指紋v2。(感謝 @berno22 提供)
-* Added Brazil 2020 Corolla Hybrid FPv2. (Thanks to @berno22) 
+* Added Brazil 2020 Corolla Hybrid FPv2. (Thanks to @berno22)
 * 加入對 VW MQB/PQ 的支援。(感謝 @dingliangxue 移植)
 * Added support to VW MQB/PQ platform. (Thanks to @dingliangxue)
 * 加入「允許多次自動換道」功能。(感謝 @阿濤 建議)
@@ -139,14 +144,14 @@ dragonpilot 0.7.5
 * 簡/繁中文版和 i18n 整合成為單一版本。  
 * Merged zhs/zht/i18n versions into one.
 * 新增大陸版 CAMRY HYBRID 指紋v2。(感謝 @杜子腾)
-* Added China Camery Hybrid FPv2. (Thanks to @杜子腾) 
+* Added China Camery Hybrid FPv2. (Thanks to @杜子腾)
 * 新增台灣版 Altis HYBRID 指紋v1。(感謝 @Fish)
 * Added Taiwan Altis Hybrid FPv1. (Thanks to @Fish)
 * 新增行駛時關閉畫面功能。
 * Added Screen off while driving feature.
 * 新增倒車時關閉畫面功能。
 * Added Screen off while reversing feature.
-* 新增駕駛介面加入「加速模式」切換鈕。 
+* 新增駕駛介面加入「加速模式」切換鈕。
 * Added acceleration profile toggle onto driving UI.
 * 新增自定車型功能，取代指紋暫存功能。
 * Replaced fingerprint cache with custom car model selector.
@@ -200,7 +205,7 @@ dragonpilot 0.7.2
 
 dragonpilot 0.7.1
 ========================
-* [2020-01-19] 調整 appd 和 ALC 邏輯。 
+* [2020-01-19] 調整 appd 和 ALC 邏輯。
 * [2020-01-14] 加入開機啟動個人熱點。(感謝 eisenheim 建議)
 * [2020-01-18] 加入大陸版 2018 Lexus RX300 支援。(感謝 cafe 提供)
 * [2020-01-18] 加入 DragonBTG 設定。(感謝 CloudJ、低調哥、歐姓Altis車主 提供)
@@ -276,7 +281,7 @@ dragonpilot 0.6.4
 * [2019-10-07] 加入台灣版 2019 RAV4H 油電版指紋。(感謝 Max Duan 提供)
 * [2019-10-05] 移除 curvature learner: 轉角明顯比原廠小。
 * [2019-09-30] 更新 curvature learner 版本至 v4。
-* [2019-09-30] Lexus ISH 使用更精確的 EPS Steering Angle Sensor 
+* [2019-09-30] Lexus ISH 使用更精確的 EPS Steering Angle Sensor
 * [2019-09-27] 加入 Zorrobyte 的 curvature learner (https://github.com/zorrobyte/openpilot)
 * [2019-09-27] 加入可開關駕駛監控的程式碼。
 * [2019-09-27] 取消當 steering 出現錯誤時，自動切斷方向控制 2 秒的機制。
