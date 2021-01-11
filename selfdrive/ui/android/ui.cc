@@ -53,7 +53,7 @@ static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
   return false;
 }
 
-static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
+static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
   if (s->active_app == cereal::UiLayoutState::App::NONE) {  // if onroad (not settings or home)
     if ((s->awake && s->vision_connected && s->status != STATUS_OFFROAD)) {  // if car started or debug mode
       if (handle_ml_touch(s, touch_x, touch_y)) {
@@ -255,9 +255,7 @@ int main(int argc, char* argv[]) {
     if (touched == 1) {
       if (!handle_dp_btn_touch(s, touch_x, touch_y)) {
       handle_sidebar_touch(s, touch_x, touch_y);
-      if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
-        handle_vision_touch(s, touch_x, touch_y);
-      }
+      handle_vision_touch(s, touch_x, touch_y);
       }
     }
 
