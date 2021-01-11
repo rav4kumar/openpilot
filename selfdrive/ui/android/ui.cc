@@ -258,6 +258,7 @@ int main(int argc, char* argv[]) {
       if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
         handle_vision_touch(s, touch_x, touch_y);
       }
+      }
     }
 
     // Don't waste resources on drawing in case screen is off
