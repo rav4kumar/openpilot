@@ -255,7 +255,8 @@ int main(int argc, char* argv[]) {
     if (touched == 1) {
       if (!handle_dp_btn_touch(s, touch_x, touch_y)) {
       handle_sidebar_touch(s, touch_x, touch_y);
-      handle_vision_touch(s, touch_x, touch_y);
+      if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
+        handle_vision_touch(s, touch_x, touch_y);
       }
     }
 
