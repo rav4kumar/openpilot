@@ -53,6 +53,18 @@ static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
   return false;
 }
 
+static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
+  if (s->active_app == cereal::UiLayoutState::App::NONE) {  // if onroad (not settings or home)
+    if ((s->awake && s->vision_connected && s->status != STATUS_OFFROAD)) {  // if car started or debug mode
+      if (handle_ml_touch(s, touch_x, touch_y)) {
+        s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
+        return true;  // only allow one button to be pressed at a time
+      }
+    }
+  }
+  return false;
+}
+
 static void handle_display_state(UIState *s, bool user_input) {
 
   static int awake_timeout = 0;
