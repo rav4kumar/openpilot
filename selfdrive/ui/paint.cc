@@ -548,6 +548,34 @@ static void ui_draw_driver_view(UIState *s) {
   ui_draw_circle_image(s->vg, x, y, face_size, s->img_face, scene->dmonitoring_state.getFaceDetected());
 }
 
+static void ui_draw_ml_button(UIState *s) {
+  int btn_w = 500;
+  int btn_h = 138;
+  int x = 1920 / 2;
+  int y = 915;
+  int btn_x = x - btn_w / 2;
+  int btn_y = y - btn_h / 2;
+
+  nvgBeginPath(s->vg);
+  nvgRoundedRect(s->vg, btn_x, btn_y, btn_w, btn_h, 25);
+  if (s->scene.mlButtonEnabled) {  // change outline color based on status of button
+    nvgStrokeColor(s->vg, nvgRGBA(55, 184, 104, 255));
+  } else {
+    nvgStrokeColor(s->vg, nvgRGBA(184, 55, 55, 255));
+  }
+  nvgStrokeWidth(s->vg, 12);
+  nvgStroke(s->vg);
+
+  nvgBeginPath(s->vg);  // dark background for readability
+  nvgRoundedRect(s->vg, btn_x, btn_y, btn_w, btn_h, 25);
+  nvgFillColor(s->vg, nvgRGBA(75, 75, 75, 75));
+  nvgFill(s->vg);
+
+  nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 255));
+  nvgFontSize(s->vg, 65);
+  nvgText(s->vg, x, y + btn_h / 8, "Toggle Model Long", NULL);
+}
+
 static void ui_draw_vision_header(UIState *s) {
   const Rect &viz_rect = s->scene.viz_rect;
   if (!s->scene.dpFullScreenApp) {
@@ -567,6 +595,7 @@ static void ui_draw_vision_header(UIState *s) {
   if (s->scene.dpUiEvent) {
   ui_draw_vision_event(s);
   }
+  ui_draw_ml_button(s);
 }
 
 static void ui_draw_vision_footer(UIState *s) {

@@ -23,7 +23,7 @@ def plannerd_thread(sm=None, pm=None):
   VM = VehicleModel(CP)
 
   if sm is None:
-    sm = messaging.SubMaster(['carState', 'controlsState', 'radarState', 'model', 'liveParameters', 'dragonConf', 'liveMapData'],
+    sm = messaging.SubMaster(['carState', 'controlsState', 'radarState', 'model', 'liveParameters', 'dragonConf', 'liveMapData', 'modelLongButton'],
                              poll=['radarState', 'model'])
 
   if pm is None:

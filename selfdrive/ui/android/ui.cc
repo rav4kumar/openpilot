@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/resource.h>
+#include <iostream>
 
 #include <algorithm>
 
@@ -27,6 +28,13 @@ static void ui_set_brightness(UIState *s, int brightness) {
       last_brightness = brightness;
     }
   }
+}
+
+static void send_ml(UIState *s, bool enabled) {
+  MessageBuilder msg;
+  auto mlStatus = msg.initEvent().initModelLongButton();
+  mlStatus.setEnabled(enabled);
+  s->pm->send("modelLongButton", msg);
 }
 
 static void handle_display_state(UIState *s, bool user_input) {

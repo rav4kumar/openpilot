@@ -107,6 +107,8 @@ typedef struct {
 
 typedef struct UIScene {
 
+  bool mlButtonEnabled;
+
   mat4 extrinsic_matrix;      // Last row is 0 so we can use mat4.
   bool world_objects_visible;
 
@@ -232,7 +234,7 @@ typedef struct UIState {
   int img_speed;
 
   SubMaster *sm;
-
+  PubMaster *pm;
   Sound *sound;
   UIStatus status;
   UIScene scene;
