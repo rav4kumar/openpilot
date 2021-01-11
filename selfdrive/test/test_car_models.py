@@ -246,11 +246,11 @@ routes = {
     'enableCamera': False,
     'enableDsu': False,
   },
-  "399f98d4e88eb662|2021-01-07--18-58-27": {
-    'carFingerprint': TOYOTA.AVALON_2021,
-    'enableCamera': True,
-    'enableDsu': False,
-  },
+  #"399f98d4e88eb662|2021-01-07--18-58-27": {
+    #'carFingerprint': TOYOTA.AVALON_2021,
+    #'enableCamera': True,
+    #'enableDsu': False,
+  #},
   "6cdecc4728d4af37|2020-02-23--15-44-18": {
     'carFingerprint': TOYOTA.CAMRY,
     'enableCamera': True,
@@ -509,6 +509,7 @@ non_tested_cars = [
   HYUNDAI.KIA_FORTE,
   HYUNDAI.KIA_OPTIMA_H,
   HYUNDAI.KONA_EV,
+  TOYOYA.AVALON_2021,
   TOYOTA.CAMRYH,
   TOYOTA.CHR,
   TOYOTA.CHRH,
