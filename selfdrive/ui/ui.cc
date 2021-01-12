@@ -26,10 +26,10 @@ int write_param_float(float param, const char* param_name, bool persistent_param
   return Params(persistent_param).write_db_value(param_name, s, size < sizeof(s) ? size : sizeof(s));
 }
 
-void sa_init(UIState *s, bool full_init) {
-  if (full_init) {
-    s->pm = new PubMaster({"modelLongButton"});
-  }
+//void sa_init(UIState *s, bool full_init) {
+  //if (full_init) {
+  //  s->pm = new PubMaster({"modelLongButton"});
+//  }
 
   //s->ui_debug = false;  // change to true while debugging
 
@@ -51,8 +51,8 @@ void sa_init(UIState *s, bool full_init) {
     //s->scene.dfButtonStatus = 0;
   //  s->scene.lsButtonStatus = 0;
   //}
-  s->scene.mlButtonEnabled = false;  // state isn't saved yet
-}
+  //s->scene.mlButtonEnabled = false;  // state isn't saved yet
+//}
 
 void ui_init(UIState *s) {
   s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "liveMapData",
