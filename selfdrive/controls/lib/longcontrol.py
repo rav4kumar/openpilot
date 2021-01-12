@@ -1,6 +1,6 @@
 from cereal import log
 from common.numpy_fast import clip, interp
-from selfdrive.controls.lib.pid import PIController
+from selfdrive.controls.lib.pid import PIDController
 from common.params import Params
 from selfdrive.controls.lib.dynamic_gas import DynamicGas
 
@@ -55,11 +55,15 @@ def long_control_state_trans(active, long_control_state, v_ego, v_target, v_pid,
 class LongControl():
   def __init__(self, CP, compute_gb):
     self.long_control_state = LongCtrlState.off  # initialized to off
-    self.pid = PIController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
-                            (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
-                            rate=RATE,
-                            sat_limit=0.8,
-                            convert=compute_gb)
+    kdBP = [0., 33, 55., 78]
+    kdBP = [i * CV.MPH_TO_MS for i in kdBP]
+    kdV = [0.05, 0.4, 0.8, 1.2]
+    self.pid = PIDController((CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV),
+                             (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV),
+                             (kdBP, kdV),
+                             rate=RATE,
+                             sat_limit=0.8,
+                             convert=compute_gb)
     self.v_pid = 0.0
     self.lastdecelForTurn = False
     self.last_output_gb = 0.0
