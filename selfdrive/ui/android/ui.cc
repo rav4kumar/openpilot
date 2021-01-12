@@ -34,7 +34,7 @@ static void send_ml(UIState *s, bool enabled) {
   MessageBuilder msg;
   auto mlStatus = msg.initEvent().initModelLongButton();
   mlStatus.setEnabled(enabled);
-  s->sm->send("modelLongButton", msg);
+  s->pm->send("modelLongButton", msg);
 }
 
 static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
@@ -189,6 +189,7 @@ int main(int argc, char* argv[]) {
   UIState uistate = {};
   UIState *s = &uistate;
   ui_init(s);
+  sa_init(s, true);
   s->sound = &sound;
 
   TouchState touch = {0};
@@ -224,6 +225,12 @@ int main(int argc, char* argv[]) {
     if (!s->started) {
       usleep(50 * 1000);
     }
+
+    if (s->started && !last_started) {
+      sa_init(s, false);  // reset ml button and regrab params
+    }
+    last_started = s->started;
+
     double u1 = millis_since_boot();
 
     ui_update(s);

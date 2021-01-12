@@ -234,7 +234,7 @@ typedef struct UIState {
   int img_speed;
 
   SubMaster *sm;
-  //PubMaster *pm;
+  PubMaster *pm;
   Sound *sound;
   UIStatus status;
   UIScene scene;
@@ -280,6 +280,7 @@ typedef struct UIState {
 } UIState;
 
 void ui_init(UIState *s);
+void sa_init(UIState *s, bool full_init);
 void ui_update(UIState *s);
 
 int write_param_float(float param, const char* param_name, bool persistent_param = false);
