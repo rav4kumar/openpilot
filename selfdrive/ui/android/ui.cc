@@ -34,7 +34,7 @@ static void send_ml(UIState *s, bool enabled) {
   MessageBuilder msg;
   auto mlStatus = msg.initEvent().initModelLongButton();
   mlStatus.setEnabled(enabled);
-  s->pm->send("modelLongButton", msg);
+  s->sm->send("modelLongButton", msg);
 }
 
 static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
