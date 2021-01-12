@@ -3,13 +3,43 @@ import os
 import sys
 import threading
 import capnp
-from selfdrive.version import version, dirty, origin, branch
+#from selfdrive.version import version, dirty, origin, branch
 from datetime import datetime
 import traceback
+import subprocess
 from common.params import Params
 import requests
 from common.dp_common import is_online
 CRASHES_DIR = '/sdcard/crash_logs/'
+
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "common", "version.h")) as _versionf:
+  version = _versionf.read().split('"')[1]
+
+def get_git_branch(default=None):
+  try:
+    return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding='utf8').strip()
+  except subprocess.CalledProcessError:
+    return default
+dirty = True
+arne_remote = False
+try:
+  local_branch = subprocess.check_output(["git", "name-rev", "--name-only", "HEAD"], encoding='utf8').strip()
+  tracking_remote = subprocess.check_output(["git", "config", "branch." + local_branch + ".remote"], encoding='utf8').strip()
+  origin = subprocess.check_output(["git", "config", "remote." + tracking_remote + ".url"], encoding='utf8').strip()
+
+except subprocess.CalledProcessError:
+  try:
+    # Not on a branch, fallback
+    origin = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], encoding='utf8').strip()
+  except subprocess.CalledProcessError:
+    origin = None
+branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding='utf8').strip()
+
+if (origin is not None) and (branch is not None):
+  arne_remote = origin.startswith('git@github.com:arne182') or origin.startswith('https://github.com/arne182')
+
+dirty = not arne_remote
+dirty = dirty or (subprocess.call(["git", "diff-index", "--quiet", branch, "--"]) != 0)
 
 from selfdrive.swaglog import cloudlog
 from common.hardware import PC
