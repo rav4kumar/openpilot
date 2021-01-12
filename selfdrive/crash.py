@@ -1,55 +1,18 @@
 """Install exception handler for process crash."""
 import os
 import sys
-import capnp
-import requests
 import threading
+import capnp
+from selfdrive.version import version, dirty, origin, branch
+from datetime import datetime
 import traceback
-import subprocess
 from common.params import Params
-
-with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "common", "version.h")) as _versionf:
-  version = _versionf.read().split('"')[1]
-
-def get_git_branch(default=None):
-  try:
-    return subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding='utf8').strip()
-  except subprocess.CalledProcessError:
-    return default
-dirty = True
-arne_remote = False
-try:
-  local_branch = subprocess.check_output(["git", "name-rev", "--name-only", "HEAD"], encoding='utf8').strip()
-  tracking_remote = subprocess.check_output(["git", "config", "branch." + local_branch + ".remote"], encoding='utf8').strip()
-  origin = subprocess.check_output(["git", "config", "remote." + tracking_remote + ".url"], encoding='utf8').strip()
-
-except subprocess.CalledProcessError:
-  try:
-    # Not on a branch, fallback
-    origin = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], encoding='utf8').strip()
-  except subprocess.CalledProcessError:
-    origin = None
-branch = subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"], encoding='utf8').strip()
-
-if (origin is not None) and (branch is not None):
-  arne_remote = origin.startswith('git@github.com:arne182') or origin.startswith('https://github.com/arne182')
-
-dirty = not arne_remote
-dirty = dirty or (subprocess.call(["git", "diff-index", "--quiet", branch, "--"]) != 0)
+import requests
+from common.dp_common import is_online
+CRASHES_DIR = '/sdcard/crash_logs/'
 
 from selfdrive.swaglog import cloudlog
 from common.hardware import PC
-
-def save_exception(exc_text):
-  i = 0
-  log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%Y-%m-%d--%H-%M-%S.%f.log')[:-3])
-  if os.path.exists(log_file):
-    while os.path.exists(log_file + str(i)):
-      i += 1
-    log_file += str(i)
-  with open(log_file, 'w') as f:
-    f.write(exc_text)
-  print('Logged current crash to {}'.format(log_file))
 
 if os.getenv("NOLOG") or os.getenv("NOCRASH") or PC:
   def capture_exception(*args, **kwargs):
@@ -67,32 +30,20 @@ else:
   from raven import Client
   from raven.transport.http import HTTPTransport
   from common.op_params import opParams
-  from datetime import datetime
-
-  COMMUNITY_DIR = '/data/community'
-  CRASHES_DIR = '{}/crashes'.format(COMMUNITY_DIR)
-
-  if not os.path.exists(COMMUNITY_DIR):
-    os.mkdir(COMMUNITY_DIR)
-  if not os.path.exists(CRASHES_DIR):
-    os.mkdir(CRASHES_DIR)
-
   params = Params()
   try:
     dongle_id = params.get("DongleId").decode('utf8')
   except AttributeError:
     dongle_id = "None"
   try:
-    ip = requests.get('https://checkip.amazonaws.com/').text.strip()
-  except:
+    ip = requests.get('https://checkip.amazonaws.com/', timeout=3).text.strip() if is_online() else '255.255.255.255'
+  except Exception:
     ip = "255.255.255.255"
   error_tags = {'dirty': dirty, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin}
-  #uniqueID = op_params.get('uniqueID')
   username = opParams().get('username')
   if username is None or not isinstance(username, str):
     username = 'undefined'
   error_tags['username'] = username
-
 
   u_tag = []
   if isinstance(username, str):
@@ -111,6 +62,15 @@ else:
     if not exc_info[0] is capnp.lib.capnp.KjException:
       client.captureException(*args, **kwargs)
     cloudlog.error("crash", exc_info=kwargs.get('exc_info', 1))
+
+  # dp - from @ShaneSmiskol, save log into local directory
+  def save_exception(exc_text):
+    if not os.path.exists(CRASHES_DIR):
+      os.mkdir(CRASHES_DIR)
+    log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%Y-%m-%d--%H-%M-%S.%f.log')[:-3])
+    with open(log_file, 'w') as f:
+      f.write(exc_text)
+    print('Logged current crash to {}'.format(log_file))
 
   def bind_user(**kwargs):
     client.user_context(kwargs)
