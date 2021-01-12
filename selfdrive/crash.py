@@ -40,7 +40,6 @@ dirty = dirty or (subprocess.call(["git", "diff-index", "--quiet", branch, "--"]
 from selfdrive.swaglog import cloudlog
 from common.hardware import PC
 
-if os.getenv("NOLOG") or os.getenv("NOCRASH") or PC:
 def save_exception(exc_text):
   i = 0
   log_file = '{}/{}'.format(CRASHES_DIR, datetime.now().strftime('%Y-%m-%d--%H-%M-%S.%f.log')[:-3])
@@ -52,7 +51,7 @@ def save_exception(exc_text):
     f.write(exc_text)
   print('Logged current crash to {}'.format(log_file))
 
-if os.getenv("NOLOG") or os.getenv("NOCRASH") or not ANDROID:
+if os.getenv("NOLOG") or os.getenv("NOCRASH") or PC:
   def capture_exception(*args, **kwargs):
     pass
 
