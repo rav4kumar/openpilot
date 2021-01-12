@@ -3,6 +3,7 @@ from common.numpy_fast import clip, interp
 from selfdrive.controls.lib.pid import PIDController
 from common.params import Params
 from selfdrive.controls.lib.dynamic_gas import DynamicGas
+from selfdrive.config import Conversions as CV
 
 LongCtrlState = log.ControlsState.LongControlState
 
