@@ -234,7 +234,7 @@ typedef struct UIState {
   int img_speed;
 
   SubMaster *sm;
-  PubMaster *pm;
+  //PubMaster *pm;
   Sound *sound;
   UIStatus status;
   UIScene scene;
