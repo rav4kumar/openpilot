@@ -226,10 +226,10 @@ int main(int argc, char* argv[]) {
       usleep(50 * 1000);
     }
 
-    if (s->started && !last_started) {
+    if (s->started) {
       sa_init(s, false);  // reset ml button and regrab params
     }
-    last_started = s->started;
+
 
     double u1 = millis_since_boot();
 
