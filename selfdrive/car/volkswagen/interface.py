@@ -48,7 +48,7 @@ class CarInterface(CarInterfaceBase):
     ret.lateralTuning.pid.kiBP = [0.]
     ret.lateralTuning.pid.kpV = [0.6]
     ret.lateralTuning.pid.kiV = [0.2]
-    ret.lateralTuning.pid.kf = 0.00006
+    ret.lateralTuning.pid.kfV = [0.00006]
 
     # PER-PLATFORM PARAMETERS - DO NOT EDIT HERE TO TUNE INDIVIDUAL VEHICLES
     ret.carName = "volkswagen"
