@@ -164,7 +164,7 @@ class PIDController:
 
       # Update when changing i will move the control away from the limits
       # or when i will move towards the sign of the error
-      if ((error >= 0 and (control <= self.pos_limit or i < 0.0)) or 
+      if ((error >= 0 and (control <= self.pos_limit or i < 0.0)) or
           (error <= 0 and (control >= self.neg_limit or i > 0.0))) and \
           not freeze_integrator:
         self.id = i
@@ -211,11 +211,11 @@ class PIControllerk_f:
   @property
   def k_i(self):
     return interp(self.speed, self._k_i[0], self._k_i[1])
-  
+
   @property
   def k_f(self):
     return interp(self.speed, self._k_f[0], self._k_f[1])
-  
+
   def _check_saturation(self, control, check_saturation, error):
     saturated = (control < self.neg_limit) or (control > self.pos_limit)
 
@@ -254,7 +254,7 @@ class PIControllerk_f:
 
       # Update when changing i will move the control away from the limits
       # or when i will move towards the sign of the error
-      if ((error >= 0 and (control <= self.pos_limit or i < 0.0)) or \
+      if ((error >= 0 and (control <= self.pos_limit or i < 0.0)) or 
           (error <= 0 and (control >= self.neg_limit or i > 0.0))) and \
          not freeze_integrator:
         self.i = i
