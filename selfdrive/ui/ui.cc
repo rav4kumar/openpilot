@@ -57,11 +57,12 @@ int write_param_float(float param, const char* param_name, bool persistent_param
 void ui_init(UIState *s) {
   s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "liveMapData",
                          "health", "carParams", "ubloxGnss", "driverState", "dMonitoringState", "sensorEvents",
-                         "dragonConf", "carState"});
+                         "dragonConf", "carState", "modelLongButton"});
 
   s->started = false;
   s->status = STATUS_OFFROAD;
   s->scene.satelliteCount = -1;
+  s->scene.mlButtonEnabled = false;
   read_param(&s->is_metric, "IsMetric");
 
   s->fb = framebuffer_init("ui", 0, true, &s->fb_w, &s->fb_h);
