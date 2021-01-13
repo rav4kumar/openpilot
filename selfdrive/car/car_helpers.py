@@ -10,7 +10,6 @@ from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
 from cereal import car
-from common.dp_common import is_online
 from common.travis_checker import travis
 if not travis:
     import selfdrive.crash as crash
@@ -180,6 +179,25 @@ def fingerprint(logcan, sendcan, has_relay):
   put_nonblocking('dp_car_detected', car_fingerprint)
   return car_fingerprint, finger, vin, car_fw, source
 
+def is_connected_to_internet(timeout=5):
+    try:
+        requests.get("https://sentry.io", timeout=timeout)
+        return True
+    except:
+        return False
+    
+def crash_log(candidate):
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("fingerprinted %s" % candidate)
+      break
+        
+def crash_log2(fingerprints, fw):
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("car doesn't match any fingerprints: %s" % fingerprints)
+      crash.capture_warning("car doesn't match any fw: %s" % fw)
+      break
 
 def get_car(logcan, sendcan, has_relay=False):
   candidate, fingerprints, vin, car_fw, source = fingerprint(logcan, sendcan, has_relay)
@@ -187,9 +205,12 @@ def get_car(logcan, sendcan, has_relay=False):
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
+    if not travis:
+      y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
+      y.start()
 
-  if is_online():
-    x = threading.Thread(target=log_fingerprinted, args=(candidate,))
+  if not travis:
+    x = threading.Thread(target=crash_log, args=(candidate,))
     x.start()
 
   CarInterface, CarController, CarState = interfaces[candidate]
@@ -199,8 +220,3 @@ def get_car(logcan, sendcan, has_relay=False):
   car_params.fingerprintSource = source
 
   return CarInterface(car_params, CarController, CarState), car_params
-
-def log_fingerprinted(candidate):
-  while True:
-    crash.capture_warning("fingerprinted %s" % candidate)
-    break
