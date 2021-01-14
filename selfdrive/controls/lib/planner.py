@@ -17,6 +17,7 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+from selfdrive.controls.lib.long_mpc_model import LongitudinalMpcModel
 from common.op_params import opParams
 op_params = opParams()
 osm = op_params.get('osm')
@@ -117,6 +118,7 @@ class Planner():
 
     self.mpc1 = LongitudinalMpc(1)
     self.mpc2 = LongitudinalMpc(2)
+    self.mpc_model = LongitudinalMpcModel()
 
     self.v_acc_start = 0.0
     self.a_acc_start = 0.0
@@ -126,6 +128,8 @@ class Planner():
     self.a_acc = 0.0
     self.v_cruise = 0.0
     self.a_cruise = 0.0
+    self.v_model = 0.0
+    self.a_model = 0.0
     self.osm = True
 
     self.longitudinalPlanSource = 'cruise'
@@ -144,7 +148,8 @@ class Planner():
     self.v_model = 0.0
     self.a_model = 0.0
 
-  def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngle):
+  def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngle, model_enabled):
+    #possible_futures = [self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint]
     center_x = -2.5 # Wheel base 2.5m
     lead1_check = True
     lead2_check = True
@@ -166,6 +171,9 @@ class Planner():
         solutions['mpc1'] = self.mpc1.v_mpc
       if self.mpc2.prev_lead_status and lead2_check:
         solutions['mpc2'] = self.mpc2.v_mpc
+      if self.mpc_model.valid and model_enabled:
+        solutions['model'] = self.mpc_model.v_mpc
+      solutions['cruise'] = self.v_cruise
 
       slowest = min(solutions, key=solutions.get)
 
@@ -180,6 +188,9 @@ class Planner():
       elif slowest == 'cruise':
         self.v_acc = self.v_cruise
         self.a_acc = self.a_cruise
+      elif slowest == 'model':
+        self.v_acc = self.mpc_model.v_mpc
+        self.a_acc = self.mpc_model.a_mpc
       # dp - slow on curve from 0.7.6.1
       elif self.dp_slow_on_curve and slowest == 'model':
         self.v_acc = self.v_model
@@ -187,9 +198,29 @@ class Planner():
 
     self.v_acc_future = v_cruise_setpoint
     if lead1_check:
-      self.v_acc_future = min([self.mpc1.v_mpc_future, self.v_acc_future])
+      self.v_acc_future = min([self.mpc1.v_mpc_future, self.v_acc_future, self.mpc_model.v_mpc_future])
     if lead2_check:
-      self.v_acc_future = min([self.mpc2.v_mpc_future, self.v_acc_future])
+      self.v_acc_future = min([self.mpc2.v_mpc_future, self.v_acc_future, self.mpc_model.v_mpc_future ])
+
+  def parse_modelV2_data(self, sm):
+    modelV2 = sm['modelV2']
+    distances, speeds, accelerations = [], [], []
+    if not sm.updated['modelV2'] or len(modelV2.position.x) == 0:
+      return distances, speeds, accelerations
+
+    model_t = modelV2.position.t
+    mpc_times = list(range(10))
+
+    model_t_idx = [sorted(range(len(model_t)), key=[abs(idx - t) for t in model_t].__getitem__)[0] for idx in mpc_times]  # matches 0 to 9 interval to idx from t
+
+    for t in model_t_idx:  # everything is derived from x position since velocity is outputting weird values
+      speeds.append(modelV2.velocity.x[t])
+      distances.append(modelV2.position.x[t])
+      if model_t_idx.index(t) > 0:  # skip first since we can't calculate (and don't want to use v_ego)
+        accelerations.append((speeds[-1] - speeds[-2]) / model_t[t])
+
+    accelerations.insert(0, accelerations[1] - (accelerations[2] - accelerations[1]))  # extrapolate back first accel from second and third, less weight
+    return distances, speeds, accelerations
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
@@ -360,11 +391,18 @@ class Planner():
 
     self.mpc1.set_cur_state(self.v_acc_start, self.a_acc_start)
     self.mpc2.set_cur_state(self.v_acc_start, self.a_acc_start)
+    self.mpc_model.set_cur_state(self.v_acc_start, self.a_acc_start)
 
     self.mpc1.update(pm, sm['carState'], lead_1)
     self.mpc2.update(pm, sm['carState'], lead_2)
 
-    self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle)
+    distances, speeds, accelerations = self.parse_modelV2_data(sm)
+    self.mpc_model.update(sm['carState'].vEgo, sm['carState'].aEgo,
+                          distances,
+                          speeds,
+                          accelerations)
+
+    self.choose_solution(v_cruise_setpoint, enabled, lead_1, lead_2, sm['carState'].steeringAngle, sm['modelLongButton'].enabled)
 
     # determine fcw
     if self.mpc1.new_lead:
