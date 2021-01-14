@@ -83,8 +83,6 @@ modelV2: [8077, true, 20., 20]
 
 dragonConf: [8088, false, 2.]
 
-modelLongButton: [8084, false, 0.]
-
 testModel: [8040, false, 0.]
 testLiveLocation: [8045, false, 0.]
 testJoystick: [8056, false, 0.]
