@@ -186,13 +186,13 @@ def is_connected_to_internet(timeout=5):
         return True
     except Exception:
         return False
-    
+
 def crash_log(candidate):
   while True:
     if is_connected_to_internet():
       crash.capture_warning("fingerprinted %s" % candidate)
       break
-      
+
 def crash_log2(fingerprints, fw):
   while True:
     if is_connected_to_internet():
