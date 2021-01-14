@@ -1,5 +1,6 @@
 import os
 import threading
+import requests
 from common.params import Params, put_nonblocking
 from common.basedir import BASEDIR
 from selfdrive.version import comma_remote, tested_branch
@@ -183,7 +184,7 @@ def is_connected_to_internet(timeout=5):
     try:
         requests.get("https://sentry.io", timeout=timeout)
         return True
-    except:
+    except Exception:
         return False
     
 def crash_log(candidate):
@@ -191,7 +192,7 @@ def crash_log(candidate):
     if is_connected_to_internet():
       crash.capture_warning("fingerprinted %s" % candidate)
       break
-        
+      
 def crash_log2(fingerprints, fw):
   while True:
     if is_connected_to_internet():
