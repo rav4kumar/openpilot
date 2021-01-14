@@ -11,6 +11,7 @@ import datetime
 import textwrap
 from typing import Dict, List
 from selfdrive.swaglog import cloudlog, add_logentries_handler
+from common.op_params import opParams
 
 import re
 from common.dp_conf import init_params_vals
@@ -23,6 +24,7 @@ os.environ['BASEDIR'] = BASEDIR
 
 TOTAL_SCONS_NODES = 1040
 prebuilt = os.path.exists(os.path.join(BASEDIR, 'prebuilt'))
+kill_updated = opParams().get('update_behavior').lower().strip() == 'off' or os.path.exists('/data/no_ota_updates')
 
 # Create folders needed for msgq
 try:
@@ -237,11 +239,13 @@ persistent_processes = [
 
 if not PC:
   persistent_processes += [
-    'updated',
+    #'updated',
     'logcatd',
     'tombstoned',
     'sensord',
   ]
+  if not kill_updated:
+    persistent_processes.append('updated')
 
 car_started_processes = [
   'controlsd',

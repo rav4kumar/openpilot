@@ -117,6 +117,9 @@ class opParams:
                                                                  #'The range is limited from 0.85 to 1.3. Set to None to disable', live=True),
                         #'use_virtual_middle_line': Param(False, bool, 'For roads over 4m wide, hug right. For roads under 2m wide, hug left.'),
                         'uniqueID': Param(None, [type(None), str], 'User\'s unique ID'),
+                        'update_behavior': Param('auto', str, 'Can be: (\'off\', \'alert\', \'auto\') without quotes\n'
+                                                              'off will never update, alert shows an alert on-screen\n'
+                                                              'auto will reboot the device when an update is seen'),
                         'enable_indi_live': Param(False, bool, live=True),
                         'indi_inner_gain_bp': Param([18, 22, 26], [list, float, int], live=True, depends_on='enable_indi_live'),
                         'indi_inner_gain_v': Param([5, 10, 15], [list, float, int], live=True, depends_on='enable_indi_live'),
