@@ -51,7 +51,7 @@ Fork is known to work in both US and Europe
 - RX hyrid 2017
 - CT 2018
 - Chevrolet Volt 2017
-- Subaru Crosstrek Limited 2019 with 0.8 it will use Eyesight for radar. 
+- Subaru Crosstrek Limited 2019 with 0.8 it will use Eyesight for radar.
 
 ### Todo
 - [ ] Once QT drops add OSM and Speed offset apk toggles
@@ -87,6 +87,7 @@ Since openpilot v0.8.0 Arne has decide to base his fork on [DragonPilot](https:/
 - Cruise set speed available down to 7 kph
 - Virtual lane lines and Lane center. This feature is for European roads and is recommended for used in Europe only.
 - Alwasys on Dashcam recording ( it will save video's to the `/sdcard/media/dashcam`)
+- Auto update when their is new commits pushed. If you do not wish to automatically update you may change it under op_edit.
 
 ### OpEdit features
 all OpEdit features can be manged by running the command `python /data/openpilot/op_edit.py`
@@ -97,9 +98,9 @@ all OpEdit features can be manged by running the command `python /data/openpilot
 This aims to provide a smoother driving experience in stop and go traffic (under 20 mph) by modifying the maximum gas that can be applied based on your current velocity and the relative velocity of the lead car. It'll also of course increase the maximum gas when the lead is accelerating to help you get up to speed quicker than stock. And smoother; this eliminates the jerking you get from stock ArnePilot with comma pedal. It tries to coast if the lead is only moving slowly, it doesn't use maximum gas as soon as the lead inches forward :). When you are above 20 mph, relative velocity and the following distance is taken into consideration.
 - 2020 Corolla tuning by Spairrow326
 - Added ability to turn on and off RSA at certain speeds.
-- Control 3 gas profiles with sport eco and normal buttons on car (only on limited car) 
+- Control 3 gas profiles with sport eco and normal buttons on car (only on limited car)
 - Ability to change the SpeedLimit Offset directly
-- Able to stop using RSA after certain mph. 
+- Able to stop using RSA after certain mph.
 - Live indi tune toggle thanks @jamcar23
 - cloak mode: which will make comma think you are using their fork. Avoid bans.
 
