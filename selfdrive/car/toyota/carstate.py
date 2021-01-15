@@ -1,3 +1,5 @@
+import numpy as np
+from common.numpy_fast import interp
 from cereal import car
 from common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
@@ -30,13 +32,18 @@ class CarState(CarStateBase):
     self.pcm_acc_active = False
     self.main_on = False
     self.gas_pressed = False
+    self.Angles = np.zeros(250)
+    self.Angles_later = np.zeros(250)
+    self.Angle_counter = 0
+    self.Angle = [0, 5, 10, 15,20,25,30,35,60,100,180,270,500]
+    self.Angle_Speed = [255,160,100,80,70,60,55,50,40,33,27,17,12]
     self.smartspeed = 0
     self.spdval1 = 0
     self.distance = 0
     #self.read_distance_lines = 0
     if not travis:
       self.pm = messaging.PubMaster(['liveTrafficData'])
-      self.sm = messaging.SubMaster(['liveMapData','latControl'])
+      self.sm = messaging.SubMaster(['liveMapData', 'latControl'])
     # On NO_DSU cars but not TSS2 cars the cp.vl["STEER_TORQUE_SENSOR"]['STEER_ANGLE']
     # is zeroed to where the steering angle is at start.
     # Need to apply an offset as soon as the steering angle measurements are both received
@@ -128,6 +135,26 @@ class CarState(CarStateBase):
       self.pcm_acc_status = cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE']
     else:
       self.pcm_acc_status = cp.vl["PCM_CRUISE"]['CRUISE_STATE']
+
+    if not travis and self.sm.updated['latControl'] and ret.vEgo > 11:
+      angle_later = self.sm['latControl'].anglelater
+    else:
+      angle_later = 0
+    if not self.left_blinker_on and not self.right_blinker_on:
+      self.Angles[self.Angle_counter] = abs(ret.steeringAngle)
+      self.Angles_later[self.Angle_counter] = abs(angle_later)
+    else:
+      self.Angles[self.Angle_counter] = abs(ret.steeringAngle) * 0.8
+      if ret.vEgo > 11:
+        self.Angles_later[self.Angle_counter] = abs(angle_later) * 0.8
+      else:
+        self.Angles_later[self.Angle_counter] = 0.0
+      factor = 1.6
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
+    self.Angle_counter = (self.Angle_counter + 1 ) % 250
+
+
     if self.CP.carFingerprint in NO_STOP_TIMER_CAR or self.CP.enableGasInterceptor:
       # ignore standstill in hybrid vehicles, since pcm allows to restart without
       # receiving any special command. Also if interceptor is detected
