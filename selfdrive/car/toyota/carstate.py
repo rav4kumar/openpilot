@@ -151,9 +151,8 @@ class CarState(CarStateBase):
         self.Angles_later[self.Angle_counter] = abs(angle_later) * 0.8
       else:
         self.Angles_later[self.Angle_counter] = 0.0
-      factor = 1.6
-    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
-    ret.cruiseState.speed = int(min(ret.cruiseState.speed, factor * interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, interp(np.max(self.Angles), self.Angle, self.Angle_Speed)))
+    ret.cruiseState.speed = int(min(ret.cruiseState.speed, interp(np.max(self.Angles_later), self.Angle, self.Angle_Speed)))
     self.Angle_counter = (self.Angle_counter + 1 ) % 250
 
 
