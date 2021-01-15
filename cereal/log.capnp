@@ -2066,6 +2066,10 @@ struct Sentinel {
   type @0 :SentinelType;
 }
 
+struct LatControl {
+  anglelater @0 :Float32;
+}
+
 struct Event {
   # in nanoseconds?
   logMonoTime @0 :UInt64;
@@ -2150,6 +2154,7 @@ struct Event {
     wideEncodeIdx @77 :EncodeIndex;
     dragonConf @78 :DragonConf;
     liveTrafficData @79:LiveTrafficData;
+    latControl @80: LatControl;
   }
 }
 

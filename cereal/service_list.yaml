@@ -88,6 +88,7 @@ testLiveLocation: [8045, false, 0.]
 testJoystick: [8056, false, 0.]
 
 liveTrafficData: [8208, false, 100.]
+latControl: [8210, false, 20.]
 
 
 # 8080 is reserved for slave testing daemon
