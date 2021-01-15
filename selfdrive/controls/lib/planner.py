@@ -219,13 +219,13 @@ class Planner():
       if v_ego < 11:
         angle_later = 0.
       else:
-        angle_later = arne_sm['latControl'].anglelater * 0.8
+        angle_later = sm['latControl'].anglelater * 0.8
     else:
       steering_angle = sm['carState'].steeringAngle
       if v_ego < 11:
         angle_later = 0.
       else:
-        angle_later = arne_sm['latControl'].anglelater
+        angle_later = sm['latControl'].anglelater
 
     long_control_state = sm['controlsState'].longControlState
     v_cruise_kph = sm['controlsState'].vCruise
@@ -327,7 +327,7 @@ class Planner():
       else:
         accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, self.dp_profile and (self.longitudinalPlanSource == 'mpc1' or self.longitudinalPlanSource == 'mpc2'))]
       jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
-      accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngle, accel_limits, self.CP, angle_later)
+      accel_limits_turns = limit_accel_in_turns(v_ego, steering_angle sm['carState'].steeringAngle, accel_limits, self.CP, angle_later)
 
       if force_slow_decel:
         # if required so, force a smooth deceleration
