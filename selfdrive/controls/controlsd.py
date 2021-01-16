@@ -66,7 +66,7 @@ class Controls:
       ignore_alive = ['dragonConf'] if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState', 'dragonConf']
       self.sm = messaging.SubMaster(socks, ignore_alive=ignore_alive)
 
-    self.sm_smiskol = messaging.SubMaster(['dynamicFollowData', 'dynamicFollowButton'])
+    self.sm_smiskol = messaging.SubMaster(['dynamicFollowButton'])
 
     self.op_params = opParams()
     self.df_manager = dfManager(self.op_params)
@@ -470,7 +470,7 @@ class Controls:
     #extras_loc = {'mpc_TR': self.sm_smiskol['dynamicFollowData'].mpcTR}
 
     # Gas/Brake PID loop
-    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource, self.sm_smiskol['dynamicFollowData'].mpcTR)
+    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource)
     # Steering PID loop and lateral MPC
     actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan)
 

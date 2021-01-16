@@ -1,5 +1,4 @@
-#pylint: skip-file
-# noqa: E501
+# flake8: noqa
 import numpy as np
 import cereal.messaging as messaging
 from common.realtime import sec_since_boot
@@ -13,8 +12,7 @@ from selfdrive.controls.lib.dynamic_follow.auto_df import predict
 from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from selfdrive.controls.lib.dynamic_follow.support import LeadData, CarData, dfData, dfProfiles
 from common.data_collector import DataCollector
-travis = False
-
+from common.travis_checker import travis
 
 class DistanceModController:
   def __init__(self, k_i, k_d, x_clip, mods):
@@ -165,7 +163,7 @@ class DynamicFollow:
   def _send_cur_state(self):
     if self.mpc_id == 1 and self.pm is not None:
       dat = messaging.new_message('dynamicFollowData')
-      dat.dynamicFollowData.mpcTR = self.TR
+      dat.dynamicFollowData.mpcTR = 1.8
       dat.dynamicFollowData.profilePred = self.model_profile
       self.pm.send('dynamicFollowData', dat)
 
@@ -365,4 +363,4 @@ class DynamicFollow:
 
     self.min_TR = self.op_params.get('min_TR')
     if self.min_TR != 1.:
-      self.min_TR = clip(self.min_TR, 0.85, 1.6)
+      self.min_TR = clip(self.min_TR, 0.85, 1.3)
