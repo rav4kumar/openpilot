@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/resource.h>
+#include <iostream>
 
 #include <algorithm>
 
@@ -27,6 +28,38 @@ static void ui_set_brightness(UIState *s, int brightness) {
       last_brightness = brightness;
     }
   }
+}
+
+static void send_df(UIState *s, int status) {
+  MessageBuilder msg;
+  auto dfStatus = msg.initEvent().initDynamicFollowButton();
+  dfStatus.setStatus(status);
+  s->pm->send("dynamicFollowButton", msg);
+}
+
+static bool handle_df_touch(UIState *s, int touch_x, int touch_y) {
+  //dfButton manager
+  int padding = 40;
+  if ((1660 - padding <= touch_x) && (855 - padding <= touch_y)) {
+    s->scene.dfButtonStatus++;
+    if (s->scene.dfButtonStatus > 3) { s->scene.dfButtonStatus = 0; }
+    send_df(s, s->scene.dfButtonStatus);
+    printf("df button: %d\n", s->scene.dfButtonStatus);
+    return true;
+  }
+  return false;
+}
+
+static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
+  if (s->active_app == cereal::UiLayoutState::App::NONE) {  // if onroad (not settings or home)
+    if ((s->awake && s->vision_connected && s->status != STATUS_OFFROAD) || s->ui_debug) {  // if car started or debug mode
+      if (handle_df_touch(s, touch_x, touch_y)) {
+        s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
+        return true;  // only allow one button to be pressed at a time
+      }
+    }
+  }
+  return false;
 }
 
 static void handle_display_state(UIState *s, bool user_input) {
@@ -72,22 +105,7 @@ static void handle_display_state(UIState *s, bool user_input) {
 static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
   //dfButton manager  // code below thanks to kumar: https://github.com/arne182/openpilot/commit/71d5aac9f8a3f5942e89634b20cbabf3e19e3e78
   if (s->started && s->active_app != cereal::UiLayoutState::App::SETTINGS) {
-    if (s->scene.dpDynamicFollow > 0 && touch_x >= df_btn_x && touch_x <= (df_btn_x + df_btn_w) && touch_y >= df_btn_y && touch_y <= (df_btn_y + df_btn_h)) {
-      int val = s->scene.dpDynamicFollow;
-      val++;
-      if (val >= 5) {
-        val = 1;
-      }
-
-      char str[2] = {0};
-      sprintf(str, "%d", val);
-      Params().write_db_value("dp_dynamic_follow", str, 1);
-
-      char time_str[11];
-      snprintf(time_str, 11, "%lu", time(NULL));
-      Params().write_db_value("dp_last_modified", time_str, 11);
-      return true;
-    } else if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
+    if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
       int val = s->scene.dpAccelProfile;
       val++;
       if (val >= 4) {
@@ -161,6 +179,7 @@ int main(int argc, char* argv[]) {
   UIState uistate = {};
   UIState *s = &uistate;
   ui_init(s);
+  sa_init(s, true);
   s->sound = &sound;
 
   TouchState touch = {0};
@@ -191,11 +210,18 @@ int main(int argc, char* argv[]) {
   s->scene.dp_alert_rate = 0;
   s->scene.dp_alert_type = 1;
   bool show_layer = true;
-
+  bool last_started = s->started;
   while (!do_exit) {
     if (!s->started) {
       usleep(50 * 1000);
     }
+
+    if (s->started && !last_started) {
+      sa_init(s, false);  // reset ml button and regrab params
+    }
+    last_started = s->started;
+
+
     double u1 = millis_since_boot();
 
     ui_update(s);
@@ -217,9 +243,12 @@ int main(int argc, char* argv[]) {
     int touch_x = -1, touch_y = -1;
     int touched = touch_poll(&touch, &touch_x, &touch_y, 0);
     if (touched == 1) {
+      if (s->ui_debug) { printf("touched x: %d, y: %d\n", touch_x, touch_y); }
       if (!handle_dp_btn_touch(s, touch_x, touch_y)) {
       handle_sidebar_touch(s, touch_x, touch_y);
-      handle_vision_touch(s, touch_x, touch_y);
+      if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
+        handle_vision_touch(s, touch_x, touch_y);
+        }
       }
     }
 

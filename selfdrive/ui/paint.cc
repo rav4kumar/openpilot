@@ -240,7 +240,18 @@ static void ui_draw_vision_lane_lines(UIState *s) {
     if(s->sm->updated("modelV2")) {
       update_line_data(s, scene->model.getLaneLines()[ll_idx], 0.025*scene->model.getLaneLineProbs()[ll_idx], pvd_ll + ll_idx, scene->max_distance);
     }
-    NVGcolor color = nvgRGBAf(1.0, 1.0, 1.0, scene->lane_line_probs[ll_idx]);
+    NVGcolor color;
+    if (ll_idx == 1 || ll_idx == 2) {
+      const cereal::ModelDataV2::XYZTData::Reader &line = scene->model.getLaneLines()[ll_idx];
+
+      const float default_pos = 1.4;  // when lane poly isn't available
+      const float lane_pos = line.getY().size() > 0 ? std::abs(line.getY()[0]) : default_pos;  // get redder when line is closer to car
+      float hue = 332.5 * lane_pos - 332.5;  // equivalent to {1.4, 1.0}: {133, 0} (green to red)
+      hue = fmin(133, fmax(0, hue)) / 360.;  // clip and normalize
+      color = nvgHSLA(hue, 0.73, 0.64, scene->lane_line_probs[ll_idx] * 255);
+    } else {
+      color = nvgHSLA(133 / 360., 0.73, 0.64, scene->lane_line_probs[ll_idx] * 255);
+    }
     ui_draw_line(s, (pvd_ll + ll_idx)->v, (pvd_ll + ll_idx)->cnt, &color, nullptr);
   }
 
@@ -548,6 +559,31 @@ static void ui_draw_driver_view(UIState *s) {
   ui_draw_circle_image(s->vg, x, y, face_size, s->img_face, scene->dmonitoring_state.getFaceDetected());
 }
 
+static void ui_draw_df_button(UIState *s) {
+  int btn_status = s->scene.dfButtonStatus;
+  int btn_w = 150;
+  int btn_h = 150;
+  int y_padding = 50;
+  int btn_x = 1920 - btn_w;
+  int btn_y = 1080 - btn_h - y_padding;
+  int btn_colors[4][3] = {{4, 67, 137}, {36, 168, 188}, {252, 255, 75}, {55, 184, 104}};
+
+  nvgBeginPath(s->vg);
+  nvgRoundedRect(s->vg, btn_x-110, btn_y-45, btn_w, btn_h, 100);
+  nvgStrokeColor(s->vg, nvgRGBA(btn_colors[btn_status][0], btn_colors[btn_status][1], btn_colors[btn_status][2], 255));
+  nvgStrokeWidth(s->vg, 11);
+  nvgStroke(s->vg);
+
+  nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 255));
+  nvgFontSize(s->vg, 80);
+  nvgText(s->vg, btn_x - 38, btn_y + 30, "DF", NULL);
+
+  nvgFillColor(s->vg, nvgRGBA(255, 255, 255, 255));
+  nvgFontSize(s->vg, 45);
+  nvgText(s->vg, btn_x - 34, btn_y + 50 + 15, "profile", NULL);
+}
+
+
 static void ui_draw_vision_header(UIState *s) {
   const Rect &viz_rect = s->scene.viz_rect;
   if (!s->scene.dpFullScreenApp) {
@@ -567,6 +603,7 @@ static void ui_draw_vision_header(UIState *s) {
   if (s->scene.dpUiEvent) {
   ui_draw_vision_event(s);
   }
+  ui_draw_df_button(s);
 }
 
 static void ui_draw_vision_footer(UIState *s) {
@@ -574,9 +611,9 @@ static void ui_draw_vision_footer(UIState *s) {
   ui_draw_vision_face(s);
   ui_draw_vision_map(s);
   }
-  if ((int)s->scene.dpDynamicFollow > 0) {
-    ui_draw_df_button(s);
-  }
+  //if ((int)s->scene.dpDynamicFollow > 0) {
+    //ui_draw_df_button(s);
+  //}
   if ((int)s->scene.dpAccelProfile > 0) {
     ui_draw_ap_button(s);
   }
