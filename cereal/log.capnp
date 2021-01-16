@@ -2066,6 +2066,15 @@ struct Sentinel {
   type @0 :SentinelType;
 }
 
+struct DynamicFollowData {
+  mpcTR @0 :Float32;
+  profilePred @1 :UInt16;
+}
+
+struct DynamicFollowButton {
+  status @0 :UInt16;
+}
+
 struct LatControl {
   anglelater @0 :Float32;
 }
@@ -2155,6 +2164,8 @@ struct Event {
     dragonConf @78 :DragonConf;
     liveTrafficData @79:LiveTrafficData;
     latControl @80: LatControl;
+    dynamicFollowData @81 :DynamicFollowData;
+    dynamicFollowButton @82 :DynamicFollowButton;
   }
 }
 
