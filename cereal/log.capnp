@@ -2196,6 +2196,7 @@ struct DragonConf {
   dpAllowGas @23 :Bool;
   dpMaxCtrlSpeed @24 :Float32;
   dpLeadCarAlert @25 :Bool;
+  dpDynamicFollow @26 :UInt8;
   dpAccelProfile @27 :UInt8;
   dpDriverMonitor @28 :Bool;
   dpSteeringMonitor @29 :Bool;
