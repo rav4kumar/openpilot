@@ -57,6 +57,22 @@ static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
         s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
         return true;  // only allow one button to be pressed at a time
       }
+      if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
+        int val = s->scene.dpAccelProfile;
+        val++;
+        if (val >= 4) {
+          val = 1;
+        }
+
+        char str[2] = {0};
+        sprintf(str, "%d", val);
+        Params().write_db_value("dp_accel_profile", str, 1);
+
+        char time_str[11];
+        snprintf(time_str, 11, "%lu", time(NULL));
+        Params().write_db_value("dp_last_modified", time_str, 11);
+        return true;
+      }
     }
   }
   return false;
@@ -102,28 +118,28 @@ static void handle_display_state(UIState *s, bool user_input) {
   }
 }
 
-static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
+//static bool handle_dp_btn_touch(UIState *s, int touch_x, int touch_y) {
   //dfButton manager  // code below thanks to kumar: https://github.com/arne182/openpilot/commit/71d5aac9f8a3f5942e89634b20cbabf3e19e3e78
-  if (s->started && s->active_app != cereal::UiLayoutState::App::SETTINGS) {
-    if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
-      int val = s->scene.dpAccelProfile;
-      val++;
-      if (val >= 4) {
-        val = 1;
-      }
+  //if (s->started && s->active_app != cereal::UiLayoutState::App::SETTINGS) {
+    //if (s->scene.dpAccelProfile > 0 && touch_x >= ap_btn_x && touch_x <= (ap_btn_x + ap_btn_w) && touch_y >= ap_btn_y && touch_y <= (ap_btn_y + ap_btn_h)) {
+      //int val = s->scene.dpAccelProfile;
+      //val++;
+      //if (val >= 4) {
+      //  val = 1;
+      //}
 
-      char str[2] = {0};
-      sprintf(str, "%d", val);
-      Params().write_db_value("dp_accel_profile", str, 1);
+      //char str[2] = {0};
+      //sprintf(str, "%d", val);
+      //Params().write_db_value("dp_accel_profile", str, 1);
 
-      char time_str[11];
-      snprintf(time_str, 11, "%lu", time(NULL));
-      Params().write_db_value("dp_last_modified", time_str, 11);
-      return true;
-    }
-  }
-  return false;
-}
+      //char time_str[11];
+      //snprintf(time_str, 11, "%lu", time(NULL));
+      //Params().write_db_value("dp_last_modified", time_str, 11);
+      //return true;
+    //}
+  //}
+  //return false;
+//}
 
 static void handle_vision_touch(UIState *s, int touch_x, int touch_y) {
   if (s->started && (touch_x >= s->scene.viz_rect.x - bdr_s)
