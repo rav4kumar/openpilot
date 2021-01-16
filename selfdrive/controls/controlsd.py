@@ -21,6 +21,8 @@ from selfdrive.controls.lib.alertmanager import AlertManager
 from selfdrive.controls.lib.vehicle_model import VehicleModel
 from selfdrive.controls.lib.planner import LON_MPC_STEP
 from selfdrive.locationd.calibrationd import Calibration
+from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
+from common.op_params import opParams
 
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -47,6 +49,7 @@ LEAD_AWAY_STATE_ALERTED = 2
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None):
     config_realtime_process(3, Priority.CTRL_HIGH)
+    self.op_params = opParams()
 
     params = Params()
 
@@ -62,6 +65,12 @@ class Controls:
                                      'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'dragonConf']
       ignore_alive = ['dragonConf'] if params.get('dp_driver_monitor') == b'1' else ['dMonitoringState', 'dragonConf']
       self.sm = messaging.SubMaster(socks, ignore_alive=ignore_alive)
+
+    self.sm_smiskol = messaging.SubMaster(['dynamicFollowData', 'dynamicFollowButton'])
+
+    self.op_params = opParams()
+    self.df_manager = dfManager(self.op_params)
+    self.hide_auto_df_alerts = self.op_params.get('hide_auto_df_alerts')
 
     self.can_sock = can_sock
     if can_sock is None:
@@ -306,6 +315,26 @@ class Controls:
       if CS.vEgo > 0. or CS.gearShifter in [car.CarState.GearShifter.reverse, car.CarState.GearShifter.park]:
         self.dp_lead_count = 0
 
+    self.add_stock_additions_alerts(CS)
+
+  def add_stock_additions_alerts(self, CS):
+    self.AM.SA_set_frame(self.sm.frame)
+    self.AM.SA_set_enabled(self.enabled)
+    # alert priority is defined by code location, keeping is highest, then lane speed alert, then auto-df alert
+
+    df_out = self.df_manager.update()
+    if df_out.changed:
+      df_alert = 'dfButtonAlert'
+      if df_out.is_auto and df_out.last_is_auto:
+        # only show auto alert if engaged, not hiding auto, and time since lane speed alert not showing
+        if CS.cruiseState.enabled and not self.hide_auto_df_alerts:
+          df_alert += 'Silent'
+          self.AM.SA_add(df_alert, extra_text_1=df_out.model_profile_text + ' (auto)')
+          return
+      else:
+        self.AM.SA_add(df_alert, extra_text_1=df_out.user_profile_text, extra_text_2='Dynamic follow: {} profile active'.format(df_out.user_profile_text))
+        return
+
   def data_sample(self):
     """Receive data from sockets and update carState"""
 
@@ -314,6 +343,7 @@ class Controls:
     CS = self.CI.update(self.CC, can_strs, self.sm['dragonConf'])
 
     self.sm.update(0)
+    self.sm_smiskol.update(0)
 
     # Check for CAN timeout
     if not can_strs:
@@ -437,8 +467,10 @@ class Controls:
     a_acc_sol = plan.aStart + (dt / LON_MPC_STEP) * (plan.aTarget - plan.aStart)
     v_acc_sol = plan.vStart + dt * (a_acc_sol + plan.aStart) / 2.0
 
+    extras_loc = {'mpc_TR': self.sm_smiskol['dynamicFollowData'].mpcTR}
+
     # Gas/Brake PID loop
-    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource)
+    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource, extras_loc)
     # Steering PID loop and lateral MPC
     actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan)
 
