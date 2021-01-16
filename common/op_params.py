@@ -82,7 +82,7 @@ class opParams:
                         'default_brake_distance': Param(250.0, VT.number, 'Distance in m to start braking for mapped speeds.'),
                         #'enable_long_derivative': Param(False, bool, 'If you have longitudinal overshooting, enable this! This enables derivative-based\n'
                                                                     # 'integral wind-down to help reduce overshooting within the long PID loop'),
-                        'dynamic_follow': Param('auto', str, 'Can be: (\'traffic\', \'relaxed\', \'roadtrip\'): Left to right increases in following distance.\n'
+                        'dynamic_follow': Param('relaxed', str, 'Can be: (\'traffic\', \'relaxed\', \'roadtrip\'): Left to right increases in following distance.\n'
                                                              'All profiles support dynamic follow so you\'ll get your preferred distance while\n'
                                                              'retaining the smoothness and safety of dynamic follow!'),
                         #'eco_mode': Param(False, bool, "Default to eco instead of normal."),
@@ -90,7 +90,7 @@ class opParams:
                         'global_df_mod': Param(1.0, VT.number, 'The multiplier for the current distance used by dynamic follow. The range is limited from 0.85 to 2.5\n'
                                                                'Smaller values will get you closer, larger will get you farther\n'
                                                                'This is multiplied by any profile that\'s active. Set to 1. to disable', live=True),
-                        #'hide_auto_df_alerts': Param(True, bool, 'Hides the alert that shows what profile the model has chosen'),
+                        'hide_auto_df_alerts': Param(False, bool, 'Hides the alert that shows what profile the model has chosen'),
                         #'hotspot_on_boot': Param(False, bool, 'Enable Hotspot On Boot'),
                         'keep_openpilot_engaged': Param(True, bool, 'True is stock behavior in this fork. False lets you use the brake and cruise control stalk to disengage as usual'),
                         #'lat_d': Param(9.0, VT.number, 'The lateral derivative gain, default is 9.0 for TSS2 Corolla. This is active at all speeds', live=True),
