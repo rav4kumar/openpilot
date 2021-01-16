@@ -40,7 +40,7 @@ class CarState(CarStateBase):
     self.smartspeed = 0
     self.spdval1 = 0
     self.distance = 0
-    #self.read_distance_lines = 0
+    self.read_distance_lines = 0
     if not travis:
       self.pm = messaging.PubMaster(['liveTrafficData', 'dynamicFollowButton'])
       self.sm = messaging.SubMaster(['liveMapData', 'latControl'])

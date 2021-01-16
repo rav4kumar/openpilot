@@ -83,15 +83,7 @@ class DynamicFollow:
     self.sng_TR = 1.8  # reacceleration stop and go TR
     self.sng_speed = 18.0 * CV.MPH_TO_MS
 
-    self._setup_collector()
     self._setup_changing_variables()
-
-  def _setup_collector(self):
-    self.sm_collector = SubMaster(['liveTracks', 'laneSpeed'])
-    self.log_auto_df = self.op_params.get('log_auto_df')
-    if not isinstance(self.log_auto_df, bool):
-      self.log_auto_df = False
-    self.data_collector = DataCollector(file_path='/data/df_data', keys=['v_ego', 'a_ego', 'a_lead', 'v_lead', 'x_lead', 'left_lane_speeds', 'middle_lane_speeds', 'right_lane_speeds', 'left_lane_distances', 'middle_lane_distances', 'right_lane_distances', 'profile', 'time'], log_data=self.log_auto_df)
 
   def _setup_changing_variables(self):
     self.TR = self.default_TR
@@ -116,9 +108,6 @@ class DynamicFollow:
     self._update_car(CS)
     self._get_profiles()
 
-    if self.mpc_id == 1 and self.log_auto_df:
-      self._gather_data()
-
     if not self.lead_data.status:
       self.TR = self.default_TR
     else:
@@ -137,25 +126,6 @@ class DynamicFollow:
     self.user_profile = df_out.user_profile
     if df_out.is_auto:  # todo: find some way to share prediction between the two mpcs to reduce processing overhead
       self._get_pred()  # sets self.model_profile, all other checks are inside function
-
-  def _gather_data(self):
-    self.sm_collector.update(0)
-    # live_tracks = [[i.dRel, i.vRel, i.aRel, i.yRel] for i in self.sm_collector['liveTracks']]
-    if self.car_data.cruise_enabled:
-      self.data_collector.update([self.car_data.v_ego,
-                                  self.car_data.a_ego,
-                                  self.lead_data.a_lead,
-                                  self.lead_data.v_lead,
-                                  self.lead_data.x_lead,
-                                  list(self.sm_collector['laneSpeed'].leftLaneSpeeds),
-                                  list(self.sm_collector['laneSpeed'].middleLaneSpeeds),
-                                  list(self.sm_collector['laneSpeed'].rightLaneSpeeds),
-
-                                  list(self.sm_collector['laneSpeed'].leftLaneDistances),
-                                  list(self.sm_collector['laneSpeed'].middleLaneDistances),
-                                  list(self.sm_collector['laneSpeed'].rightLaneDistances),
-                                  self.user_profile,
-                                  sec_since_boot()])
 
   def _norm(self, x, name):
     self.x = x
