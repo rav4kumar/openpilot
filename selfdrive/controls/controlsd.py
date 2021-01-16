@@ -467,10 +467,10 @@ class Controls:
     a_acc_sol = plan.aStart + (dt / LON_MPC_STEP) * (plan.aTarget - plan.aStart)
     v_acc_sol = plan.vStart + dt * (a_acc_sol + plan.aStart) / 2.0
 
-    extras_loc = {'mpc_TR': self.sm_smiskol['dynamicFollowData'].mpcTR}
+    #extras_loc = {'mpc_TR': self.sm_smiskol['dynamicFollowData'].mpcTR}
 
     # Gas/Brake PID loop
-    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource, extras_loc)
+    actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, self.sm, plan.hasLead, self.sm['radarState'], plan.decelForTurn, plan.longitudinalPlanSource, self.sm_smiskol['dynamicFollowData'].mpcTR)
     # Steering PID loop and lateral MPC
     actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan)
 
