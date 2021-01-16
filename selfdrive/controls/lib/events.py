@@ -218,6 +218,23 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
 
   # ********** events only containing alerts displayed in all states **********
 
+  'dfButtonAlert': {
+    ET.PERMANENT: Alert(
+      _("Using profile: "),
+      "",
+      AlertStatus.normal, AlertSize.mid,
+      Priority.LOW, VisualAlert.none, AudibleAlert.chimeWarning1, .4, 0., 1.5),
+  },
+
+  'dfButtonAlertSilent': {
+    ET.PERMANENT: Alert(
+      _("Dynamic follow: "),
+      "",
+      AlertStatus.normal, AlertSize.small,
+      Priority.LOWER, VisualAlert.none, AudibleAlert.none, .2, 0., 1.5),
+  },
+
+
   EventName.debugAlert: {
     ET.PERMANENT: Alert(
       _("DEBUG ALERT"),
