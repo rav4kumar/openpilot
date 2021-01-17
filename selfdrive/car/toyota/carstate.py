@@ -30,6 +30,7 @@ class CarState(CarStateBase):
     self.accurate_steer_angle_seen = CP.carFingerprint in TSS2_CAR or CP.carFingerprint in [CAR.LEXUS_ISH] or self.dp_toyota_zss
     self.setspeedcounter = 0
     self.pcm_acc_active = False
+    self.engaged_when_gas_was_pressed = False
     self.main_on = False
     self.gas_pressed = False
     self.Angles = np.zeros(250)
@@ -38,6 +39,7 @@ class CarState(CarStateBase):
     self.Angle = [0, 5, 10, 15,20,25,30,35,60,100,180,270,500]
     self.Angle_Speed = [255,160,100,80,70,60,55,50,40,33,27,17,12]
     self.smartspeed = 0
+    self.rsa_ignored_speed = 0
     self.spdval1 = 0
     self.distance = 0
     self.read_distance_lines = 0
