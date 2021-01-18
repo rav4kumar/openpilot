@@ -227,7 +227,6 @@ def update_custom_logic(msg):
     msg.dragonConf.dpAutoLcMinMph = msg.dragonConf.dpAssistedLcMinMph
   if msg.dragonConf.dpAtl:
     msg.dragonConf.dpAllowGas = True
-    msg.dragonConf.dpDynamicFollow = 0
     msg.dragonConf.dpAccelProfile = 0
     msg.dragonConf.dpGearCheck = False
   if msg.dragonConf.dpAppWaze or msg.dragonConf.dpAppHr:
