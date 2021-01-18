@@ -106,11 +106,11 @@ class CarState(CarStateBase):
       self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
       msg_df = messaging.new_message('dynamicFollowButton')
       msg_df.dynamicFollowButton.status = max(self.read_distance_lines - 1, 0)
-      self.pm.send('dynamicFollowButton', msg_df)
 
     if not travis:
       self.sm.update(0)
       self.smartspeed = self.sm['liveMapData'].speedLimit
+      self.pm.send('dynamicFollowButton', msg_df)
     self.left_blinker_on = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 1
     self.right_blinker_on = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 2
 
