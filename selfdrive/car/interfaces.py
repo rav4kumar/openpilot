@@ -71,9 +71,9 @@ class CarInterfaceBase():
     ret.brakeMaxBP = [0.]
     ret.brakeMaxV = [1.]
     ret.openpilotLongitudinalControl = False
-    ret.startAccel = 1.2
+    ret.startAccel = 1.0
     ret.minSpeedCan = 0.3
-    ret.stoppingBrakeRate = 0.1 # brake_travel/s while trying to stop
+    ret.stoppingBrakeRate = 0.2 # brake_travel/s while trying to stop
     ret.startingBrakeRate = 0.8 # brake_travel/s while releasing on restart
     ret.stoppingControl = False
     ret.longitudinalTuning.deadzoneBP = [0.]
