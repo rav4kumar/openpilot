@@ -82,9 +82,9 @@ class opParams:
                         'default_brake_distance': Param(250.0, VT.number, 'Distance in m to start braking for mapped speeds.'),
                         #'enable_long_derivative': Param(False, bool, 'If you have longitudinal overshooting, enable this! This enables derivative-based\n'
                                                                     # 'integral wind-down to help reduce overshooting within the long PID loop'),
-                        'dynamic_follow': Param('relaxed', str, 'Can be: (\'traffic\', \'relaxed\', \'roadtrip\'): Left to right increases in following distance.\n'
-                                                             'All profiles support dynamic follow so you\'ll get your preferred distance while\n'
-                                                             'retaining the smoothness and safety of dynamic follow!'),
+                        'dynamic_follow': Param('relaxed', str, "Can be: ('traffic', 'relaxed', 'roadtrip'): Left to right increases in following distance.\n"
+                                                               "All profiles support dynamic follow so you'll get your preferred distance while\n"
+                                                               "retaining the smoothness and safety of dynamic follow!", live=True),
                         #'eco_mode': Param(False, bool, "Default to eco instead of normal."),
                         #'force_pedal': Param(False, bool, "If openpilot isn't recognizing your comma pedal, set this to True"),
                         'global_df_mod': Param(1.0, VT.number, 'The multiplier for the current distance used by dynamic follow. The range is limited from 0.85 to 2.5\n'
