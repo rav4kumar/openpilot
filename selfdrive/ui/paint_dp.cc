@@ -1,34 +1,6 @@
 #include "paint_dp.hpp"
 #include <math.h>
 
-void ui_draw_df_button(UIState *s) {
-  nvgBeginPath(s->vg);
-  nvgRoundedRect(s->vg, df_btn_x, df_btn_y, df_btn_w, df_btn_h, 20);
-  nvgStrokeColor(s->vg, COLOR_WHITE_ALPHA(80));
-  nvgStrokeWidth(s->vg, 6);
-  nvgStroke(s->vg);
-
-  nvgFontFaceId(s->vg,  s->font_sans_regular);
-  nvgFillColor(s->vg, COLOR_WHITE_ALPHA(200));
-  nvgFontSize(s->vg, (s->scene.dpLocale == "zh-TW"? 96 : s->scene.dpLocale == "zh-CN"? 96 : 48));
-  nvgTextAlign(s->vg, NVG_ALIGN_CENTER);
-
-  nvgText(s->vg, df_btn_x + df_btn_w / 2, df_btn_y + df_btn_h / 2,
-  s->scene.dpDynamicFollow == 4? (s->scene.dpLocale == "zh-TW"? "自動" : s->scene.dpLocale == "zh-CN"? "自动" : "AUTO") :
-  s->scene.dpDynamicFollow == 3? (s->scene.dpLocale == "zh-TW"? "長距" : s->scene.dpLocale == "zh-CN"? "长距" : "LONG") :
-  s->scene.dpDynamicFollow == 2? (s->scene.dpLocale == "zh-TW"? "正常" : s->scene.dpLocale == "zh-CN"? "正常" : "NORMAL") :
-  (s->scene.dpLocale == "zh-TW"? "短距" : s->scene.dpLocale == "zh-CN"? "短距" : "SHORT"),
-  NULL);
-
-  nvgFontFaceId(s->vg,  s->font_sans_regular);
-  nvgFillColor(s->vg, COLOR_WHITE_ALPHA(200));
-  nvgFontSize(s->vg, 37.5);
-  nvgTextAlign(s->vg, NVG_ALIGN_CENTER);
-  nvgText(s->vg, df_btn_x + df_btn_w / 2, df_btn_y + df_btn_h - 10,
-  (s->scene.dpLocale == "zh-TW"? "車距" : s->scene.dpLocale == "zh-CN"? "车距" : "FOLLOW"),
-  NULL);
-}
-
 void ui_draw_ap_button(UIState *s) {
   nvgBeginPath(s->vg);
   nvgRoundedRect(s->vg, ap_btn_x, ap_btn_y, ap_btn_w, ap_btn_h, 20);

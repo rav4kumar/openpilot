@@ -4,6 +4,7 @@ from selfdrive.controls.lib.pid import PIDController
 from common.params import Params
 from selfdrive.controls.lib.dynamic_gas import DynamicGas
 from selfdrive.config import Conversions as CV
+from common.travis_checker import travis
 
 LongCtrlState = log.ControlsState.LongControlState
 
@@ -105,9 +106,9 @@ class LongControl():
 
     v_ego_pid = max(CS.vEgo, CP.minSpeedCan)  # Without this we get jumps, CAN bus reports 0 when speed < 0.3
 
-    if self.long_control_state == LongCtrlState.off or CS.gasPressed or CS.brakePressed:
+    if self.long_control_state == LongCtrlState.off or (CS.brakePressed or CS.gasPressed and not travis):
       self.v_pid = v_ego_pid
-      self.reset(v_ego_pid)
+      self.pid.reset()
       output_gb = 0.
 
     # tracking objects and driving

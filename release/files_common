@@ -26,6 +26,7 @@ common/op_params.py
 common/travis_checker.py
 common/colors.py
 common/i18n.py
+common/data_collector.py
 
 common/hardware.py
 common/hardware_android.py

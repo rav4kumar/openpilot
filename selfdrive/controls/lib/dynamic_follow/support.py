@@ -28,5 +28,3 @@ class dfProfiles:
   auto = 3
   to_profile = {0: 'traffic', 1: 'relaxed', 2: 'roadtrip', 3: 'auto'}
   to_idx = {v: k for k, v in to_profile.items()}
-
-  default = relaxed

@@ -64,11 +64,6 @@ const int TRACK_POINTS_MAX_CNT = TRAJECTORY_SIZE*4;
 
 const int SET_SPEED_NA = 255;
 
-// dp - dynamic follow btn
-const int df_btn_h = 180;
-const int df_btn_w = 180;
-const int df_btn_x = 1650;
-const int df_btn_y = 750;
 // dp - accel profile btn
 const int ap_btn_h = 180;
 const int ap_btn_w = 180;
@@ -106,6 +101,8 @@ typedef struct {
 
 
 typedef struct UIScene {
+
+  int dfButtonStatus;
 
   mat4 extrinsic_matrix;      // Last row is 0 so we can use mat4.
   bool world_objects_visible;
@@ -188,7 +185,6 @@ typedef struct UIScene {
   std::string dpLocale;
   bool dpIsUpdating;
   bool dpAthenad;
-  int dpDynamicFollow;
   int dpAccelProfile;
 } UIScene;
 
@@ -232,6 +228,7 @@ typedef struct UIState {
   int img_speed;
 
   SubMaster *sm;
+  PubMaster *pm;
 
   Sound *sound;
   UIStatus status;
@@ -261,6 +258,7 @@ typedef struct UIState {
   bool ignition;
   bool is_metric;
   bool longitudinal_control;
+  bool ui_debug;
   bool limit_set_speed;
   bool is_ego_over_limit;
   float speed_lim_off;
@@ -278,6 +276,7 @@ typedef struct UIState {
 } UIState;
 
 void ui_init(UIState *s);
+void sa_init(UIState *s, bool full_init);
 void ui_update(UIState *s);
 
 int write_param_float(float param, const char* param_name, bool persistent_param = false);
