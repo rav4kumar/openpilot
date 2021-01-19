@@ -95,6 +95,15 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.indi.timeConstantV = [0.5, 1, 1, 2, 2, 4, 4, 5]
         ret.lateralTuning.indi.actuatorEffectivenessBP = [16.7, 25, 36.1]
         ret.lateralTuning.indi.actuatorEffectivenessV = [9.5, 15, 15]
+        #ret.lateralTuning.init('indi') #really good tune from cgw.
+        #ret.lateralTuning.indi.innerLoopGainBP = [16.7, 25, 36.1]
+        #ret.lateralTuning.indi.innerLoopGainV = [9.5, 15, 15]
+        #ret.lateralTuning.indi.outerLoopGainBP = [16.7, 25, 36.1]
+        #ret.lateralTuning.indi.outerLoopGainV = [9.5, 14.99, 14.99]
+        #ret.lateralTuning.indi.timeConstantBP = [16.7, 16.71, 22, 22.01, 26, 26.01, 36, 36.01]
+        #ret.lateralTuning.indi.timeConstantV = [0.5, 1, 1, 2, 2, 4, 4, 5]
+        #ret.lateralTuning.indi.actuatorEffectivenessBP = [16.7, 25, 36.1]
+        #ret.lateralTuning.indi.actuatorEffectivenessV = [9.5, 15, 15]
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
@@ -264,12 +273,12 @@ class CarInterface(CarInterfaceBase):
 
     elif candidate in [CAR.COROLLA_TSS2, CAR.COROLLAH_TSS2]:
       stop_and_go = True
-      ret.safetyParam = 53 
+      ret.safetyParam = 53
       ret.wheelbase = 2.67
       ret.steerRatio = 15.33
       tire_stiffness_factor = 0.996  # not optimized yet
       ret.mass = 3060. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.steerActuatorDelay = 0.45 
+      ret.steerActuatorDelay = 0.45
       ret.steerLimitTimer = 5.0
       ret.lateralTuning.init('indi')
       ret.lateralTuning.indi.innerLoopGainBP = [18, 22, 26]
@@ -279,7 +288,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.indi.timeConstantBP = [18, 22, 26]
       ret.lateralTuning.indi.timeConstantV = [1, 3, 4.5]
       ret.lateralTuning.indi.actuatorEffectivenessBP = [18, 22, 26]
-      ret.lateralTuning.indi.actuatorEffectivenessV = [9, 12, 15]  
+      ret.lateralTuning.indi.actuatorEffectivenessV = [9, 12, 15]
 
     elif candidate in [CAR.LEXUS_ES_TSS2, CAR.LEXUS_ESH_TSS2]:
       stop_and_go = True
