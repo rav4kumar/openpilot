@@ -267,7 +267,6 @@ class Controls:
       # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
       if not (SIMULATION or NOSENSOR):  # TODO: send GPS in carla
         self.events.add(EventName.noGps)
-         self.events.add(EventName.noGps)
     if not self.sm['pathPlan'].paramsValid:
       self.events.add(EventName.vehicleModelInvalid)
     if not self.sm['liveLocationKalman'].posenetOK:
