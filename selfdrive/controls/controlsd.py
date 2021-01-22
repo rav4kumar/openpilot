@@ -704,7 +704,7 @@ def send_params(a, b, c):
 
 def main(sm=None, pm=None, logcan=None, arne_sm=None):
   params = Params()
-  dongle_id = params.get("DongleId").decode('utf-8')
+  dongle_id = params.get("DongleId")
   cloudlog.bind_global(dongle_id=dongle_id, version=version, dirty=dirty, is_eon=True)
   crash.bind_user(id=dongle_id)
   crash.bind_extra(version=version, dirty=dirty, is_eon=True)
