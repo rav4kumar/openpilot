@@ -24,10 +24,10 @@ from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from common.op_params import opParams
 
-LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
+LDW_MIN_SPEED = 12.5
 LANE_DEPARTURE_THRESHOLD = 0.1
 STEER_ANGLE_SATURATION_TIMEOUT = 1.0 / DT_CTRL
-STEER_ANGLE_SATURATION_THRESHOLD = 2.5  # Degrees
+STEER_ANGLE_SATURATION_THRESHOLD = 2.75  # Degrees
 
 SIMULATION = "SIMULATION" in os.environ
 NOSENSOR = "NOSENSOR" in os.environ
@@ -138,7 +138,19 @@ class Controls:
     self.mismatch_counter = 0
     self.can_error_counter = 0
     self.last_blinker_frame = 0
+    self.last_ldw_frame = 0
     self.saturated_count = 0
+    self.distance_traveled_now = 0
+    if not travis:
+      self.distance_traveled = float(params.get("DistanceTraveled", encoding='utf8'))
+      self.distance_traveled_engaged = float(params.get("DistanceTraveledEngaged", encoding='utf8'))
+      self.distance_traveled_override = float(params.get("DistanceTraveledOverride", encoding='utf8'))
+    else:
+      self.distance_traveled = 0
+      self.distance_traveled_engaged = 0
+      self.distance_traveled_override = 0
+
+    self.distance_traveled_frame = 0
     self.distance_traveled = 0
     self.last_functional_fan_frame = 0
     self.events_prev = []
@@ -243,18 +255,19 @@ class Controls:
     if not self.sm.alive['plan'] and self.sm.alive['pathPlan']:
       # only plan not being received: radar not communicating
       self.events.add(EventName.radarCommIssue)
-    elif not self.sm.all_alive_and_valid():
+    elif not self.sm.all_alive_and_valid() and self.sm.frame > 5 / DT_CTRL:
       self.sm.print_dead_and_not_valid()
       self.events.add(EventName.commIssue)
-    if not self.sm['pathPlan'].mpcSolutionValid:
+    if not self.sm['pathPlan'].mpcSolutionValid and self.sm.frame > 5 / DT_CTRL:
       self.events.add(EventName.steerTempUnavailable if self.sm['dragonConf'].dpAtl else EventName.plannerError)
-    # if not self.sm['liveLocationKalman'].sensorsOK and not NOSENSOR:
-    #   if self.sm.frame > 5 / DT_CTRL:  # Give locationd some time to receive all the inputs
-    #     self.events.add(EventName.sensorDataInvalid)
-    # if not self.sm['liveLocationKalman'].gpsOK and (self.distance_traveled > 1000):
-    #   # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
-    #   if not (SIMULATION or NOSENSOR):  # TODO: send GPS in carla
-    #     self.events.add(EventName.noGps)
+    if not self.sm['liveLocationKalman'].sensorsOK and not NOSENSOR:
+      if self.sm.frame > 5 / DT_CTRL:  # Give locationd some time to receive all the inputs
+        self.events.add(EventName.sensorDataInvalid)
+    if not self.sm['liveLocationKalman'].gpsOK and (self.distance_traveled > 1000):
+      # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
+      if not (SIMULATION or NOSENSOR):  # TODO: send GPS in carla
+        self.events.add(EventName.noGps)
+         self.events.add(EventName.noGps)
     if not self.sm['pathPlan'].paramsValid:
       self.events.add(EventName.vehicleModelInvalid)
     if not self.sm['liveLocationKalman'].posenetOK:
@@ -362,7 +375,16 @@ class Controls:
     if not self.sm['dragonConf'].dpAtl and not self.sm['health'].controlsAllowed and self.enabled:
       self.mismatch_counter += 1
 
+    self.distance_traveled_now += CS.vEgo * DT_CTRL
     self.distance_traveled += CS.vEgo * DT_CTRL
+    if self.enabled:
+      self.distance_traveled_engaged += CS.vEgo * DT_CTRL
+      if CS.steeringPressed:
+        self.distance_traveled_override += CS.vEgo * DT_CTRL
+    if (self.sm.frame - self.distance_traveled_frame) * DT_CTRL > 10.0 and not travis:
+      y = threading.Thread(target=send_params, args=(str(self.distance_traveled),str(self.distance_traveled_engaged),str(self.distance_traveled_override),))
+      y.start()
+      self.distance_traveled_frame = self.sm.frame
 
     return CS
 
@@ -488,8 +510,8 @@ class Controls:
       if (lac_log.saturated and not CS.steeringPressed) or \
               (self.saturated_count > STEER_ANGLE_SATURATION_TIMEOUT):
         # Check if we deviated from the path
-        left_deviation = actuators.steer > 0 and path_plan.dPoly[3] > 0.1
-        right_deviation = actuators.steer < 0 and path_plan.dPoly[3] < -0.1
+        left_deviation = actuators.steer > 0 and path_plan.dPoly[3] > 0.15
+        right_deviation = actuators.steer < 0 and path_plan.dPoly[3] < -0.15
 
         if left_deviation or right_deviation:
           self.events.add(EventName.steerSaturated)
@@ -531,16 +553,17 @@ class Controls:
     if len(meta.desirePrediction) and ldw_allowed:
       if self.sm.updated['dragonConf']:
         self.dp_camera_offset = self.sm['dragonConf'].dpCameraOffset * 0.01 if self.sm['dragonConf'].dpCameraOffset != 0 else 0
-      l_lane_change_prob = meta.desirePrediction[Desire.laneChangeLeft - 1]
-      r_lane_change_prob = meta.desirePrediction[Desire.laneChangeRight - 1]
-      l_lane_close = left_lane_visible and (self.sm['pathPlan'].lPoly[3] < (1.08 - self.dp_camera_offset))
-      r_lane_close = right_lane_visible and (self.sm['pathPlan'].rPoly[3] > -(1.08 + self.dp_camera_offset))
+      #l_lane_change_prob = meta.desirePrediction[Desire.laneChangeLeft - 1]
+      #r_lane_change_prob = meta.desirePrediction[Desire.laneChangeRight - 1]
+      l_lane_close = left_lane_visible and (self.sm['pathPlan'].lPoly[3] < (0.8 - self.dp_camera_offset))
+      r_lane_close = right_lane_visible and (self.sm['pathPlan'].rPoly[3] > -(0.8 + self.dp_camera_offset))
 
-      CC.hudControl.leftLaneDepart = bool(l_lane_change_prob > LANE_DEPARTURE_THRESHOLD and l_lane_close)
-      CC.hudControl.rightLaneDepart = bool(r_lane_change_prob > LANE_DEPARTURE_THRESHOLD and r_lane_close)
+      CC.hudControl.leftLaneDepart = bool(l_lane_close)  # l_lane_change_prob > LANE_DEPARTURE_THRESHOLD and
+      CC.hudControl.rightLaneDepart = bool(r_lane_close)  # r_lane_change_prob > LANE_DEPARTURE_THRESHOLD and
 
-    if CC.hudControl.rightLaneDepart or CC.hudControl.leftLaneDepart:
+    if (CC.hudControl.rightLaneDepart or CC.hudControl.leftLaneDepart) and (self.sm.frame - self.last_ldw_frame) * DT_CTRL > 5.0:
       self.events.add(EventName.ldw)
+      self.last_ldw_frame = self.sm.frame
 
     clear_event = ET.WARNING if ET.WARNING not in self.current_alert_types else None
     alerts = self.events.create_alerts(self.current_alert_types, [self.CP, self.sm, self.is_metric])
@@ -578,7 +601,8 @@ class Controls:
     controlsState.vEgo = CS.vEgo
     controlsState.vEgoRaw = CS.vEgoRaw
     controlsState.angleSteers = CS.steeringAngle
-    controlsState.curvature = self.VM.calc_curvature(steer_angle_rad, CS.vEgo)
+    controlsState.curvature = self.VM.calc_curvature(steer_angle_rad, CS.vEgo)\
+    controlsState.decelForTurn = self.sm['plan'].decelForTurn
     controlsState.steerOverride = CS.steeringPressed
     controlsState.state = self.state
     controlsState.engageable = not self.events.any(ET.NO_ENTRY)
@@ -668,6 +692,11 @@ class Controls:
       self.step()
       self.rk.monitor_time()
       self.prof.display()
+def send_params(a, b, c):
+  params = Params()
+  params.put("DistanceTraveled", a)
+  params.put("DistanceTraveledEngaged", b)
+  params.put("DistanceTraveledOverride", c)
 
 def main(sm=None, pm=None, logcan=None):
   controls = Controls(sm, pm, logcan)

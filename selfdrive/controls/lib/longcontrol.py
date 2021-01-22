@@ -129,12 +129,19 @@ class LongControl():
           self.pid._k_i = (CP.longitudinalTuning.kiBP, [x * 0 for x in CP.longitudinalTuning.kiV])
           self.pid.i = 0.0
           self.pid.k_f=1.0
+          self.v_pid = CS.vEgo
+          self.pid.reset()
         if self.lastdecelForTurn and not decelForTurn:
           self.lastdecelForTurn = False
           self.pid._k_p = (CP.longitudinalTuning.kpBP, CP.longitudinalTuning.kpV)
           self.pid._k_i = (CP.longitudinalTuning.kiBP, CP.longitudinalTuning.kiV)
           self.pid.k_f=1.0
+          self.v_pid = CS.vEgo
+          self.pid.reset()
       else:
+        if self.lastdecelForTurn:
+          self.v_pid = CS.vEgo
+          self.pid.reset()
         self.lastdecelForTurn = False
         self.pid._k_p = (CP.longitudinalTuning.kpBP, [x * 1 for x in CP.longitudinalTuning.kpV])
         self.pid._k_i = (CP.longitudinalTuning.kiBP, [x * 1 for x in CP.longitudinalTuning.kiV])
