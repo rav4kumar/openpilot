@@ -565,7 +565,7 @@ def manager_prepare(spinner=None):
     if os.getenv("PREPAREONLY") is None:
       loader_proc.append(subprocess.Popen(["./spinner",
         "loading {0}: {1}/{2} {3}".format(spinner_text, n+1, process_cnt, p)],
-        cwd=os.path.join(BASEDIR, "selfdrive", "ui", "spinner"),
+        cwd=os.path.join(BASEDIR, "selfdrive", "ui", "android", "spinner"),
         close_fds=True))
     prepare_managed_process(p)
 
