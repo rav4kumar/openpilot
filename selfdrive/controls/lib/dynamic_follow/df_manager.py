@@ -32,6 +32,7 @@ class dfManager:
     self.cur_model_profile = 0
     self.alert_duration = 2.0
 
+    self.offset = self.cur_user_profile
     self.profile_pred = None
     self.change_time = sec_since_boot()
     self.first_run = True
@@ -50,9 +51,8 @@ class dfManager:
     df_out = dfReturn()
     if self.sm.updated['dynamicFollowButton']:
       self.button_updated = True
-
     if self.first_run:
-      df_out.changed = True  # to show alert on start
+      #df_out.changed = True  # to show alert on start
       self.first_run = False
 
     if self.button_updated:  # only update when button is first pressed
