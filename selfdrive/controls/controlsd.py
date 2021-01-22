@@ -25,6 +25,9 @@ from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from common.op_params import opParams
 from common.travis_checker import travis
 import threading
+import selfdrive.crash as crash
+from selfdrive.swaglog import cloudlog
+from selfdrive.version import version, dirty
 
 LDW_MIN_SPEED = 12.5
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -699,7 +702,13 @@ def send_params(a, b, c):
   params.put("DistanceTraveledEngaged", b)
   params.put("DistanceTraveledOverride", c)
 
-def main(sm=None, pm=None, logcan=None):
+def main(sm=None, pm=None, logcan=None, arne_sm=None):
+  params = Params()
+  dongle_id = params.get("DongleId").decode('utf-8')
+  cloudlog.bind_global(dongle_id=dongle_id, version=version, dirty=dirty, is_eon=True)
+  crash.bind_user(id=dongle_id)
+  crash.bind_extra(version=version, dirty=dirty, is_eon=True)
+  crash.install()
   controls = Controls(sm, pm, logcan)
   controls.controlsd_thread()
 
