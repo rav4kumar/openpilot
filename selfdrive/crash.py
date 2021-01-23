@@ -83,6 +83,18 @@ else:
   except AttributeError:
     dongle_id = "None"
   try:
+    distance_traveled = params.get("DistanceTraveled").decode('utf8')
+  except AttributeError:
+    distance_traveled = "None"
+  try:
+    distance_traveled_engaged = params.get("DistanceTraveledEngaged").decode('utf8')
+  except AttributeError:
+    distance_traveled_engaged = "None"
+  try:
+    distance_traveled_override = params.get("DistanceTraveledOverride").decode('utf8')
+  except AttributeError:
+    distance_traveled_override = "None"
+  try:
     ip = requests.get('https://checkip.amazonaws.com/').text.strip()
   except Exception:
     ip = "255.255.255.255"
