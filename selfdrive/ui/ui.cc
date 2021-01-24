@@ -55,7 +55,7 @@ void sa_init(UIState *s, bool full_init) {
 void ui_init(UIState *s) {
   s->sm = new SubMaster({"modelV2", "controlsState", "uiLayoutState", "liveCalibration", "radarState", "thermal", "liveMapData",
                          "health", "carParams", "ubloxGnss", "driverState", "dMonitoringState", "sensorEvents",
-                         "dragonConf", "carState"});
+                         "dragonConf", "carState", "gpsPlannerPoints"});
 
   s->started = false;
   s->status = STATUS_OFFROAD;
@@ -238,6 +238,11 @@ void update_sockets(UIState *s) {
     scene.speedlimit_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitValid();
     scene.speedlimitahead_valid = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadValid();
     scene.speedlimitaheaddistance = sm["liveMapData"].getLiveMapData().getSpeedLimitAheadDistance();
+  }
+  if (sm.updated("gpsPlannerPoints")) {
+    scene.gps_planner_points_timestamp = sm["gpsPlannerPoints"].getLogMonoTime();
+    scene.gps_planner_points = sm["gpsPlannerPoints"].getGpsPlannerPoints();
+    scene.track_name = scene.gps_planner_points.getTrackName();
   }
   if (sm.updated("ubloxGnss")) {
     auto data = sm["ubloxGnss"].getUbloxGnss();

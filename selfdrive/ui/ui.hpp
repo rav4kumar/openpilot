@@ -129,12 +129,16 @@ typedef struct UIScene {
   int satelliteCount;
   NetStatus athenaStatus;
 
+  std::string track_name;
+  uint64_t gps_planner_points_timestamp;
+
   cereal::ThermalData::Reader thermal;
   cereal::RadarState::LeadData::Reader lead_data[2];
   cereal::ControlsState::Reader controls_state;
   cereal::DriverState::Reader driver_state;
   cereal::DMonitoringState::Reader dmonitoring_state;
   cereal::ModelDataV2::Reader model;
+  cereal::GPSPlannerPoints::Reader gps_planner_points;
   line path;
   line outer_left_lane_line;
   line left_lane_line;
@@ -143,6 +147,8 @@ typedef struct UIScene {
   line left_road_edge;
   line right_road_edge;
   float max_distance;
+
+  // modelV2
   float lane_line_probs[4];
   float road_edge_stds[2];
 

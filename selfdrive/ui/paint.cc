@@ -8,6 +8,7 @@
 #include <map>
 #include <cmath>
 #include <iostream>
+#include "common/timing.h"
 #include "common/util.h"
 #include <algorithm>
 
@@ -415,6 +416,51 @@ static void ui_draw_vision_speedlimit(UIState *s) {
   }
 }
 
+static void ui_draw_vision_road_info(UIState *s) {
+  if (!s->scene.gps_planner_points.getValid()) {
+    return;
+  }
+
+  // Road name
+  if (s->scene.track_name.length()) {
+    // TODO: split evenly onto 2 lines if too wide (maybe can split on ',')
+    nvgTextAlign(s->vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+    ui_draw_text(s->vg, s->scene.viz_rect.x + (bdr_s*2), 350, s->scene.track_name.c_str(), 20 * 2.5, COLOR_WHITE, s->font_sans_semibold);
+  }
+
+  // Speed limit
+  float speedlimit = s->scene.gps_planner_points.getSpeedLimit();
+  if (speedlimit <= 0) {
+    return;
+  }
+  char speedlimit_str[32];
+  int speedlimit_calc = speedlimit * 0.6225 + 0.5;
+  if (s->is_metric) {
+    speedlimit_calc = speedlimit + 0.5;
+  }
+
+  int viz_speedlimit_w = 184;
+  int viz_speedlimit_h = 202;
+  int viz_speedlimit_x = (s->video_rect.x + (bdr_s*9));
+  int viz_speedlimit_y = (s->video_rect.y + (bdr_s*1.5));
+
+  // background
+  ui_draw_rect(s->vg, viz_speedlimit_x, viz_speedlimit_y, viz_speedlimit_w, viz_speedlimit_h, COLOR_BLACK_ALPHA(100), 30);
+
+  // border
+  ui_draw_rect(s->vg, viz_speedlimit_x, viz_speedlimit_y, viz_speedlimit_w, viz_speedlimit_h, COLOR_WHITE, 20, 10);
+
+  // title
+  nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+  const int text_x = viz_speedlimit_x + (viz_speedlimit_w / 2);
+  ui_draw_text(s->vg, text_x, 125, "SPEED", 18 * 2.5, COLOR_WHITE, s->font_sans_semibold);
+  ui_draw_text(s->vg, text_x, 160, "LIMIT", 18 * 2.5, COLOR_WHITE, s->font_sans_semibold);
+
+  // value
+  snprintf(speedlimit_str, sizeof(speedlimit_str), "%d", speedlimit_calc);
+  ui_draw_text(s->vg, text_x, 242, speedlimit_str, 48 * 2.5, COLOR_WHITE, s->font_sans_bold);
+}
+
 static void ui_draw_vision_speed(UIState *s) {
   const Rect &viz_rect = s->scene.viz_rect;
   float v_ego = s->scene.controls_state.getVEgo();
@@ -596,6 +642,7 @@ static void ui_draw_vision_header(UIState *s) {
   if (s->scene.dpUiMaxSpeed) {
   ui_draw_vision_maxspeed(s);
   ui_draw_vision_speedlimit(s);
+  ui_draw_vision_road_info(s);
   }
   if (s->scene.dpUiSpeed) {
   ui_draw_vision_speed(s);

@@ -208,6 +208,7 @@ managed_processes = {
   "systemd": "selfdrive.dragonpilot.systemd",
   "appd": "selfdrive.dragonpilot.appd",
   "gpxd": "selfdrive.dragonpilot.gpxd",
+  "speedlimitd": "selfdrive.locationd.speedlimitd",
 }
 
 daemon_processes = {
@@ -260,6 +261,8 @@ car_started_processes = [
   'locationd',
   'clocksd',
   'gpxd',
+  'logcatd',
+  'speedlimitd',
 ]
 
 driver_view_processes = [
