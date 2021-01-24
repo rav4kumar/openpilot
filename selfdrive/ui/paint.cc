@@ -492,18 +492,18 @@ static void ui_draw_vision_event(UIState *s) {
   }
 }
 
-static void ui_draw_vision_map(UIState *s) {
-  const int map_size = 90;
-  const int map_x = (s->video_rect.x + (map_size * 3) + (bdr_is * 3));
-  const int map_y = (s->scene.viz_rect.bottom() + ((footer_h - map_size) / 2));
-  ui_draw_circle_image(s->vg, map_x, map_y, map_size, s->img_map, s->scene.map_valid);
-}
-
 static void ui_draw_vision_face(UIState *s) {
   const int face_size = 90;
   const int face_x = (s->scene.viz_rect.x + face_size + (bdr_is * 2));
   const int face_y = (s->scene.viz_rect.bottom() - footer_h + ((footer_h - face_size) / 2));
   ui_draw_circle_image(s->vg, face_x, face_y+border_shifter+25, face_size, s->img_face, s->scene.dmonitoring_state.getFaceDetected());
+}
+
+static void ui_draw_vision_map(UIState *s) {
+  const int map_size = 90;
+  const int map_x = (s->video_rect.x + (map_size * 3) + (bdr_is * 3));
+  const int map_y = (s->scene.viz_rect.bottom() + ((footer_h - map_size) / 2));
+  ui_draw_circle_image(s->vg, map_x, map_y, map_size, s->img_map, s->scene.map_valid);
 }
 
 static void ui_draw_driver_view(UIState *s) {
