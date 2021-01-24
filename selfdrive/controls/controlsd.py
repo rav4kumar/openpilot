@@ -190,7 +190,7 @@ class Controls:
     self.sm['dragonConf'].dpAtl = False
     self.sm['dragonConf'].dpCameraOffset = 6
 
-    self.dp_lead_away_alert = params.get('dp_lead_car_away_alert') == b'1'
+    self.dp_lead_away_alert = params.get('dp_lead_car_away_alert') == b'0'
     self.dp_lead_away_min_speed = 80 # kph
     self.dp_lead_away_alert_lead_count = 0
     self.dp_lead_away_alert_nolead_count = 0
