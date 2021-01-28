@@ -260,10 +260,9 @@ class Controls:
     if not self.sm.alive['plan'] and self.sm.alive['pathPlan']:
       # only plan not being received: radar not communicating
       self.events.add(EventName.radarCommIssue)
-    elif not self.sm.all_alive_and_valid() and self.sm.frame > 5 / DT_CTRL:
-      self.sm.print_dead_and_not_valid()
+    elif not self.sm.all_alive_and_valid():
       self.events.add(EventName.commIssue)
-    if not self.sm['pathPlan'].mpcSolutionValid and self.sm.frame > 5 / DT_CTRL:
+    if not self.sm['pathPlan'].mpcSolutionValid:
       self.events.add(EventName.steerTempUnavailable if self.sm['dragonConf'].dpAtl else EventName.plannerError)
     if not self.sm['liveLocationKalman'].sensorsOK and not NOSENSOR:
       if self.sm.frame > 5 / DT_CTRL:  # Give locationd some time to receive all the inputs
