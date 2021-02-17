@@ -70,6 +70,18 @@ class CarController():
     apply_accel, self.accel_steady = accel_hysteresis(apply_accel, self.accel_steady, enabled)
     apply_accel = clip(apply_accel * ACCEL_SCALE, ACCEL_MIN, ACCEL_MAX)
 
+    if CS.CP.enableGasInterceptor:
+      if CS.out.gasPressed:
+        apply_accel = max(apply_accel, 0.06)
+      if CS.out.brakePressed:
+        apply_gas = 0.0
+        apply_accel = min(apply_accel, 0.00)
+    else:
+      if CS.out.gasPressed:
+        apply_accel = max(apply_accel, 0.0)
+      if CS.out.brakePressed and CS.out.vEgo > 1:
+        apply_accel = min(apply_accel, 0.0)
+
     # steer torque
     new_steer = int(round(actuators.steer * SteerLimitParams.STEER_MAX))
     apply_steer = apply_toyota_steer_torque_limits(new_steer, self.last_steer, CS.out.steeringTorqueEps, SteerLimitParams)

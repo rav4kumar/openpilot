@@ -56,6 +56,14 @@ bool car_space_to_full_frame(const UIState *s, float in_x, float in_y, float in_
   return *out_x >= 0 && *out_x <= s->fb_w && *out_y >= 0 && *out_y <= s->fb_h;
 }
 
+static float toyota_ui_speed(float speed) {
+  if (speed<10.0) return speed;
+  if (speed<30.0) return speed+2.5;
+  if (speed<43.0) return speed+4;
+  if (speed<75.0) return speed+5;
+  if (speed<95.0) return speed+6;
+  return speed+7.0;
+}
 
 static void ui_draw_text(NVGcontext *vg, float x, float y, const char* string, float size, NVGcolor color, int font){
   nvgFontFaceId(vg, font);
@@ -258,7 +266,7 @@ static void ui_draw_vision_lane_lines(UIState *s) {
     }
     ui_draw_line(s, (pvd_ll + ll_idx)->v, (pvd_ll + ll_idx)->cnt, &color, nullptr);
   }
-  
+
   // paint road edges
   line_vertices_data *pvd_re = &s->road_edge_vertices[0];
   for (int re_idx = 0; re_idx < 2; re_idx++) {
@@ -268,7 +276,7 @@ static void ui_draw_vision_lane_lines(UIState *s) {
     NVGcolor color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0-scene->road_edge_stds[re_idx], 0.0, 1.0));
     ui_draw_line(s, (pvd_re + re_idx)->v, (pvd_re + re_idx)->cnt, &color, nullptr);
   }
-  
+
   // paint path
   if(s->sm->updated("modelV2")) {
     update_track_data(s, scene->model.getPosition(), &s->track_vertices);
@@ -315,7 +323,7 @@ static void ui_draw_vision_maxspeed(UIState *s) {
   float maxspeed = s->scene.controls_state.getVCruise();
   int maxspeed_calc = maxspeed * 0.6225 + 0.5;
   if (s->is_metric) {
-    maxspeed_calc = maxspeed + 0.5;
+    maxspeed_calc = toyota_ui_speed(maxspeed + 0.5);
   }
 
   bool is_cruise_set = (maxspeed != 0 && maxspeed != SET_SPEED_NA);
@@ -352,7 +360,7 @@ static void ui_draw_vision_speed(UIState *s) {
   float v_ego = s->scene.controls_state.getVEgo();
   float speed = v_ego * 2.2369363 + 0.5;
   if (s->is_metric){
-    speed = v_ego * 3.6 + 0.5;
+    speed = toyota_ui_speed(v_ego * 3.6 + 0.5);
   }
   const int viz_speed_w = 280;
   const int viz_speed_x = viz_rect.centerX() - viz_speed_w/2;

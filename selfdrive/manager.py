@@ -168,15 +168,15 @@ ThermalStatus = cereal.log.ThermalData.ThermalStatus
 # comment out anything you don't want to run
 managed_processes = {
   "thermald": "selfdrive.thermald.thermald",
-  "uploader": "selfdrive.loggerd.uploader",
+  #"uploader": "selfdrive.loggerd.uploader",
   "deleter": "selfdrive.loggerd.deleter",
   "controlsd": "selfdrive.controls.controlsd",
   "plannerd": "selfdrive.controls.plannerd",
   "radard": "selfdrive.controls.radard",
   "dmonitoringd": "selfdrive.monitoring.dmonitoringd",
   "ubloxd": ("selfdrive/locationd", ["./ubloxd"]),
-  "loggerd": ("selfdrive/loggerd", ["./loggerd"]),
-  "logmessaged": "selfdrive.logmessaged",
+  #"loggerd": ("selfdrive/loggerd", ["./loggerd"]),
+  #"logmessaged": "selfdrive.logmessaged",
   "locationd": "selfdrive.locationd.locationd",
   "tombstoned": "selfdrive.tombstoned",
   "logcatd": ("selfdrive/logcatd", ["./logcatd"]),
@@ -197,9 +197,9 @@ managed_processes = {
   "lanespeedd": "selfdrive.controls.lib.lane_speed",
 }
 
-daemon_processes = {
-  "manage_athenad": ("selfdrive.athena.manage_athenad", "AthenadPid"),
-}
+#daemon_processes = {
+  #"manage_athenad": ("selfdrive.athena.manage_athenad", "AthenadPid"),
+#}
 
 running: Dict[str, Process] = {}
 def get_running():
@@ -456,13 +456,13 @@ def manager_thread():
   cloudlog.info({"environ": os.environ})
 
   # save boot log
-  subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
+  #subprocess.call(["./loggerd", "--bootlog"], cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
 
   params = Params()
 
   # start daemon processes
-  for p in daemon_processes:
-    start_daemon_process(p)
+  #for p in daemon_processes:
+    #start_daemon_process(p)
 
   # start persistent processes
   for p in persistent_processes:
@@ -481,7 +481,7 @@ def manager_thread():
       del managed_processes[k]
 
   started_prev = False
-  logger_dead = False
+  logger_dead = True
 
   while 1:
     msg = messaging.recv_sock(thermal_sock, wait=True)
@@ -497,7 +497,7 @@ def manager_thread():
         else:
           start_managed_process(p)
     else:
-      logger_dead = False
+      logger_dead = True
       driver_view = params.get("IsDriverViewEnabled") == b"1"
 
       # TODO: refactor how manager manages processes

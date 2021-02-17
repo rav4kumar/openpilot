@@ -61,7 +61,8 @@ class opParams:
     """
 
     VT = ValueTypes()
-    self.fork_params = {'camera_offset': Param(0.06, VT.number, 'Your camera offset to use in lane_planner.py', live=True),
+    self.fork_params = {'awareness_factor': Param(10., VT.number, 'Multiplier for the awareness times'),
+                        'camera_offset': Param(0.06, VT.number, 'Your camera offset to use in lane_planner.py', live=True),
                         'dynamic_follow': Param('auto', str, 'Can be: (\'traffic\', \'relaxed\', \'roadtrip\'): Left to right increases in following distance.\n'
                                                              'All profiles support dynamic follow so you\'ll get your preferred distance while\n'
                                                              'retaining the smoothness and safety of dynamic follow!'),
@@ -99,7 +100,10 @@ class opParams:
                         'use_lqr': Param(False, bool, 'Enable this to use LQR as your lateral controller over default with any car'),
                         'corollaTSS2_use_indi': Param(False, bool, 'Enable this to use INDI for lat with your TSS2 Corolla'),
                         'rav4TSS2_use_indi': Param(False, bool, 'Enable this to use INDI for lat with your TSS2 RAV4'),
-                        'standstill_hack': Param(False, bool, 'Some cars support stop and go, you just need to enable this')}
+                        'steer_actuator_delay': Param(0.5, VT.number, 'The steer actuator delay', live=True),
+                        'standstill_hack': Param(False, bool, 'Some cars support stop and go, you just need to enable this'),
+                        'NoctuaMode': Param(False, bool, 'Noctua Fan are super quite and they run at full speed at all time.')
+                        }
 
     self._params_file = '/data/op_params.json'
     self._backup_file = '/data/op_params_corrupt.json'

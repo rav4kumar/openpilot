@@ -3,11 +3,13 @@ from math import atan2, sqrt
 from common.realtime import DT_DMON
 from common.filter_simple import FirstOrderFilter
 from common.stat_live import RunningStatFilter
-from common.is_shane import is_shane
+#from common.is_shane import is_shane
+from common.op_params import opParams
 
 from cereal import car
 
 EventName = car.CarEvent.EventName
+awareness_factor = opParams().get('awareness_factor')
 
 # ******************************************************************************************
 #  NOTE: To fork maintainers.
@@ -15,12 +17,12 @@ EventName = car.CarEvent.EventName
 #  We recommend that you do not change these numbers from the defaults.
 # ******************************************************************************************
 
-_AWARENESS_TIME = 35. if not is_shane else 70.  # passive wheel touch total timeout (35 seconds for everyone!)
-_AWARENESS_PRE_TIME_TILL_TERMINAL = 12.
-_AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6.
-_DISTRACTED_TIME = 11.
-_DISTRACTED_PRE_TIME_TILL_TERMINAL = 8.
-_DISTRACTED_PROMPT_TIME_TILL_TERMINAL = 6.
+_AWARENESS_TIME = 70. * awareness_factor  # 1.6 minutes limit without user touching steering wheels make the car enter a terminal status
+_AWARENESS_PRE_TIME_TILL_TERMINAL = 15. * awareness_factor # a first alert is issued 25s before expiration
+_AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6. * awareness_factor  # a second alert is issued 15s before start decelerating the car
+_DISTRACTED_TIME = 11. * awareness_factor
+_DISTRACTED_PRE_TIME_TILL_TERMINAL = 8. * awareness_factor
+_DISTRACTED_PROMPT_TIME_TILL_TERMINAL = 6. * awareness_factor
 
 _FACE_THRESHOLD = 0.6
 _EYE_THRESHOLD = 0.6

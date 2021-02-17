@@ -6,7 +6,7 @@ from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness,
 from selfdrive.swaglog import cloudlog
 from selfdrive.car.interfaces import CarInterfaceBase
 from common.op_params import opParams
-
+GearShifter = car.CarState.GearShifter
 op_params = opParams()
 use_lqr = op_params.get('use_lqr')
 prius_use_pid = op_params.get('prius_use_pid')
@@ -35,6 +35,7 @@ class CarInterface(CarInterfaceBase):
     if not prius_use_pid:
       CARS_NOT_PID.append(CAR.PRIUS_2020)
       CARS_NOT_PID.append(CAR.PRIUS)
+      CARS_NOT_PID.append(CAR.PRIUS_TSS2)
 
     if candidate not in CARS_NOT_PID and not use_lqr:  # These cars use LQR/INDI
       ret.lateralTuning.init('pid')
@@ -80,6 +81,54 @@ class CarInterface(CarInterfaceBase):
         ret.lateralTuning.indi.outerLoopGainV = [3.0]
         ret.lateralTuning.indi.timeConstantV = [0.1] if ret.hasZss else [1.0]
         ret.lateralTuning.indi.actuatorEffectivenessV = [1.0]
+
+    elif candidate == CAR.PRIUS_TSS2:
+      #ret.longitudinalTuning.kpV = [0.4, 0.36, 0.325]  # braking tune from rav4h
+      #ret.longitudinalTuning.kiV = [0.195, 0.10]
+      ret.longitudinalTuning.deadzoneBP = [0., 8.05]
+      ret.longitudinalTuning.deadzoneV = [.0, .14]
+      ret.longitudinalTuning.kpBP = [0., 5., 20.]
+      ret.longitudinalTuning.kpV = [1.3, 1.0, 0.7]
+      ret.longitudinalTuning.kiBP = [0., 5., 12., 20., 27.] # 0, 11, 27, 45, 60
+      ret.longitudinalTuning.kiV = [.35, .23, .20, .17, .1]
+      #ret.stoppingBrakeRate = 0.16 # reach stopping target smoothly
+      #ret.startingBrakeRate = 0.9 # release brakes fast
+      #ret.startAccel = 1.2 # Accelerate from 0 faster
+      ret.steerActuatorDelay = 0.58
+      ret.steerRateCost = 0.45 #0.45
+      ret.steerLimitTimer = 5.0
+
+      stop_and_go = True
+      ret.safetyParam = 55
+      ret.wheelbase = 2.70002
+      ret.steerRatio = 13.4   # True steerRation from older prius
+      tire_stiffness_factor = 0.6371   # hand-tune
+      ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
+
+      if prius_use_pid:
+        ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.21], [0.008]]
+        ret.lateralTuning.pid.kdV = [1.]  # corolla D times gain in PI values
+        ret.lateralTuning.pid.kf = 0.00009531750004645412
+        ret.lateralTuning.pid.newKfTuned = True
+      else:
+        ret.lateralTuning.init('indi')
+        #ret.lateralTuning.indi.innerLoopGainBP = [16.7, 25]
+        #ret.lateralTuning.indi.innerLoopGainV = [15, 15]
+        #ret.lateralTuning.indi.outerLoopGainBP = [8.3, 25, 27.7, 36.1]
+        #ret.lateralTuning.indi.outerLoopGainV = [4.6, 14.99, 14.99, 19]
+        #ret.lateralTuning.indi.timeConstantBP = [8.3, 11.1, 13.9, 16.7, 19.4, 22.2, 25, 30.1, 33.3, 36.1]
+        #ret.lateralTuning.indi.timeConstantV = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.0, 4.0, 4.0]
+        #ret.lateralTuning.indi.actuatorEffectivenessBP = [16.7, 25]
+        #ret.lateralTuning.indi.actuatorEffectivenessV = [15, 15]
+        #ret.lateralTuning.init('indi') #really good tune from cgw.
+        ret.lateralTuning.indi.innerLoopGainBP = [16.7, 25, 36.1]
+        ret.lateralTuning.indi.innerLoopGainV = [9.5, 15, 15]
+        ret.lateralTuning.indi.outerLoopGainBP = [16.7, 25, 36.1]
+        ret.lateralTuning.indi.outerLoopGainV = [9.5, 14.99, 14.99]
+        ret.lateralTuning.indi.timeConstantBP = [16.7, 16.71, 22, 22.01, 26, 26.01, 36, 36.01]
+        ret.lateralTuning.indi.timeConstantV = [0.5, 1, 1, 2, 2, 4, 4, 5]
+        ret.lateralTuning.indi.actuatorEffectivenessBP = [16.7, 25, 36.1]
+        ret.lateralTuning.indi.actuatorEffectivenessV = [9.5, 15, 15]
 
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
@@ -336,16 +385,6 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.1]]
       ret.lateralTuning.pid.kf = 0.00006
 
-    elif candidate == CAR.PRIUS_TSS2:
-      stop_and_go = True
-      ret.safetyParam = 73
-      ret.wheelbase = 2.70002  # from toyota online sepc.
-      ret.steerRatio = 13.4   # True steerRation from older prius
-      tire_stiffness_factor = 0.6371   # hand-tune
-      ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.15]]
-      ret.lateralTuning.pid.kf = 0.00007818594
-
     ret.centerToFront = ret.wheelbase * 0.44
 
     # TODO: get actual value, for now starting with reasonable value for
@@ -404,11 +443,35 @@ class CarInterface(CarInterfaceBase):
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
 
+    # gear except P, R
+    extra_gears = [GearShifter.neutral, GearShifter.eco, GearShifter.manumatic, GearShifter.drive, GearShifter.sport, GearShifter.low, GearShifter.brake, GearShifter.unknown]
+
+    longControlDisabled = False
+    if not self.CS.out.cruiseState.enabled:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+    else:
+      if self.keep_openpilot_engaged:
+        ret.cruiseState.enabled = bool(self.CS.main_on)
+      if not self.CS.pcm_acc_active:
+        longControlDisabled = True
+        ret.brakePressed = True
+        self.disengage_due_to_slow_speed = False
+    if ret.vEgo < 1 or not self.keep_openpilot_engaged:
+      ret.cruiseState.enabled = self.CS.pcm_acc_active
+      if self.CS.out.cruiseState.enabled and not self.CS.pcm_acc_active:
+        self.disengage_due_to_slow_speed = True
+    if self.disengage_due_to_slow_speed and ret.vEgo > 1 and ret.gearShifter != GearShifter.reverse:
+      self.disengage_due_to_slow_speed = False
+      ret.cruiseState.enabled = bool(self.CS.main_on)
+
     # events
     events = self.create_common_events(ret)
 
     if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and not self.CP.isPandaBlack:
       events.add(EventName.invalidGiraffeToyotaDEPRECATED)
+    if longControlDisabled:
+      events.add(EventName.longControlDisabled)
+
     if self.CS.low_speed_lockout and self.CP.openpilotLongitudinalControl:
       events.add(EventName.lowSpeedLockout)
     if ret.vEgo < self.CP.minEnableSpeed and self.CP.openpilotLongitudinalControl:

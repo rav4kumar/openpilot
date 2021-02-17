@@ -27,6 +27,11 @@ from selfdrive.thermald.power_monitoring import (PowerMonitoring,
                                                  get_usb_present)
 from selfdrive.version import get_git_branch, terms_version, training_version
 
+from common.op_params import opParams
+
+op_params = opParams()
+NoctuaMode = op_params.get('NoctuaMode')
+
 ThermalConfig = namedtuple('ThermalConfig', ['cpu', 'gpu', 'mem', 'bat', 'ambient'])
 
 FW_SIGNATURE = get_expected_signature()
@@ -128,6 +133,9 @@ _TEMP_THRS_L = [42.5, 57.5, 72.5, 10000]
 _FAN_SPEEDS = [0, 16384, 32768, 65535]
 # max fan speed only allowed if battery is hot
 _BAT_TEMP_THRESHOLD = 45.
+if NoctuaMode:
+  _FAN_SPEEDS = [0, 65535, 65535, 65535]
+  _BAT_TEMP_THERSHOLD = 20.
 
 
 def handle_fan_eon(max_cpu_temp, bat_temp, fan_speed, ignition):
@@ -352,9 +360,9 @@ def thermald_thread():
     startup_conditions["accepted_terms"] = params.get("HasAcceptedTerms") == terms_version
     completed_training = params.get("CompletedTrainingVersion") == training_version
 
-    panda_signature = params.get("PandaFirmware")
-    startup_conditions["fw_version_match"] = (panda_signature is None) or (panda_signature == FW_SIGNATURE)   # don't show alert is no panda is connected (None)
-    set_offroad_alert_if_changed("Offroad_PandaFirmwareMismatch", (not startup_conditions["fw_version_match"]))
+    #panda_signature = params.get("PandaFirmware")
+    #startup_conditions["fw_version_match"] = (panda_signature is None) or (panda_signature == FW_SIGNATURE)   # don't show alert is no panda is connected (None)
+    #set_offroad_alert_if_changed("Offroad_PandaFirmwareMismatch", (not startup_conditions["fw_version_match"]))
 
     # with 2% left, we killall, otherwise the phone will take a long time to boot
     startup_conditions["free_space"] = msg.thermal.freeSpace > 0.02

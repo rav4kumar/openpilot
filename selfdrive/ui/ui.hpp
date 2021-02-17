@@ -90,7 +90,7 @@ typedef struct {
 
 
 typedef struct UIScene {
-
+  //bool recording;
   int dfButtonStatus;
   int lsButtonStatus;
   bool mlButtonEnabled;
