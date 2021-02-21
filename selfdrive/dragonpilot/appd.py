@@ -10,11 +10,11 @@ params = Params()
 from math import floor
 import re
 import os
-from common.dp_common import is_online
+#from common.dp_common import is_online
 from common.dp_conf import get_struct_name
 from common.realtime import sec_since_boot
 
-is_online = is_online()
+#is_online = is_online()
 auto_update = params.get("dp_app_auto_update", encoding='utf8') == "1"
 
 class App():
@@ -160,7 +160,7 @@ class App():
       if self.has_own_apk and not self.is_installed:
         self.update_app()
 
-      elif is_online:
+      #elif is_online:
         if local_version is None:
           self.update_app()
         else:

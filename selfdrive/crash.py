@@ -83,22 +83,10 @@ else:
   except AttributeError:
     dongle_id = "None"
   try:
-    distance_traveled = params.get("DistanceTraveled").decode('utf8')
-  except AttributeError:
-    distance_traveled = "None"
-  try:
-    distance_traveled_engaged = params.get("DistanceTraveledEngaged").decode('utf8')
-  except AttributeError:
-    distance_traveled_engaged = "None"
-  try:
-    distance_traveled_override = params.get("DistanceTraveledOverride").decode('utf8')
-  except AttributeError:
-    distance_traveled_override = "None"
-  try:
     ip = requests.get('https://checkip.amazonaws.com/').text.strip()
   except Exception:
     ip = "255.255.255.255"
-  error_tags = {'dirty': dirty, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin, 'distance_traveled': distance_traveled, 'distance_traveled_engaged': distance_traveled_engaged, 'distance_traveled_override': distance_traveled_override}  # noqa: E501
+  error_tags = {'dirty': dirty, 'dongle_id': dongle_id, 'branch': branch, 'remote': origin}
   #uniqueID = op_params.get('uniqueID')
   username = opParams().get('username')
   if username is None or not isinstance(username, str):

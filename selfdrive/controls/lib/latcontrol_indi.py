@@ -82,7 +82,7 @@ class LatControlINDI():
       time_v = CP.lateralTuning.indi.timeConstantV
 
       self.sat_limit = CP.steerLimitTimer
-    
+
     self.G = interp(CS.vEgo, act_bp, act_v)
     self.outer_loop_gain = interp(CS.vEgo, outer_bp, outer_v)
     self.inner_loop_gain = interp(CS.vEgo, inner_bp, inner_v)
@@ -120,6 +120,10 @@ class LatControlINDI():
       # Compute change in actuator
       g_inv = 1. / self.G
       delta_u = g_inv * accel_error
+
+      # If steering pressed, only allow wind down
+      if CS.steeringPressed and (delta_u * self.output_steer > 0):
+        delta_u = 0
 
       # Enforce rate limit
       if self.enforce_rate_limit:

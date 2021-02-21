@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.7
-import subprocess
+#import subprocess
 from cereal import car
 from common.params import Params
 from common.realtime import sec_since_boot
@@ -21,11 +21,11 @@ LAST_MODIFIED = str(PARAM_PATH) + "dp_last_modified"
 #  params.put('dp_last_modified',str(floor(time.time())))
 #  init_params_vals(params)
 
-def is_online():
-  try:
-    return not subprocess.call(["ping", "-W", "4", "-c", "1", "117.28.245.92"])
-  except ProcessLookupError:
-    return False
+#def is_online():
+  #try:
+    #return not subprocess.call(["ping", "-W", "4", "-c", "1", "117.28.245.92"])
+  #except ProcessLookupError:
+    #return False
 
 def common_controller_ctrl(enabled, dragonconf, blinker_on, steer_req, v_ego):
   if enabled:
