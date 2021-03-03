@@ -205,6 +205,11 @@ struct CarState {
   lkMode @37 :Bool;
   stopSteering @38 :Bool; # timebomb - stopSteering
   engineRPM @39 :Float32;
+  rightBlindspotD1 @41 :Float32;
+  rightBlindspotD2 @42 :Float32;
+  leftBlindspotD1 @43 :Float32;
+  leftBlindspotD2 @44 :Float32;
+  blindspotside @45 :Float32;
 
   struct WheelSpeeds {
     # optional wheel speeds

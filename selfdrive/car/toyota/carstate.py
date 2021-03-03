@@ -41,6 +41,14 @@ class CarState(CarStateBase):
     self.main_on = False
     self.gas_pressed = False
     self.smartspeed = 0
+    self.leftblindspot = False
+    self.leftblindspotD1 = 0
+    self.leftblindspotD2 = 0
+    self.rightblindspot = False
+    self.rightblindspotD1 = 0
+    self.rightblindspotD2 = 0
+    self.rightblindspotcounter = 0
+    self.leftblindspotcounter = 0
     self.Angles = np.zeros(250)
     self.Angles_later = np.zeros(250)
     self.Angle_counter = 0
@@ -129,7 +137,7 @@ class CarState(CarStateBase):
         sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON_2']
       else:
         try:
-          sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON']      
+          sport_on = cp.vl["GEAR_PACKET"]['SPORT_ON']
         except KeyError:
           sport_on = 0
     if not travis:
@@ -145,11 +153,53 @@ class CarState(CarStateBase):
         if int(Params().get('dp_accel_profile')) != DP_NORMAL:
           put_nonblocking('dp_accel_profile',str(DP_NORMAL))
           put_nonblocking('dp_last_modified',str(floor(time.time())))
+    #Arne Blindspot code.
+    if frame > 999 and not (self.CP.carFingerprint in TSS2_CAR or self.CP.carFingerprint == CAR.CAMRY or self.CP.carFingerprint == CAR.CAMRYH):
+      if cp.vl["DEBUG"]['BLINDSPOTSIDE']==65: #Left
+        if cp.vl["DEBUG"]['BLINDSPOTD1'] != self.leftblindspotD1:
+          self.leftblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+          self.leftblindspotcounter = 21
+        if cp.vl["DEBUG"]['BLINDSPOTD2'] != self.leftblindspotD2:
+          self.leftblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+          self.leftblindspotcounter = 21
+        if (self.leftblindspotD1 > 10) or (self.leftblindspotD2 > 10):
+          self.leftblindspot = bool(1)
+          print("Left Blindspot Detected")
+      elif  cp.vl["DEBUG"]['BLINDSPOTSIDE']==66: #Right
+        if cp.vl["DEBUG"]['BLINDSPOTD1'] != self.rightblindspotD1:
+          self.rightblindspotD1 = cp.vl["DEBUG"]['BLINDSPOTD1']
+          self.rightblindspotcounter = 21
+        if cp.vl["DEBUG"]['BLINDSPOTD2'] != self.rightblindspotD2:
+          self.rightblindspotD2 = cp.vl["DEBUG"]['BLINDSPOTD2']
+          self.rightblindspotcounter = 21
+        if (self.rightblindspotD1 > 10) or (self.rightblindspotD2 > 10):
+          self.rightblindspot = bool(1)
+          print("Right Blindspot Detected")
+      self.rightblindspotcounter = self.rightblindspotcounter -1 if self.rightblindspotcounter > 0 else 0
+      self.leftblindspotcounter = self.leftblindspotcounter -1 if self.leftblindspotcounter > 0 else 0
+      if self.leftblindspotcounter == 0:
+        self.leftblindspot = False
+        self.leftblindspotD1 = 0
+        self.leftblindspotD2 = 0
+      if self.rightblindspotcounter == 0:
+        self.rightblindspot = False
+        self.rightblindspotD1 = 0
+        self.rightblindspotD2 = 0
+    elif frame > 999 and self.CP.carFingerprint in TSS2_CAR or self.CP.carFingerprint == CAR.AVALON_2021:
+      self.leftblindspot = cp.vl["BSM"]['L_ADJACENT'] == 1
+      self.leftblindspotD1 = 10.1
+      self.leftblindspotD2 = 10.1
+      self.rightblindspot = cp.vl["BSM"]['R_ADJACENT'] == 1
+      self.rightblindspotD1 = 10.1
+      self.rightblindspotD2 = 10.1
+    #Arne Distance button read and write code.
     if self.read_distance_lines != cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']:
       self.read_distance_lines = cp.vl["PCM_CRUISE_SM"]['DISTANCE_LINES']
       put_nonblocking('dp_dynamic_follow', str(int(max(self.read_distance_lines - 1, 0))))
       #put_nonblocking('dp_last_modified',str(floor(time.time())))
 
+    ret.leftBlindspot = self.leftblindspot
+    ret.rightBlindspot = self.rightblindspot
 
     ret.leftBlinker = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 1
     ret.rightBlinker = cp.vl["STEERING_LEVERS"]['TURN_SIGNALS'] == 2
@@ -174,7 +224,7 @@ class CarState(CarStateBase):
       ret.cruiseState.speed = cp.vl["PCM_CRUISE_2"]['SET_SPEED'] * CV.KPH_TO_MS
       self.low_speed_lockout = cp.vl["PCM_CRUISE_2"]['LOW_SPEED_LOCKOUT'] == 2
       ret.cruiseState.available = self.main_on
-    
+
     if self.CP.carFingerprint in TSS2_CAR:
       minimum_set_speed = 27.0
     elif self.CP.carFingerprint == CAR.RAV4:
@@ -236,7 +286,7 @@ class CarState(CarStateBase):
       #  self.Angles_later[self.Angle_counter] = abs(angle_later) * 0.8
       #else:
       #  self.Angles_later[self.Angle_counter] = 0.0
-    
+
     if dp_profile == DP_ECO:
       factor = 1.0
     elif dp_profile == DP_SPORT:
@@ -360,6 +410,10 @@ class CarState(CarStateBase):
       ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
       ("SPORT_ON", "GEAR_PACKET", 0),
       ("ECON_ON", "GEAR_PACKET", 0),
+      ("BLINDSPOT","DEBUG", 0),
+      ("BLINDSPOTSIDE","DEBUG",65),
+      ("BLINDSPOTD1","DEBUG", 0),
+      ("BLINDSPOTD2","DEBUG", 0),
       ("DISTANCE_LINES", "PCM_CRUISE_SM", 0),
     ]
 
@@ -374,11 +428,11 @@ class CarState(CarStateBase):
     ]
     if CP.carFingerprint == CAR.RAV4_TSS2:
       signals.append(("SPORT_ON_2", "GEAR_PACKET", 0))
-      
+
     if CP.carFingerprint in [CAR.COROLLAH_TSS2, CAR.LEXUS_ESH_TSS2, CAR.RAV4H_TSS2, CAR.CHRH, CAR.PRIUS_TSS2, CAR.HIGHLANDERH_TSS2]:
       signals.append(("SPORT_ON", "GEAR_PACKET2", 0))
       signals.append(("ECON_ON", "GEAR_PACKET2", 0))
-      
+
     if CP.carFingerprint in [CAR.LEXUS_ISH, CAR.LEXUS_GSH]:
       signals.append(("GAS_PEDAL", "GAS_PEDAL_ALT", 0))
       signals.append(("MAIN_ON", "PCM_CRUISE_ALT", 0))
@@ -411,7 +465,7 @@ class CarState(CarStateBase):
 
     if CP.carFingerprint == CAR.PRIUS:
       signals += [("STATE", "AUTOPARK_STATUS", 0)]
-      
+
     if CP.carFingerprint == CAR.RAV4H:
       signals += [("FD_BUTTON", "SDSU", 0)]
 
