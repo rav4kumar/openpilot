@@ -457,11 +457,15 @@ class CarInterface(CarInterfaceBase):
 
   # returns a car.CarState
   def update(self, c, can_strings, dragonconf):
+    self.sm.update(0)
     # ******************* do can recv *******************
-    self.cp.update_strings(can_strings)
     self.cp_cam.update_strings(can_strings)
-
-    ret = self.CS.update(self.cp, self.cp_cam)
+    if self.frame < 1000:
+      self.cp.update_strings(can_strings)
+      ret = self.CS.update(self.cp, self.cp_cam, self.frame)
+    else:
+      self.cp.update_strings(can_strings)
+      ret = self.CS.update(self.cp, self.cp_cam, self.frame)
     # dp
     self.dragonconf = dragonconf
     ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
@@ -511,7 +515,7 @@ class CarInterface(CarInterfaceBase):
 
     # if self.cp_cam.can_invalid_cnt >= 200 and self.CP.enableCamera and not self.CP.isPandaBlack:
     #   events.add(EventName.invalidGiraffeToyotaDEPRECATED)
-    
+
     if not self.waiting and ret.vEgo < 0.3 and not ret.gasPressed and self.CP.carFingerprint == CAR.RAV4H:
       self.waiting = True
     if self.waiting:
@@ -519,7 +523,7 @@ class CarInterface(CarInterfaceBase):
         self.waiting = False
       else:
         events.add(EventName.waitingMode)
-    
+
     if self.CS.low_speed_lockout and self.CP.openpilotLongitudinalControl:
       events.add(EventName.lowSpeedLockout)
     if ret.vEgo < self.CP.minEnableSpeed and self.CP.openpilotLongitudinalControl:
