@@ -410,6 +410,10 @@ class CarState(CarStateBase):
       ("AUTO_HIGH_BEAM", "LIGHT_STALK", 0),
       ("SPORT_ON", "GEAR_PACKET", 0),
       ("ECON_ON", "GEAR_PACKET", 0),
+      ("BLINDSPOT","DEBUG", 0),
+      ("BLINDSPOTSIDE","DEBUG",65),
+      ("BLINDSPOTD1","DEBUG", 0),
+      ("BLINDSPOTD2","DEBUG", 0),
       ("DISTANCE_LINES", "PCM_CRUISE_SM", 0),
     ]
 

@@ -457,6 +457,7 @@ class CarInterface(CarInterfaceBase):
 
   # returns a car.CarState
   def update(self, c, can_strings, dragonconf):
+    self.sm.update(0)
     # ******************* do can recv *******************
     self.cp_cam.update_strings(can_strings)
     if self.frame < 1000:
