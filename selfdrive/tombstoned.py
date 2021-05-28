@@ -201,17 +201,13 @@ def main():
   clear_apport_folder()  # Clear apport folder on start, otherwise duplicate crashes won't register
   initial_tombstones = set(get_tombstones())
 
-  sentry_sdk.utils.MAX_STRING_LENGTH = 8192
-  sentry_sdk.init("https://a40f22e13cbc4261873333c125fc9d38@o33823.ingest.sentry.io/157615",
-                  default_integrations=False, release=version)
-
-  dongle_id = Params().get("DongleId", encoding='utf-8')
-  sentry_sdk.set_user({"id": dongle_id})
-  sentry_sdk.set_tag("dirty", dirty)
-  sentry_sdk.set_tag("origin", origin)
-  sentry_sdk.set_tag("branch", branch)
-  sentry_sdk.set_tag("commit", commit)
-  sentry_sdk.set_tag("device", HARDWARE.get_device_type())
+  tags = {
+    'dirty': dirty,
+    'origin': origin,
+    'branch': branch
+  }
+  client = Client('https://137e8e621f114f858f4c392c52e18c6d:8aba82f49af040c8aac45e95a8484970@sentry.io/1404547',
+                  install_sys_hook=False, transport=HTTPTransport, release=version, tags=tags, string_max_length=10000)
 
   while True:
     now_tombstones = set(get_tombstones())

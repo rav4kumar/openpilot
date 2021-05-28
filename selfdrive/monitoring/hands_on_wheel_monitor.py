@@ -4,9 +4,16 @@ from selfdrive.config import Conversions as CV
 EventName = car.CarEvent.EventName
 HandsOnWheelState = log.DriverMonitoringState.HandsOnWheelState
 
-_PRE_ALERT_THRESHOLD = 150  # 15s
-_PROMPT_ALERT_THRESHOLD = 300  # 30s
-_TERMINAL_ALERT_THRESHOLD = 600  # 60s
+from common.op_params import opParams
+from common.travis_checker import travis
+if not travis:
+  awareness_factor = opParams().get('awareness_factor')
+else:
+  awareness_factor = 1
+
+_PRE_ALERT_THRESHOLD = 150 + awareness_factor * 600  # 15s
+_PROMPT_ALERT_THRESHOLD = 300 + awareness_factor * 600 # 30s
+_TERMINAL_ALERT_THRESHOLD = 600 + awareness_factor * 600  # 60s
 
 _MIN_MONITORING_SPEED = 10 * CV.KPH_TO_MS  # No monitoring underd 10kph
 
