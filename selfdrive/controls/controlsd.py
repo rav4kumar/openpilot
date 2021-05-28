@@ -531,7 +531,7 @@ class Controls:
     controlsState.longControlState = self.LoC.long_control_state
     controlsState.vPid = float(self.LoC.v_pid)
     controlsState.vCruise = float(self.v_cruise_kph)
-    controlsState.speedLimit = float(CS.cruiseState.speedLimit)
+    controlsState.speedLimit = float(self.sm['longitudinalPlan'].speedLimit)
     controlsState.upAccelCmd = float(self.LoC.pid.p)
     controlsState.uiAccelCmd = float(self.LoC.pid.i)
     controlsState.ufAccelCmd = float(self.LoC.pid.f)
