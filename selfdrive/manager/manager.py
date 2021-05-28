@@ -39,6 +39,7 @@ def manager_init():
     ("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')),
     ("MaxDecelerationForTurns", "-3.0"),
     ("OpenpilotEnabledToggle", "1"),
+    ("ShowDebugUI", "1"),
     ("SpeedLimitControl", "1"),
     ("SpeedLimitPercOffset", "10.0"),
     ("TurnSpeedControl", "1"),

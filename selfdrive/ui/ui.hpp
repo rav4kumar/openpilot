@@ -108,6 +108,9 @@ typedef struct UIScene {
   bool is_rhd;
   bool driver_view;
 
+  // Debug UI
+  bool show_debug_ui;
+
   // Speed limit control
   int ui_speed_sgn_x, ui_speed_sgn_y; // speed sign position
   bool speed_limit_control_enabled;

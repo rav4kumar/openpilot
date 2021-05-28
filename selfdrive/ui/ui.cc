@@ -338,6 +338,7 @@ static void update_status(UIState *s) {
       read_param(&s->scene.end_to_end, "EndToEndToggle");
       read_param(&s->scene.speed_limit_control_enabled, "SpeedLimitControl");
       read_param(&s->scene.speed_limit_perc_offset, "SpeedLimitPercOffset");
+      read_param(&s->scene.show_debug_ui, "ShowDebugUI");
       s->sidebar_collapsed = true;
       s->scene.alert_size = cereal::ControlsState::AlertSize::NONE;
       s->vipc_client = s->scene.driver_view ? s->vipc_client_front : s->vipc_client_rear;
