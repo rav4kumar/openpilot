@@ -1,3 +1,5 @@
+import math
+#from math import floor
 from cereal import car
 from common.numpy_fast import mean
 from opendbc.can.can_define import CANDefine
@@ -5,8 +7,16 @@ from selfdrive.car.interfaces import CarStateBase
 from opendbc.can.parser import CANParser
 from selfdrive.config import Conversions as CV
 from selfdrive.car.toyota.values import CAR, DBC, STEER_THRESHOLD, TSS2_CAR, NO_STOP_TIMER_CAR
+from common.op_params import opParams
+from common.travis_checker import travis
+if not travis:
+  import cereal.messaging as messaging
+op_params = opParams()
+set_speed_offset = op_params.get('set_speed_offset')
 
 _TRAFFIC_SINGAL_MAP = {
+# more info regarding this can be found under rsa.
+# https://github.com/arne182/ArnePilot/blob/aea76bff0a87e2368c5c2177f5860448df964438/opendbc/toyota_prius_2021_tss2.dbc#L370
   1: "kph",
   36: "mph",
   65: "No overtake",
@@ -26,6 +36,11 @@ class CarState(CarStateBase):
     self.needs_angle_offset = True
     self.accurate_steer_angle_seen = False
     self.angle_offset = 0.
+    self.pcm_acc_active = False
+    self.main_on = False
+    self.v_cruise_pcmlast = 0
+    self.setspeedoffset = 34.0
+    self.setspeedcounter = 0
     self._init_traffic_signals()
 
   def update(self, cp, cp_cam):
@@ -35,7 +50,7 @@ class CarState(CarStateBase):
                         cp.vl["SEATS_DOORS"]['DOOR_OPEN_RL'], cp.vl["SEATS_DOORS"]['DOOR_OPEN_RR']])
     ret.seatbeltUnlatched = cp.vl["SEATS_DOORS"]['SEATBELT_DRIVER_UNLATCHED'] != 0
 
-    ret.brakePressed = cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED'] != 0
+    ret.brakePressed = (cp.vl["BRAKE_MODULE"]['BRAKE_PRESSED'] != 0) or not bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE'])
     ret.brakeLights = bool(cp.vl["ESP_CONTROL"]['BRAKE_LIGHTS_ACC'] or ret.brakePressed)
     if self.CP.enableGasInterceptor:
       ret.gas = (cp.vl["GAS_SENSOR"]['INTERCEPTOR_GAS'] + cp.vl["GAS_SENSOR"]['INTERCEPTOR_GAS2']) / 2.
@@ -81,13 +96,61 @@ class CarState(CarStateBase):
     ret.steerWarning = cp.vl["EPS_STATUS"]['LKA_STATE'] not in [1, 5]
 
     if self.CP.carFingerprint == CAR.LEXUS_IS:
-      ret.cruiseState.available = cp.vl["DSU_CRUISE"]['MAIN_ON'] != 0
+      self.main_on= cp.vl["DSU_CRUISE"]['MAIN_ON'] != 0
       ret.cruiseState.speed = cp.vl["DSU_CRUISE"]['SET_SPEED'] * CV.KPH_TO_MS
       self.low_speed_lockout = False
     else:
-      ret.cruiseState.available = cp.vl["PCM_CRUISE_2"]['MAIN_ON'] != 0
+      self.main_on = cp.vl["PCM_CRUISE_2"]['MAIN_ON'] != 0
       ret.cruiseState.speed = cp.vl["PCM_CRUISE_2"]['SET_SPEED'] * CV.KPH_TO_MS
       self.low_speed_lockout = cp.vl["PCM_CRUISE_2"]['LOW_SPEED_LOCKOUT'] == 2
+      ret.cruiseState.available = self.main_on
+
+     ####################
+     ## arne + - 5 mph ##
+     ####################
+
+    if self.CP.carFingerprint in TSS2_CAR:
+      minimum_set_speed = 28.0
+    elif self.CP.carFingerprint == CAR.RAV4:
+      minimum_set_speed = 44.0
+    else:
+      minimum_set_speed = 41.0
+    maximum_set_speed = 169.0
+    if self.CP.carFingerprint == CAR.LEXUS_RXH:
+      maximum_set_speed = 177.0
+    v_cruise_pcm_max = ret.cruiseState.speed
+    if v_cruise_pcm_max < minimum_set_speed:
+      minimum_set_speed = v_cruise_pcm_max
+    if v_cruise_pcm_max > maximum_set_speed:
+      maximum_set_speed = v_cruise_pcm_max
+    speed_range = maximum_set_speed-minimum_set_speed
+    if bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE']) and not self.pcm_acc_active and self.v_cruise_pcmlast != ret.cruiseState.speed:
+      if ret.vEgo < minimum_set_speed/3.6:
+        self.setspeedoffset = max(min(int(minimum_set_speed-ret.vEgo*3.6),(minimum_set_speed-7.0)),0.0)
+        self.v_cruise_pcmlast = ret.cruiseState.speed
+    if ret.cruiseState.speed < self.v_cruise_pcmlast:
+      if self.setspeedcounter > 0 and ret.cruiseState.speed > minimum_set_speed:
+        self.setspeedoffset = self.setspeedoffset + 4
+      else:
+        if math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0))) > 0: # noqa:E501
+          self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(ret.cruiseState.speed-(minimum_set_speed-1.0))) # noqa:E501
+      self.setspeedcounter = 50
+    if self.v_cruise_pcmlast < ret.cruiseState.speed:
+      if self.setspeedcounter > 0 and (self.setspeedoffset - 4) > 0:
+        self.setspeedoffset = self.setspeedoffset - 4
+      else:
+        self.setspeedoffset = self.setspeedoffset + math.floor((int((-ret.cruiseState.speed)*(minimum_set_speed-7.0)/speed_range  + maximum_set_speed*(minimum_set_speed-7.0)/speed_range)-self.setspeedoffset)/(maximum_set_speed+1.0-ret.cruiseState.speed)) # noqa:E501
+      self.setspeedcounter = 50
+    if self.setspeedcounter > 0:
+      self.setspeedcounter = self.setspeedcounter - 1
+    self.v_cruise_pcmlast = ret.cruiseState.speed
+    if int(ret.cruiseState.speed) - self.setspeedoffset < 7:
+      self.setspeedoffset = int(ret.cruiseState.speed) - 7
+    if int(ret.cruiseState.speed) - self.setspeedoffset > maximum_set_speed:
+      self.setspeedoffset = int(ret.cruiseState.speed) - maximum_set_speed
+    if set_speed_offset:
+      ret.cruiseState.speed = ret.cruiseState.speed - self.setspeedoffset/3.6
+
     self.pcm_acc_status = cp.vl["PCM_CRUISE"]['CRUISE_STATE']
     if self.CP.carFingerprint in NO_STOP_TIMER_CAR or self.CP.enableGasInterceptor:
       # ignore standstill in hybrid vehicles, since pcm allows to restart without
@@ -95,8 +158,8 @@ class CarState(CarStateBase):
       ret.cruiseState.standstill = False
     else:
       ret.cruiseState.standstill = self.pcm_acc_status == 7
-    ret.cruiseState.enabled = bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE'])
-    ret.cruiseState.nonAdaptive = cp.vl["PCM_CRUISE"]['CRUISE_STATE'] in [1, 2, 3, 4, 5, 6]
+    self.pcm_acc_active = bool(cp.vl["PCM_CRUISE"]['CRUISE_ACTIVE'])
+    ret.cruiseState.enabled = self.pcm_acc_active
 
     if self.CP.carFingerprint == CAR.PRIUS:
       ret.genericToggle = cp.vl["AUTOPARK_STATUS"]['STATE'] != 0
@@ -230,6 +293,7 @@ class CarState(CarStateBase):
 
     checks = [
       ("BRAKE_MODULE", 40),
+      ("PCM_CRUISE_SM", 1),
       ("GAS_PEDAL", 33),
       ("WHEEL_SPEEDS", 80),
       ("STEER_ANGLE_SENSOR", 80),
