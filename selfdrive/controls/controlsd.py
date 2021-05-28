@@ -523,6 +523,7 @@ class Controls:
     controlsState.ufAccelCmd = float(self.LoC.pid.f)
     controlsState.vTargetLead = float(v_acc)
     controlsState.aTarget = float(a_acc)
+    controlsState.decelForModelDEPRECATED = self.sm['longitudinalPlan'].decelForTurnDEPRECATED
     controlsState.cumLagMs = -self.rk.remaining * 1000.
     controlsState.startMonoTime = int(start_time * 1e9)
     controlsState.forceDecel = bool(force_decel)

@@ -66,6 +66,12 @@ QWidget * toggles_panel() {
                                             "Monitor and alert when driver is not keeping the hands on the steering wheel.",
                                             "../assets/offroad/icon_openpilot.png"
                                             ));
+  toggles_list->addWidget(horizontal_line());                                            
+  toggles_list->addWidget(new ParamControl("TurnVisionControl",
+                                            "Enable vision based turn control",
+                                            "Use vision path predictions to estimate the appropiate speed to drive through turns ahead.",
+                                            "../assets/offroad/icon_road.png"
+                                            ));
 
   bool record_lock = Params().read_db_bool("RecordFrontLock");
   record_toggle->setEnabled(!record_lock);

@@ -37,7 +37,9 @@ def manager_init():
     ("IsUploadRawEnabled", "1"),
     ("IsLdwEnabled", "0"),
     ("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')),
+    ("MaxDecelerationForTurns", "-3.0"),
     ("OpenpilotEnabledToggle", "1"),
+    ("TurnVisionControl", "1"),
     ("VisionRadarToggle", "0"),
     ("IsDriverViewEnabled", "0"),
   ]

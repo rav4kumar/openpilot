@@ -213,7 +213,13 @@ static void ui_draw_vision_speed(UIState *s) {
 }
 
 static void ui_draw_vision_event(UIState *s) {
-  if (s->scene.controls_state.getEngageable()) {
+  if (s->scene.controls_state.getDecelForModelDEPRECATED() && s->scene.controls_state.getEnabled()) {
+    // draw winding road sign
+    const int img_turn_size = 96;
+    const int img_turn_x = s->viz_rect.right() - img_turn_size - bdr_s;
+    const int img_turn_y = s->viz_rect.y + (bdr_s * 1.5);
+    ui_draw_image(s, {img_turn_x, img_turn_y, img_turn_size, img_turn_size}, "trafficSign_turn", 1.0f);
+  } else if (s->scene.controls_state.getEngageable()) {
     // draw steering wheel
     const int bg_wheel_size = 96;
     const int bg_wheel_x = s->viz_rect.right() - bg_wheel_size - bdr_s * 2;
