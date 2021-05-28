@@ -10,7 +10,7 @@ from selfdrive.mapd.lib.WayCollection import WayCollection
 from .config import QUERY_RADIUS, MIN_DISTANCE_FOR_NEW_QUERY, FULL_STOP_MAX_SPEED
 
 
-_DEBUG = False
+_DEBUG = True
 
 
 def _debug(msg):
