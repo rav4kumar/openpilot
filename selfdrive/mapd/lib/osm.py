@@ -3,8 +3,8 @@ import overpy
 
 class OSM():
   def __init__(self):
-    self.api = overpy.Overpass()
-    # self.api = overpy.Overpass(url='http://3.65.170.21/api/interpreter')
+    # self.api = overpy.Overpass()
+    self.api = overpy.Overpass(url='http://3.65.170.21/api/interpreter')
 
   def fetch_road_ways_around_location(self, lat, lon, radius):
       # fetch all ways and nodes on this ways around location
