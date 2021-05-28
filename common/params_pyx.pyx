@@ -74,6 +74,7 @@ keys = {
   b"RecordFrontLock": [TxType.PERSISTENT],  # for the internal fleet
   b"ReleaseNotes": [TxType.PERSISTENT],
   b"ShouldDoUpdate": [TxType.CLEAR_ON_MANAGER_START],
+  b"ShowDebugUI": [TxType.PERSISTENT],
   b"SpeedLimitControl": [TxType.PERSISTENT],
   b"SpeedLimitPercOffset": [TxType.PERSISTENT],
   b"SubscriberInfo": [TxType.PERSISTENT],

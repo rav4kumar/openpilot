@@ -288,7 +288,8 @@ static void ui_draw_vision_speed(UIState *s) {
 
 static void ui_draw_vision_event(UIState *s) {
   auto turnControllerState = s->scene.controls_state.getTurnControllerState();
-  if (turnControllerState > cereal::ControlsState::TurnControllerState::DISABLED && s->scene.controls_state.getEnabled()) {
+  if (s->scene.show_debug_ui && turnControllerState > cereal::ControlsState::TurnControllerState::DISABLED && 
+      s->scene.controls_state.getEnabled()) {
     // draw a rectangle with colors indicating the state with the value of the acceleration inside.
     const int size = 184;
     const Rect rect = {s->viz_rect.right() - size - bdr_s, int(s->viz_rect.y + (bdr_s * 1.5)), size, size};

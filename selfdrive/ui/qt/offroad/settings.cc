@@ -92,6 +92,12 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                             "Use curvature info from map data to define speed limits to take turns ahead",
                                             "../assets/offroad/icon_openpilot.png"
                                             ));
+  toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("ShowDebugUI",
+                                            "Show debug UI elements",
+                                            "Show UI elements that aid debugging.",
+                                            "../assets/offroad/icon_calibration.png"
+                                            ));
 
   if (Hardware::TICI()) {
     toggles.append(new ParamControl("EnableWideCamera",
