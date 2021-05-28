@@ -87,6 +87,12 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                             "../assets/offroad/icon_speed_limit.png"
                                             ));
   toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("SpeedLimitDelayIncrease",
+                                            "Delay increase of speed limit",
+                                            "Delays the increase of the speed limit to give time to the driver to cancel the increase by changing cruise speed.",
+                                            "../assets/offroad/icon_speed_limit.png"
+                                            ));
+  toggles_list->addWidget(horizontal_line());
   toggles_list->addWidget(new ParamControl("TurnSpeedControl",
                                             "Enable Map Data Turn Control",
                                             "Use curvature info from map data to define speed limits to take turns ahead",

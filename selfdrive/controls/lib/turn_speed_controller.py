@@ -11,7 +11,6 @@ _MIN_ADAPTING_BRAKE_ACC = -1.5  # Minimum acceleration allowed when adapting to 
 _MIN_ADAPTING_BRAKE_JERK = -1.0  # Minimum jerk allowed when adapting to lower speed limit.
 _SPEED_OFFSET_TH = -3.0  # m/s Maximum offset between speed limit and current speed for adapting state.
 _LIMIT_ADAPT_TIME_PER_MS = 1.0  # Ideal adapt time(s) to lower speed limit. i.e. braking for every m/s of speed delta.
-_MIN_LIMIT_ADAPT_TIME = 5.  # s, Minimum time to provide for adapting logic.
 _MIN_SPEED_LIMIT = 11.  # m/s, Minimum speed limit to provide as solution.
 
 _MAX_MAP_DATA_AGE = 10.0  # s Maximum time to hold to map data, then consider it invalid.
@@ -50,6 +49,7 @@ class TurnSpeedController():
 
     self._v_offset = 0.0
     self._speed_limit = 0.0
+    self._distance = 0.0
     self._state = TurnSpeedControlState.inactive
 
     self._next_speed_limit_prev = 0.
@@ -84,12 +84,18 @@ class TurnSpeedController():
   def speed_limit(self):
     return max(self._speed_limit, _MIN_SPEED_LIMIT) if self._speed_limit > 0. else 0.
 
+  @property
+  def distance(self):
+    return self._distance
+
   def _get_limit_from_map_data(self, sm):
+    """Provides the speed limit and distance to it for turns based on map data.
+    """
     # Ignore if no live map data
     sock = 'liveMapData'
     if sm.logMonoTime[sock] is None:
       _debug('TS: No map data for speed limit')
-      return 0.
+      return 0., 0.
 
     # Load limits from map_data
     map_data = sm[sock]
@@ -100,7 +106,7 @@ class TurnSpeedController():
     gps_fix_age = time.time() - map_data.lastGpsTimestamp * 1e-3
     if gps_fix_age > _MAX_MAP_DATA_AGE:
       _debug(f'TS: Ignoring map data as is too old. Age: {gps_fix_age}')
-      return 0.
+      return 0., 0.
 
     # Ensure current speed limit is considered only if we are inside the section.
     if map_data.turnSpeedLimitValid and self._v_ego > 0.:
@@ -112,12 +118,16 @@ class TurnSpeedController():
     # or car has stopped, then provide current value and reset tracking.
     if next_speed_limit == 0. or self._v_ego == 0. or (speed_limit > 0 and next_speed_limit > speed_limit):
       self._next_speed_limit_prev = 0.
-      return speed_limit
+      return speed_limit, 0.
+
+    # Calculate the distance to the next speed limit ahead corrected by gps_fix_age
+    distance_since_fix = self._v_ego * gps_fix_age
+    distance_to_limit_ahead = max(0., map_data.turnSpeedLimitAheadDistance - distance_since_fix)
 
     # When we have a next_speed_limit value that has not changed from a provided next speed limit value
-    # in previous resolutions, we keep providing it.
+    # in previous resolutions, we keep providing it along with the udpated distance to it.
     if next_speed_limit == self._next_speed_limit_prev:
-      return next_speed_limit
+      return next_speed_limit, distance_to_limit_ahead
 
     # Reset tracking
     self._next_speed_limit_prev = 0.
@@ -129,10 +139,10 @@ class TurnSpeedController():
     # When we detect we are close enough, we provide the next limit value and track it.
     if next_speed_limit_time <= adapt_time:
       self._next_speed_limit_prev = next_speed_limit
-      return next_speed_limit
+      return next_speed_limit, distance_to_limit_ahead
 
     # Otherwise we just provide the calculated speed_limit
-    return speed_limit
+    return speed_limit, 0.
 
   def _update_params(self):
     time = sec_since_boot()
@@ -209,7 +219,7 @@ class TurnSpeedController():
     self._active_jerk_limits = jerk_limits
 
     # Get the speed limit from Map Data
-    self._speed_limit = self._get_limit_from_map_data(sm)
+    self._speed_limit, self._distance = self._get_limit_from_map_data(sm)
 
     self._update_params()
     self._update_calculations()

@@ -1,6 +1,5 @@
 import numpy as np
 import math
-from enum import Enum
 from cereal import log
 from common.numpy_fast import interp
 from common.params import Params
@@ -19,7 +18,6 @@ _TURNING_CURVATURE_TH = 0.0022  # Curvature threshold to trigger turning turn st
 _LEAVING_CURVATURE_TH = 0.002  # Curvature threshold to trigger leaving turn state.
 _FINISH_CURVATURE_TH = 0.0015  # Curvature threshold to trigger the end of turn cycle.
 
-_ENTERING_SMOOTH_DECEL = -0.3  # Smooth decel when entering curve without overshooting lat acc limits.
 _LEAVING_ACC = 0.0  # Allowed acceleration when leaving the turn.
 
 _EVAL_STEP = 5.  # evaluate curvature every 5mts

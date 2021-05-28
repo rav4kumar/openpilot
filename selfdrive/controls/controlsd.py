@@ -532,6 +532,8 @@ class Controls:
     controlsState.vPid = float(self.LoC.v_pid)
     controlsState.vCruise = float(self.v_cruise_kph)
     controlsState.speedLimit = float(self.sm['longitudinalPlan'].speedLimit)
+    controlsState.distToSpeedLimit = float(self.sm['longitudinalPlan'].distToSpeedLimit)
+    controlsState.isMapSpeedLimit = bool(self.sm['longitudinalPlan'].isMapSpeedLimit)
     controlsState.upAccelCmd = float(self.LoC.pid.p)
     controlsState.uiAccelCmd = float(self.LoC.pid.i)
     controlsState.ufAccelCmd = float(self.LoC.pid.f)
@@ -546,6 +548,7 @@ class Controls:
     controlsState.speedLimitControlState = self.sm['longitudinalPlan'].speedLimitControlState
     controlsState.turnSpeed = float(self.sm['longitudinalPlan'].turnSpeed)
     controlsState.turnSpeedControlState = self.sm['longitudinalPlan'].turnSpeedControlState
+    controlsState.distToTurn = float(self.sm['longitudinalPlan'].distToTurn)
 
     if self.CP.steerControlType == car.CarParams.SteerControlType.angle:
       controlsState.lateralControlState.angleState = lac_log
