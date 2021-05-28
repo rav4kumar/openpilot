@@ -39,9 +39,9 @@ def manager_init():
     ("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')),
     ("MaxDecelerationForTurns", "-3.0"),
     ("OpenpilotEnabledToggle", "1"),
-    ("TurnVisionControl", "1"),
     ("SpeedLimitControl", "1"),
     ("SpeedLimitPercOffset", "10.0"),
+    ("TurnVisionControl", "1"),
     ("VisionRadarToggle", "0"),
     ("IsDriverViewEnabled", "0"),
   ]

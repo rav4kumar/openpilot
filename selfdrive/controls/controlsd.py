@@ -525,11 +525,12 @@ class Controls:
     controlsState.ufAccelCmd = float(self.LoC.pid.f)
     controlsState.vTargetLead = float(v_acc)
     controlsState.aTarget = float(a_acc)
-    controlsState.decelForModelDEPRECATED = self.sm['longitudinalPlan'].decelForTurnDEPRECATED
     controlsState.cumLagMs = -self.rk.remaining * 1000.
     controlsState.startMonoTime = int(start_time * 1e9)
     controlsState.forceDecel = bool(force_decel)
     controlsState.canErrorCounter = self.can_error_counter
+    controlsState.turnControllerState = self.sm['longitudinalPlan'].turnControllerState
+    controlsState.turnAcc = float(self.sm['longitudinalPlan'].turnAcc)
     controlsState.speedLimitControlState = self.sm['longitudinalPlan'].speedLimitControlState
 
     if self.CP.steerControlType == car.CarParams.SteerControlType.angle:

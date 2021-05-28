@@ -262,12 +262,18 @@ static void ui_draw_vision_speed(UIState *s) {
 }
 
 static void ui_draw_vision_event(UIState *s) {
-  if (s->scene.controls_state.getDecelForModelDEPRECATED() && s->scene.controls_state.getEnabled()) {
-    // draw winding road sign
-    const int img_turn_size = 96;
-    const int img_turn_x = s->viz_rect.right() - img_turn_size - bdr_s;
-    const int img_turn_y = s->viz_rect.y + (bdr_s * 1.5);
-    ui_draw_image(s, {img_turn_x, img_turn_y, img_turn_size, img_turn_size}, "trafficSign_turn", 1.0f);
+  auto turnControllerState = s->scene.controls_state.getTurnControllerState();
+  if (turnControllerState > cereal::ControlsState::TurnControllerState::DISABLED && s->scene.controls_state.getEnabled()) {
+    // draw a rectangle with colors indicating the state with the value of the acceleration inside.
+    const int size = 184;
+    const Rect rect = {s->viz_rect.right() - size - bdr_s, int(s->viz_rect.y + (bdr_s * 1.5)), size, size};
+    ui_fill_rect(s->vg, rect, COLOR_BLACK_ALPHA(100), 30.);
+    ui_draw_rect(s->vg, rect, tcs_colors[turnControllerState], 10, 20.);
+    const float turnAcc = s->scene.controls_state.getTurnAcc();
+    char acc_str[16];
+    snprintf(acc_str, sizeof(acc_str), "%.2f", turnAcc);
+    nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    ui_draw_text(s, rect.centerX(), rect.centerY(), acc_str, 48, COLOR_WHITE, "sans-bold");
   } else if (s->scene.controls_state.getEngageable()) {
     // draw steering wheel
     const int bg_wheel_size = 96;

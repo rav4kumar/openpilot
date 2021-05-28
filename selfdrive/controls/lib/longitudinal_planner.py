@@ -239,7 +239,9 @@ class Planner():
     longitudinalPlan.longitudinalPlanSource = self.longitudinalPlanSource
     longitudinalPlan.fcw = self.fcw
 
-    longitudinalPlan.decelForTurnDEPRECATED = bool(self.turn_controller.is_active)
+    longitudinalPlan.turnControllerState = self.turn_controller.state
+    longitudinalPlan.turnAcc = float(self.turn_controller.a_turn)
+
     longitudinalPlan.speedLimitControlState = self.speed_limit_controller.state
     longitudinalPlan.speedLimit = float(self.speed_limit_controller.speed_limit)
     longitudinalPlan.eventsDEPRECATED = self.events.to_msg()
