@@ -41,6 +41,7 @@ def manager_init():
     ("OpenpilotEnabledToggle", "1"),
     ("SpeedLimitControl", "1"),
     ("SpeedLimitPercOffset", "10.0"),
+    ("TurnSpeedControl", "1"),
     ("TurnVisionControl", "1"),
     ("VisionRadarToggle", "0"),
     ("IsDriverViewEnabled", "0"),
