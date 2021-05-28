@@ -544,6 +544,8 @@ class Controls:
     controlsState.turnControllerState = self.sm['longitudinalPlan'].turnControllerState
     controlsState.turnAcc = float(self.sm['longitudinalPlan'].turnAcc)
     controlsState.speedLimitControlState = self.sm['longitudinalPlan'].speedLimitControlState
+    controlsState.turnSpeed = float(self.sm['longitudinalPlan'].turnSpeed)
+    controlsState.turnSpeedControlState = self.sm['longitudinalPlan'].turnSpeedControlState
 
     if self.CP.steerControlType == car.CarParams.SteerControlType.angle:
       controlsState.lateralControlState.angleState = lac_log

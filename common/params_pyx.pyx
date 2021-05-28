@@ -82,6 +82,7 @@ keys = {
   b"Timezone": [TxType.PERSISTENT],
   b"TrainingVersion": [TxType.PERSISTENT],
   b"TurnVisionControl": [TxType.PERSISTENT],
+  b"TurnSpeedControl": [TxType.PERSISTENT],
   b"UpdateAvailable": [TxType.CLEAR_ON_MANAGER_START],
   b"UpdateFailedCount": [TxType.CLEAR_ON_MANAGER_START],
   b"Version": [TxType.PERSISTENT],

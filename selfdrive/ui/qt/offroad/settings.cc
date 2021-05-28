@@ -86,6 +86,12 @@ TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
                                             "Use speed limit signs information from map data and car interface to automatically adapt cruise speed to road limits.",
                                             "../assets/offroad/icon_speed_limit.png"
                                             ));
+  toggles_list->addWidget(horizontal_line());
+  toggles_list->addWidget(new ParamControl("TurnSpeedControl",
+                                            "Enable Map Data Turn Control",
+                                            "Use curvature info from map data to define speed limits to take turns ahead",
+                                            "../assets/offroad/icon_openpilot.png"
+                                            ));
 
   if (Hardware::TICI()) {
     toggles.append(new ParamControl("EnableWideCamera",

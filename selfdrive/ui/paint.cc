@@ -261,6 +261,23 @@ static void ui_draw_vision_speedlimit(UIState *s) {
   }
 }
 
+static void ui_draw_vision_turnspeed(UIState *s) {
+  const float turnSpeed = s->scene.controls_state.getTurnSpeed();
+
+  if (turnSpeed > 0.0 && s->scene.controls_state.getEnabled()) {
+    const int viz_maxspeed_h = 202;
+    const float sign_center_x = s->viz_rect.right() - bdr_s * 4 - speed_sgn_r * 3;
+    const float sign_center_y = s->viz_rect.y + viz_maxspeed_h / 2;
+    const float speed = (s->scene.is_metric ? turnSpeed * 3.6 : turnSpeed * 2.2369363) + 0.5;
+
+    auto turnSpeedControlState = s->scene.controls_state.getTurnSpeedControlState();
+    const bool inactive = turnSpeedControlState == cereal::ControlsState::SpeedLimitControlState::INACTIVE;
+    const int ring_alpha = inactive ? 100 : 255;
+
+    ui_draw_speed_sign(s, sign_center_x, sign_center_y, speed_sgn_r, speed, 0, "sans-bold", ring_alpha, ring_alpha);
+  }
+}
+
 static void ui_draw_vision_speed(UIState *s) {
   const float speed = std::max(0.0, s->scene.car_state.getVEgo() * (s->scene.is_metric ? 3.6 : 2.2369363));
   const std::string speed_str = std::to_string((int)std::nearbyint(speed));
@@ -358,6 +375,7 @@ static void ui_draw_vision_header(UIState *s) {
   ui_draw_vision_maxspeed(s);
   ui_draw_vision_speedlimit(s);
   ui_draw_vision_speed(s);
+  ui_draw_vision_turnspeed(s);
   ui_draw_vision_event(s);
 }
 
