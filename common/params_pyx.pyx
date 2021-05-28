@@ -68,6 +68,7 @@ keys = {
   b"ShowDebugUI": [TxType.PERSISTENT],
   b"SpeedLimitControl": [TxType.PERSISTENT],
   b"SpeedLimitPercOffset": [TxType.PERSISTENT],
+  b"SpeedLimitDelayIncrease": [TxType.PERSISTENT],
   b"SubscriberInfo": [TxType.PERSISTENT],
   b"SshEnabled": [TxType.PERSISTENT],
   b"TermsVersion": [TxType.PERSISTENT],

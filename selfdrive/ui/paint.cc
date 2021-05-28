@@ -30,26 +30,54 @@ static void ui_draw_text(const UIState *s, float x, float y, const char *string,
 
 static void ui_draw_circle(UIState *s, float x, float y, float size, NVGcolor color) {
   nvgBeginPath(s->vg);
-  nvgCircle(s->vg, x, y + (bdr_s * 1.5), size);
+  nvgCircle(s->vg, x, y, size);
   nvgFillColor(s->vg, color);
   nvgFill(s->vg);
 }
 
-static void ui_draw_speed_sign(UIState *s, float x, float y, int size, float speed, float speed_offset, const char *font_name, int ring_alpha, int inner_alpha) {
+static void ui_draw_speed_sign(UIState *s, float x, float y, int size, float speed, const char *subtext, float subtext_size, bool is_map_sourced, const char *font_name, int ring_alpha, int inner_alpha) {
   ui_draw_circle(s, x, y, float(size), COLOR_RED_ALPHA(ring_alpha));
   ui_draw_circle(s, x, y, float(size) * 0.8, COLOR_WHITE_ALPHA(inner_alpha));
 
   char speedlimit_str[16];
   nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
   snprintf(speedlimit_str, sizeof(speedlimit_str), "%d", int(speed));
-  ui_draw_text(s, x, y + (bdr_s * 1.5), speedlimit_str, 120, COLOR_BLACK_ALPHA(inner_alpha), font_name);
+  ui_draw_text(s, x, y, speedlimit_str, 120, COLOR_BLACK_ALPHA(inner_alpha), font_name);
 
-  if (int(speed_offset) == 0) {
-    return;
+  ui_draw_text(s, x, y + 55, subtext, subtext_size, COLOR_BLACK_ALPHA(inner_alpha), font_name);
+
+  if (is_map_sourced && s->scene.show_debug_ui) {
+    const int img_size = 35;
+    const int img_y = int(y - 55);
+    ui_draw_image(s, {int(x - (img_size / 2)), img_y - (img_size / 2), img_size, img_size}, "map_source_icon", inner_alpha);
   }
-  char speedlimitoffset_str[16];
-  snprintf(speedlimitoffset_str, sizeof(speedlimitoffset_str), "%+d", int(speed_offset));
-  ui_draw_text(s, x, y + (bdr_s * 1.5) + 55, speedlimitoffset_str, 50, COLOR_BLACK_ALPHA(inner_alpha), font_name);
+}
+
+static void ui_draw_turn_speed_sign(UIState *s, float x, float y, int size, float speed, const char *subtext, const char *font_name, int alpha) {
+  nvgLineJoin(s->vg, NVG_ROUND);
+  nvgStrokeWidth(s->vg, 15.0);
+  nvgStrokeColor(s->vg, COLOR_RED_ALPHA(alpha));
+
+  nvgBeginPath(s->vg);
+  nvgMoveTo(s->vg, x, y - 0.73205 * size);
+  nvgLineTo(s->vg, x - size, y + size);
+  nvgLineTo(s->vg, x + size, y + size);
+  nvgClosePath(s->vg);
+
+  nvgFillColor(s->vg, COLOR_WHITE_ALPHA(alpha));
+  nvgFill(s->vg);
+  nvgStroke(s->vg);
+
+  const int img_size = 35;
+  const int img_y = int(y - 0.35 * size + 17);
+  ui_draw_image(s, {int(x - (img_size / 2)), img_y - (img_size / 2), img_size, img_size}, "turn_icon", 1.0);
+
+  char speedlimit_str[16];
+  nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+  snprintf(speedlimit_str, sizeof(speedlimit_str), "%d", int(speed));
+  ui_draw_text(s, x, y + bdr_s + 5, speedlimit_str, 100., COLOR_BLACK_ALPHA(alpha), font_name);
+
+  ui_draw_text(s, x, y + bdr_s + 45, subtext, 30., COLOR_BLACK_ALPHA(alpha), font_name);
 }
 
 static void draw_chevron(UIState *s, float x, float y, float sz, NVGcolor fillColor, NVGcolor glowColor) {
@@ -236,9 +264,9 @@ static void ui_draw_vision_speedlimit(UIState *s) {
     const int viz_maxspeed_w = 184;
     const int viz_maxspeed_h = 202;
     const float sign_center_x = s->viz_rect.x + bdr_s * 3 + viz_maxspeed_w + speed_sgn_r;
-    const float sign_center_y = s->viz_rect.y + viz_maxspeed_h / 2;
+    const float sign_center_y = s->viz_rect.y + bdr_s * 1.5 + viz_maxspeed_h / 2;
     const float speed = (s->scene.is_metric ? speedLimit * 3.6 : speedLimit * 2.2369363) + 0.5;
-    const float speed_offset = (s->scene.is_metric ? speedLimitOffset * 3.6 : speedLimitOffset * 2.2369363) + 0.5;
+    const int speed_offset = int((s->scene.is_metric ? speedLimitOffset * 3.6 : speedLimitOffset * 2.2369363) + 0.5);
 
     auto speedLimitControlState = s->scene.controls_state.getSpeedLimitControlState();
     const bool force_active = s->scene.speed_limit_control_enabled && seconds_since_boot() < s->scene.last_speed_limit_sign_tap + 2.0;
@@ -247,7 +275,19 @@ static void ui_draw_vision_speedlimit(UIState *s) {
     const int ring_alpha = inactive ? 100 : 255;
     const int inner_alpha = inactive || temp_inactive ? 100 : 255;
 
-    ui_draw_speed_sign(s, sign_center_x, sign_center_y, speed_sgn_r, speed, speed_offset, "sans-bold", ring_alpha, inner_alpha);
+    const float distToSpeedLimit = s->scene.controls_state.getDistToSpeedLimit();
+    const bool is_map_sourced = s->scene.controls_state.getIsMapSpeedLimit();
+    char subtext[16] = "";
+    float subtext_size = 50.0;
+
+    if (distToSpeedLimit > 0.0) {
+      snprintf(subtext, sizeof(subtext), "AHEAD");
+      subtext_size = 30.0;
+    } else if (speed_offset > 0) {
+      snprintf(subtext, sizeof(subtext), "%+d", speed_offset);
+    }
+
+    ui_draw_speed_sign(s, sign_center_x, sign_center_y, speed_sgn_r, speed, subtext, subtext_size, is_map_sourced, "sans-bold", ring_alpha, inner_alpha);
     s->scene.ui_speed_sgn_x = sign_center_x - speed_sgn_r;
     s->scene.ui_speed_sgn_y = sign_center_y - speed_sgn_r;
   }
@@ -255,18 +295,27 @@ static void ui_draw_vision_speedlimit(UIState *s) {
 
 static void ui_draw_vision_turnspeed(UIState *s) {
   const float turnSpeed = s->scene.controls_state.getTurnSpeed();
+  const float vEgo = s->scene.car_state.getVEgo();
+  const bool show = s->scene.controls_state.getEnabled() && turnSpeed > 0.0 &&
+                    (turnSpeed < vEgo || s->scene.show_debug_ui);
 
-  if (turnSpeed > 0.0 && s->scene.controls_state.getEnabled()) {
+  if (show) {
     const int viz_maxspeed_h = 202;
     const float sign_center_x = s->viz_rect.right() - bdr_s * 4 - speed_sgn_r * 3;
-    const float sign_center_y = s->viz_rect.y + viz_maxspeed_h / 2;
+    const float sign_center_y = s->viz_rect.y + bdr_s * 1.5 + viz_maxspeed_h / 2;
     const float speed = (s->scene.is_metric ? turnSpeed * 3.6 : turnSpeed * 2.2369363) + 0.5;
 
     auto turnSpeedControlState = s->scene.controls_state.getTurnSpeedControlState();
     const bool inactive = turnSpeedControlState == cereal::ControlsState::SpeedLimitControlState::INACTIVE;
-    const int ring_alpha = inactive ? 100 : 255;
+    const int alpha = inactive ? 100 : 255;
 
-    ui_draw_speed_sign(s, sign_center_x, sign_center_y, speed_sgn_r, speed, 0, "sans-bold", ring_alpha, ring_alpha);
+    const float distToTurn = s->scene.controls_state.getDistToTurn();
+    char subtext[16] = "";
+
+    if (distToTurn > 0.0) {
+      snprintf(subtext, sizeof(subtext), "AHEAD");
+    }
+    ui_draw_turn_speed_sign(s, sign_center_x, sign_center_y, speed_sgn_r, speed, subtext, "sans-bold", alpha);
   }
 }
 
@@ -611,6 +660,8 @@ void ui_nvg_init(UIState *s) {
       {"wheel", "../assets/img_chffr_wheel.png"},
       {"hands_on_wheel", "../assets/img_hands_on_wheel.png"},
       {"trafficSign_turn", "../assets/img_trafficSign_turn.png"},
+      {"turn_icon", "../assets/img_turn_icon.png"},
+      {"map_source_icon", "../assets/img_world_icon.png"},
       {"driver_face", "../assets/img_driver_face.png"},
       {"button_settings", "../assets/images/button_settings.png"},
       {"button_home", "../assets/images/button_home.png"},
