@@ -113,6 +113,7 @@ onnx = "*"
 onnxruntime = "*"
 timezonefinder = "*"
 sentry-sdk = "*"
+opspline = {git = "https://github.com/move-fast/opspline.git", editable = true, ref = "master"}
 
 [requires]
 python_version = "3.8"
