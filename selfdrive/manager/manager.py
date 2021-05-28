@@ -35,7 +35,9 @@ def manager_init():
     ("HasAcceptedTerms", "0"),
     ("HandsOnWheelMonitoring", "0"),
     ("LastUpdateTime", datetime.datetime.utcnow().isoformat().encode('utf8')),
+    ("MaxDecelerationForTurns", "-3.0"),
     ("OpenpilotEnabledToggle", "1"),
+    ("TurnVisionControl", "1"),
   ]
 
   if TICI:
