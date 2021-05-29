@@ -66,7 +66,7 @@ QWidget * toggles_panel() {
                                             "Monitor and alert when driver is not keeping the hands on the steering wheel.",
                                             "../assets/offroad/icon_openpilot.png"
                                             ));
-  toggles_list->addWidget(horizontal_line());                                            
+  toggles_list->addWidget(horizontal_line());
   toggles_list->addWidget(new ParamControl("TurnVisionControl",
                                             "Enable vision based turn control",
                                             "Use vision path predictions to estimate the appropiate speed to drive through turns ahead.",
@@ -236,6 +236,31 @@ QWidget * network_panel(QWidget * parent) {
   layout->addWidget(new SshToggle());
   layout->addWidget(horizontal_line());
   layout->addWidget(new SshControl());
+  layout->addWidget(horizontal_line());
+
+  const char* gitpull = "/data/openpilot/scripts/gitpull.sh ''";
+  layout->addWidget(new ButtonControl("Git Pull", "Fetch", "Pressing this button will pull latest changes from github.",
+                                      [=]() { std::system(gitpull); }));
+
+  layout->addWidget(horizontal_line());
+
+  const char* panda_flashing = "/data/openpilot/scripts/panda_flashing.sh ''";
+  layout->addWidget(new ButtonControl("Flash panda", "Flash", "Are you sure you want to flash the panda manully?",
+                                      [=]() {
+                                        if (ConfirmationDialog::confirm("are you sure?")) {
+                                          std::system(panda_flashing);
+                                        }
+                                      }));
+
+  layout->addWidget(horizontal_line());
+
+  const char* run_mixplorer = "/data/openpilot/run_mixplorer.sh ''";
+  layout->addWidget(new ButtonControl("Mixplorer", "Open Files", "This is open file browers.",
+                                      [=]() {
+                                        if (ConfirmationDialog::confirm("are you sure?")) {
+                                          std::system(run_mixplorer);
+                                        }
+                                      }));
 
   layout->addStretch(1);
 
