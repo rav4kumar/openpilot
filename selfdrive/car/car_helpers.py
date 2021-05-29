@@ -1,5 +1,8 @@
 import os
-from common.params import Params
+import json
+import threading
+import requests
+from common.params import Params, put_nonblocking
 from common.basedir import BASEDIR
 from selfdrive.version import comma_remote, tested_branch
 from selfdrive.car.fingerprints import eliminate_incompatible_cars, all_known_cars
@@ -8,10 +11,15 @@ from selfdrive.car.fw_versions import get_fw_versions, match_fw_to_car
 from selfdrive.swaglog import cloudlog
 import cereal.messaging as messaging
 from selfdrive.car import gen_empty_fingerprint
+from common.op_params import opParams
 
 from cereal import car
+from common.travis_checker import travis
+if not travis:
+    import selfdrive.crash as crash
 EventName = car.CarEvent.EventName
 
+use_car_caching = opParams().get('use_car_caching')
 
 def get_startup_event(car_recognized, controller_available, fuzzy_fingerprint):
   if comma_remote and tested_branch:
@@ -84,6 +92,11 @@ def only_toyota_left(candidate_cars):
 
 # **** for use live only ****
 def fingerprint(logcan, sendcan):
+  if not travis:
+    cached_fingerprint = Params().get("CachedFingerprint")
+  else:
+    cached_fingerprint = None
+
   fixed_fingerprint = os.environ.get('FINGERPRINT', "")
   skip_fw_query = os.environ.get('SKIP_FW_QUERY', False)
 
@@ -120,6 +133,16 @@ def fingerprint(logcan, sendcan):
   frame_fingerprint = 10  # 0.1s
   car_fingerprint = None
   done = False
+
+  if cached_fingerprint is not None and use_car_caching:  # if we previously identified a car and fingerprint and user hasn't disabled caching
+    cached_fingerprint = json.loads(cached_fingerprint)
+    if cached_fingerprint[0] is None or len(cached_fingerprint) < 3:
+      Params().put("CachedFingerprint")
+    else:
+      finger[0] = {int(key): value for key, value in cached_fingerprint[2].items()}
+      source = car.CarParams.FingerprintSource.can
+      exact_match = True
+      return (str(cached_fingerprint[0]), finger, vin, car_fw, cached_fingerprint[1], exact_match)
 
   while not done:
     a = get_one_can(logcan)
@@ -168,8 +191,28 @@ def fingerprint(logcan, sendcan):
     source = car.CarParams.FingerprintSource.fixed
 
   cloudlog.event("fingerprinted", car_fingerprint=car_fingerprint, source=source, fuzzy=not exact_match)
+  put_nonblocking("CachedFingerprint", json.dumps([car_fingerprint, source, {int(key): value for key, value in finger[0].items()}]))
   return car_fingerprint, finger, vin, car_fw, source, exact_match
 
+def is_connected_to_internet(timeout=5):
+    try:
+        requests.get("https://sentry.io", timeout=timeout)
+        return True
+    except Exception:
+        return False
+
+def crash_log(candidate):
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("fingerprinted %s" % candidate)
+      break
+
+def crash_log2(fingerprints, fw):
+  while True:
+    if is_connected_to_internet():
+      crash.capture_warning("car doesn't match any fingerprints: %s" % fingerprints)
+      crash.capture_warning("car doesn't match any fw: %s" % fw)
+      break
 
 def get_car(logcan, sendcan):
   candidate, fingerprints, vin, car_fw, source, exact_match = fingerprint(logcan, sendcan)
@@ -177,6 +220,13 @@ def get_car(logcan, sendcan):
   if candidate is None:
     cloudlog.warning("car doesn't match any fingerprints: %r", fingerprints)
     candidate = "mock"
+    if not travis:
+      y = threading.Thread(target=crash_log2, args=(fingerprints,car_fw,))
+      y.start()
+
+  if not travis:
+    x = threading.Thread(target=crash_log, args=(candidate,))
+    x.start()
 
   CarInterface, CarController, CarState = interfaces[candidate]
   car_params = CarInterface.get_params(candidate, fingerprints, car_fw)

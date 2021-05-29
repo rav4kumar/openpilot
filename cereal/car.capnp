@@ -123,6 +123,12 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     neosUpdateRequiredDEPRECATED @88;
     modelLagWarningDEPRECATED @93;
     startupOneplusDEPRECATED @82;
+
+    #toyota
+    longControlDisabled @99;
+    preKeepHandsOnWheel @100;
+    promptKeepHandsOnWheel @101;
+    keepHandsOnWheel @102;
   }
 }
 
@@ -188,6 +194,11 @@ struct CarState {
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
+
+  #Toyota: thanks to @cydia2020
+  engineRPM @37 :Float32; # Engine RPM
+  parkingLightON @38 :Bool; # Parking Light ON
+  headlightON @39 :Bool; # Low Beam ON
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -433,6 +444,8 @@ struct CarParams {
     kiBP @2 :List(Float32);
     kiV @3 :List(Float32);
     kf @4 :Float32;
+    kfV @5 :List(Float32);
+    kfBP @6 :List(Float32);
   }
 
   struct LongitudinalPIDTuning {

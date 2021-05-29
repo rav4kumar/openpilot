@@ -10,6 +10,7 @@ from selfdrive.controls.lib.lane_planner import LanePlanner, TRAJECTORY_SIZE
 from selfdrive.config import Conversions as CV
 import cereal.messaging as messaging
 from cereal import log
+from common.op_params import opParams
 
 LaneChangeState = log.LateralPlan.LaneChangeState
 LaneChangeDirection = log.LateralPlan.LaneChangeDirection
@@ -49,6 +50,8 @@ class LateralPlanner():
     self.use_lanelines = use_lanelines
     self.LP = LanePlanner(wide_camera)
 
+    self.op_params = opParams()
+
     self.last_cloudlog_t = 0
     self.steer_rate_cost = CP.steerRateCost
 
@@ -66,6 +69,8 @@ class LateralPlanner():
     self.plan_yaw = np.zeros((TRAJECTORY_SIZE,))
     self.t_idxs = np.arange(TRAJECTORY_SIZE)
     self.y_pts = np.zeros(TRAJECTORY_SIZE)
+    self.alca_nudge_required = self.op_params.get('alca_nudge_required')
+    self.alca_min_speed = self.op_params.get('alca_min_speed')
 
   def setup_mpc(self):
     self.libmpc = libmpc_py.libmpc
@@ -99,15 +104,17 @@ class LateralPlanner():
 
     # Lane change logic
     one_blinker = sm['carState'].leftBlinker != sm['carState'].rightBlinker
-    below_lane_change_speed = v_ego < LANE_CHANGE_SPEED_MIN
+    below_lane_change_speed = v_ego < self.alca_min_speed * CV.MPH_TO_MS
 
     if (not active) or (self.lane_change_timer > LANE_CHANGE_TIME_MAX):
       self.lane_change_state = LaneChangeState.off
       self.lane_change_direction = LaneChangeDirection.none
     else:
-      torque_applied = sm['carState'].steeringPressed and \
+      torque_applied = (sm['carState'].steeringPressed and
                        ((sm['carState'].steeringTorque > 0 and self.lane_change_direction == LaneChangeDirection.left) or
-                        (sm['carState'].steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))
+                        (sm['carState'].steeringTorque < 0 and self.lane_change_direction == LaneChangeDirection.right))) or \
+                       (not self.alca_nudge_required and self.lane_change_direction == LaneChangeDirection.left) or \
+                       (not self.alca_nudge_required and self.lane_change_direction == LaneChangeDirection.right)
 
       blindspot_detected = ((sm['carState'].leftBlindspot and self.lane_change_direction == LaneChangeDirection.left) or
                             (sm['carState'].rightBlindspot and self.lane_change_direction == LaneChangeDirection.right))
