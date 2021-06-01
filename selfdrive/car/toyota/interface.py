@@ -89,7 +89,7 @@ class CarInterface(CarInterfaceBase):
       ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
       if prius_pid:
         ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.6], [0.03]]
-        ret.lateralTuning.pid.kf = 0.00007818594
+        ret.lateralTuning.pid.kf = 0.000007818594
       else:
         ret.steerActuatorDelay = 0
         ret.steerLimitTimer = 5
