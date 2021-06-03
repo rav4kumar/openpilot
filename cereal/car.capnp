@@ -135,6 +135,11 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     timebombWarn @104;
     timebombBypassing @105;
     timebombBypassed @106;
+    #kumar
+    longControlDisabled @107;
+    preKeepHandsOnWheel @99;
+    promptKeepHandsOnWheel @100;
+    keepHandsOnWheel @101;
   }
 }
 
@@ -200,6 +205,13 @@ struct CarState {
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
+
+  #kumar
+  engineRPM @37 :Float32; # Engine RPM
+  parkingLightON @38 :Bool; # Parking Light ON
+  headlightON @39 :Bool; # Low Beam ON
+  lightSensor @40 :Float32; # Auto Headlight Sensor
+  meterDimmed @41 :Bool; # Combination Metre Dimmer ON
 
   # dp
   lkMode @37 :Bool;

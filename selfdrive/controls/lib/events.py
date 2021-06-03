@@ -241,7 +241,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       _("Be ready to take over at any time"),
       _("Always keep hands on wheel and eyes on road"),
       AlertStatus.normal, AlertSize.mid,
-      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 15.),
+      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 4.),
   },
 
   EventName.startupMaster: {
@@ -249,7 +249,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       _("WARNING: This branch is not tested"),
       _("Always keep hands on wheel and eyes on road"),
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 15.),
+      Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 4.),
   },
 
   EventName.startupNoControl: {
