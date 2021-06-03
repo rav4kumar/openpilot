@@ -214,8 +214,8 @@ struct CarState {
   meterDimmed @41 :Bool; # Combination Metre Dimmer ON
 
   # dp
-  lkMode @37 :Bool;
-  stopSteering @38 :Bool; # timebomb - stopSteering
+  lkMode @42 :Bool;
+  stopSteering @43 :Bool; # timebomb - stopSteering
 
   struct WheelSpeeds {
     # optional wheel speeds
