@@ -137,9 +137,9 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     timebombBypassed @106;
     #kumar
     longControlDisabled @107;
-    preKeepHandsOnWheel @99;
-    promptKeepHandsOnWheel @100;
-    keepHandsOnWheel @101;
+    preKeepHandsOnWheel @108;
+    promptKeepHandsOnWheel @109;
+    keepHandsOnWheel @110;
   }
 }
 
