@@ -57,7 +57,7 @@ class Controls:
 
     self.sm = sm
     if self.sm is None:
-      ignore = ['driverCameraState', 'managerState'] if (self.q or SIMULATION) else None
+      ignore = ['driverCameraState', 'managerState'] if (self.dp_jetson or SIMULATION) else None
       self.sm = messaging.SubMaster(['deviceState', 'pandaState', 'modelV2', 'liveCalibration',
                                      'driverMonitoringState', 'longitudinalPlan', 'lateralPlan', 'liveLocationKalman',
                                      'roadCameraState', 'driverCameraState', 'managerState', 'liveParameters', 'radarState', 'dragonConf'],
