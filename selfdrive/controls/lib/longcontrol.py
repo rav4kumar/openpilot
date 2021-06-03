@@ -111,10 +111,10 @@ class LongControl():
     # Intention is to stop, switch to a different brake control until we stop
     elif self.long_control_state == LongCtrlState.stopping:
       # Keep applying brakes until the car is stopped
-      if not CS.standstill or output_gb > -BRAKE_STOPPING_TARGET:
       factor = 1
       if hasLead:
         factor = interp(dRel,[2.0,3.0,4.0,5.0,6.0,7.0,8.0], [2.0,1.45,1.0,0.7,0.45,0.2,0.0])
+      if not CS.standstill or output_gb > -BRAKE_STOPPING_TARGET:
         output_gb -= CP.stoppingBrakeRate / RATE * factor
       output_gb = clip(output_gb, -brake_max, gas_max)
 
