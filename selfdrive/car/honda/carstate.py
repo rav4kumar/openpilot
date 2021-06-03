@@ -70,7 +70,7 @@ def get_can_signals(CP):
     checks += [
       ("SCM_FEEDBACK", 10),
       ("SCM_BUTTONS", 25),
-    ]q
+    ]
 
   if CP.carFingerprint in (CAR.CRV_HYBRID, CAR.CIVIC_BOSCH_DIESEL, CAR.ACURA_RDX_3G):
     checks += [
