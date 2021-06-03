@@ -50,15 +50,22 @@ void Sidebar::mousePressEvent(QMouseEvent *event) {
 
 void Sidebar::update(const UIState &s) {
   if (s.sm->frame % (6*UI_FREQ) == 0) {
-    connect_str = "OFFLINE";
-    connect_status = warning_color;
-    auto last_ping = params.get<float>("LastAthenaPingTime");
-    if (last_ping) {
-      bool online = nanos_since_boot() - *last_ping < 70e9;
-      connect_str = online ? "ONLINE" : "ERROR";
-      connect_status = online ? good_color : danger_color;
-    }
+    ip_str = s.scene.dpIpAddr.c_str();
     repaint();
+    if (!s.scene.dpAthenad) {
+      connect_str = "N/A";
+      connect_status = good_color;
+    } else {
+      connect_str = "OFFLINE";
+      connect_status = warning_color;
+      auto last_ping = params.get<float>("LastAthenaPingTime");
+      if (last_ping) {
+        bool online = nanos_since_boot() - *last_ping < 70e9;
+        connect_str = online ? "ONLINE" : "ERROR";
+        connect_status = online ? good_color : danger_color;
+      }
+      repaint();
+    }
   }
 
   net_type = s.scene.deviceState.getNetworkType();
@@ -106,8 +113,16 @@ void Sidebar::paintEvent(QPaintEvent *event) {
   const QRect r = QRect(50, 247, 100, 50);
   p.drawText(r, Qt::AlignCenter, network_type[net_type]);
 
+  // IP
+  configFont(p, "Open Sans", 30, "Bold");
+  p.setPen(QColor(0xff, 0xff, 0xff));
+  const QRect ip = QRect(40, 260, 230, 100);
+  p.drawText(ip, Qt::AlignCenter, ip_str);
+
   // metrics
   drawMetric(p, "TEMP", QString("%1°C").arg(temp_val), temp_status, 338);
   drawMetric(p, panda_str, "", panda_status, 518);
-  drawMetric(p, "CONNECT\n" + connect_str, "", connect_status, 676);
+  if (connect_str != "N/A") {
+    drawMetric(p, "CONNECT\n" + connect_str, "", connect_status, 676);
+  }
 }

@@ -77,9 +77,11 @@ void uno_set_usb_power_mode(uint8_t mode) {
   bool valid = false;
   switch (mode) {
     case USB_POWER_CLIENT:
+      uno_set_phone_power(false);
       valid = true;
       break;
     case USB_POWER_CDP:
+      uno_set_phone_power(true);
       uno_bootkick();
       valid = true;
       break;

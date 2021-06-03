@@ -30,6 +30,7 @@
 #define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
 #define COLOR_YELLOW nvgRGBA(218, 202, 37, 255)
 #define COLOR_RED nvgRGBA(201, 34, 49, 255)
+#define COLOR_RED_ALPHA(x) nvgRGBA(201, 34, 49, x)
 
 typedef struct Rect {
   int x, y, w, h;
@@ -47,6 +48,23 @@ const int header_h = 420;
 const int footer_h = 280;
 
 const int UI_FREQ = 20;   // Hz
+
+// dp - dynamic follow btn
+const int df_btn_h = 180;
+const int df_btn_w = 180;
+const int df_btn_x = 1650;
+const int df_btn_y = 750;
+// dp - accel profile btn
+const int ap_btn_h = 180;
+const int ap_btn_w = 180;
+const int ap_btn_x = 1450;
+const int ap_btn_y = 750;
+const int info_bar_h = 80;
+// dp - rec btn
+const int rec_btn_h = 130;
+const int rec_btn_w = 180;
+const int rec_btn_x = 870;
+const int rec_btn_y = 800;
 
 typedef enum UIStatus {
   STATUS_DISENGAGED,
@@ -87,6 +105,7 @@ typedef struct UIScene {
   cereal::ControlsState::Reader controls_state;
   cereal::DriverState::Reader driver_state;
   cereal::DriverMonitoringState::Reader dmonitoring_state;
+  cereal::DragonConf::Reader dragon_conf;
 
   // gps
   int satelliteCount;
@@ -105,6 +124,47 @@ typedef struct UIScene {
   float light_sensor, accel_sensor, gyro_sensor;
   bool started, ignition, is_metric, longitudinal_control, end_to_end;
   uint64_t started_frame;
+
+  // dp
+  bool dpDashcam;
+  bool dpDashcamUi;
+  bool dpUiScreenOffReversing;
+  bool dpUiSpeed;
+  bool dpUiEvent;
+  bool dpUiMaxSpeed;
+  bool dpUiFace;
+  bool dpUiLane;
+  bool dpUiLead;
+  bool dpUiDev;
+  bool dpUiDevMini;
+  bool dpUiBlinker;
+  int dpUiBrightness;
+  int dpUiVolumeBoost;
+  std::string dpIpAddr;
+  // for minimal UI
+  float angleSteersDes;
+  float angleSteers;
+  // for black screen on reversing
+  bool isReversing;
+  // for blinker, from kegman
+  bool leftBlinker;
+  bool rightBlinker;
+  bool brakeLights;
+  int blinker_blinking_rate;
+  // for blind spot
+  bool leftBlindspot;
+  bool rightBlindspot;
+  // for updating icon
+//  int dp_alert_rate;
+//  int dp_alert_type;
+  std::string dpLocale;
+  bool dpIsUpdating;
+  bool dpAthenad;
+  bool dpFollowingProfileCtrl;
+  int dpFollowingProfile;
+  bool dpAccelProfileCtrl;
+  int dpAccelProfile;
+  bool dpDebug;
 } UIScene;
 
 typedef struct UIState {

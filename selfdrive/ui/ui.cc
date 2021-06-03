@@ -133,9 +133,22 @@ static void update_state(UIState *s) {
   UIScene &scene = s->scene;
   if (scene.started && sm.updated("controlsState")) {
     scene.controls_state = sm["controlsState"].getControlsState();
+//    // dp - steer data
+    scene.angleSteers = scene.controls_state.getAngleSteers();
+    scene.angleSteersDes = scene.controls_state.getSteeringAngleDesiredDeg();
   }
   if (sm.updated("carState")) {
     scene.car_state = sm["carState"].getCarState();
+    // dp - blinker / reversing
+    if(scene.leftBlinker != scene.car_state.getLeftBlinker() || scene.rightBlinker != scene.car_state.getRightBlinker()) {
+      scene.blinker_blinking_rate = 100;
+    }
+    scene.leftBlinker = scene.car_state.getLeftBlinker();
+    scene.rightBlinker = scene.car_state.getRightBlinker();
+    scene.brakeLights = scene.car_state.getBrakeLights();
+    scene.isReversing = scene.car_state.getGearShifter() == cereal::CarState::GearShifter::REVERSE;
+    scene.leftBlindspot = scene.car_state.getLeftBlindspot();
+    scene.rightBlindspot = scene.car_state.getRightBlindspot();
   }
   if (sm.updated("radarState")) {
     std::optional<cereal::ModelDataV2::XYZTData::Reader> line;
@@ -210,6 +223,30 @@ static void update_state(UIState *s) {
       }
     }
   }
+  if (sm.updated("dragonConf")) {
+    auto dragonConf = sm["dragonConf"].getDragonConf();
+    scene.dpUiScreenOffReversing = dragonConf.getDpUiScreenOffReversing();
+    scene.dpUiSpeed = dragonConf.getDpUiSpeed();
+    scene.dpUiEvent = dragonConf.getDpUiEvent();
+    scene.dpUiMaxSpeed = dragonConf.getDpUiMaxSpeed();
+    scene.dpUiFace = dragonConf.getDpUiFace();
+    scene.dpUiLane = dragonConf.getDpUiLane();
+    scene.dpUiLead = dragonConf.getDpUiLead();
+    scene.dpUiDev = dragonConf.getDpUiDev();
+    scene.dpUiDevMini = dragonConf.getDpUiDevMini();
+    scene.dpUiBlinker = dragonConf.getDpUiBlinker();
+//    scene.dpUiBrightness = data.getDpUiBrightness();
+//    scene.dpUiVolumeBoost = data.getDpUiVolumeBoost();
+    scene.dpFollowingProfileCtrl = dragonConf.getDpFollowingProfileCtrl();
+    scene.dpFollowingProfile = dragonConf.getDpFollowingProfile();
+    scene.dpAccelProfileCtrl = dragonConf.getDpAccelProfileCtrl();
+    scene.dpAccelProfile = dragonConf.getDpAccelProfile();
+    scene.dpDebug = dragonConf.getDpDebug();
+
+    scene.dpIpAddr = dragonConf.getDpIpAddr();
+//    scene.dpLocale = data.getDpLocale();
+    scene.dpAthenad = dragonConf.getDpAthenad();
+  }
   if (Hardware::TICI() && sm.updated("roadCameraState")) {
     auto camera_state = sm["roadCameraState"].getRoadCameraState();
     float gain = camera_state.getGainFrac() * (camera_state.getGlobalGain() > 100 ? 2.5 : 1.0) / 10.0;
@@ -277,6 +314,7 @@ QUIState::QUIState(QObject *parent) : QObject(parent) {
   ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "liveLocationKalman",
     "pandaState", "carParams", "driverState", "driverMonitoringState", "sensorEvents", "carState", "ubloxGnss",
+    "dragonConf",
 #ifdef QCOM2
     "roadCameraState",
 #endif
@@ -373,6 +411,7 @@ void Device::updateWakefulness(const UIState &s) {
     gyro_prev = s.scene.gyro_sensor;
     accel_prev = (accel_prev * (accel_samples - 1) + s.scene.accel_sensor) / accel_samples;
   }
-
+  if (s.scene.dpUiScreenOffReversing && s.scene.isReversing)
+    should_wake = false;
   setAwake(awake_timeout, should_wake);
 }

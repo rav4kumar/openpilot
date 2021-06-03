@@ -49,7 +49,7 @@ void OnroadAlerts::updateState(const UIState &s) {
       const cereal::ControlsState::Reader &cs = sm["controlsState"].getControlsState();
       updateAlert(QString::fromStdString(cs.getAlertText1()), QString::fromStdString(cs.getAlertText2()),
                   cs.getAlertBlinkingRate(), cs.getAlertType(), cs.getAlertSize(), cs.getAlertSound());
-    } else if ((sm.frame - s.scene.started_frame) > 10 * UI_FREQ) {
+    } else if (!s.scene.dpDebug && (sm.frame - s.scene.started_frame) > 10 * UI_FREQ) {
       // Handle controls timeout
       if (sm.rcv_frame("controlsState") < s.scene.started_frame) {
         // car is started, but controlsState hasn't been seen at all

@@ -74,7 +74,7 @@ cdef class CANParser:
         c = (self.msg_name_to_address[name], c[1])
         checks[i] = c
 
-    if enforce_checks:
+    if False: #enforce_checks:
       checked_addrs = {c[0] for c in checks}
       signal_addrs = {s[1] for s in signals}
       unchecked = signal_addrs - checked_addrs

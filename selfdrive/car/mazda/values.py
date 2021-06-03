@@ -79,3 +79,7 @@ DBC = {
 }
 
 GEN1 = [ CAR.CX5, CAR.CX9, CAR.Mazda3 ]
+
+ECU_FINGERPRINT = {
+  Ecu.fwdCamera: [579],   # steer torque cmd
+}

@@ -18,6 +18,7 @@ import numpy as np
 from numpy.linalg import solve
 
 from cereal import car
+from common.params import Params
 
 class VehicleModel:
   def __init__(self, CP: car.CarParams):
@@ -33,6 +34,10 @@ class VehicleModel:
     self.aR = CP.wheelbase - CP.centerToFront
     self.chi = CP.steerRatioRear
 
+    # dp
+    self.sR_orig = CP.steerRatio
+    self.dp_sr_learner = Params().get('dp_sr_learner') == b'1'
+
     self.cF_orig = CP.tireStiffnessFront
     self.cR_orig = CP.tireStiffnessRear
     self.update_params(1.0, CP.steerRatio)
@@ -41,7 +46,7 @@ class VehicleModel:
     """Update the vehicle model with a new stiffness factor and steer ratio"""
     self.cF = stiffness_factor * self.cF_orig
     self.cR = stiffness_factor * self.cR_orig
-    self.sR = steer_ratio
+    self.sR = steer_ratio if self.dp_sr_learner else self.sR_orig
 
   def steady_state_sol(self, sa: float, u: float) -> np.ndarray:
     """Returns the steady state solution.
