@@ -198,7 +198,7 @@ DevicePanel::DevicePanel(QWidget* parent) : QWidget(parent) {
       padding: 0;
       height: 120px;
       border-radius: 15px;
-      background-color: #393939;
+      background-color: #000000;
     }
   )");
 }
@@ -253,6 +253,7 @@ QWidget * network_panel(QWidget * parent) {
   layout->addWidget(new SshToggle());
   layout->addWidget(horizontal_line());
   layout->addWidget(new SshControl());
+  layout->addWidget(horizontal_line());
 
   const char* gitpull = "/data/openpilot/scripts/gitpull.sh ''";
   layout->addWidget(new ButtonControl("Git Pull", "Fetch", "Pressing this button will pull latest changes from github.",
@@ -290,7 +291,7 @@ void SettingsWindow::showEvent(QShowEvent *event) {
   panel_widget = new QStackedWidget();
   panel_widget->setStyleSheet(R"(
     border-radius: 30px;
-    background-color: #292929;
+    background-color: #000000;
   )");
 
   // close button
@@ -300,7 +301,7 @@ void SettingsWindow::showEvent(QShowEvent *event) {
     font-weight: bold;
     border 1px grey solid;
     border-radius: 100px;
-    background-color: #292929;
+    background-color: #000000;
   )");
   close_btn->setFixedSize(100, 100);
   sidebar_layout->addSpacing(10);
