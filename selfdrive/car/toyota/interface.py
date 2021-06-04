@@ -97,7 +97,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kiBP = [0, 8, 23.6, 23.7, 40]
       ret.lateralTuning.pid.kpV = [0.6, 0.38, 0.38, 0.6, 0.6]
       ret.lateralTuning.pid.kiV = [0.3, 0.45, 0.45, 0.03, 0.03]
-      ret.lateralTuning.pid.kfV = 0.000153263811757641
+      ret.lateralTuning.pid.kf = 0.000153263811757641
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
