@@ -171,7 +171,7 @@ class Planner():
         self.v_acc = self.v_cruise
         self.a_acc = self.a_cruise
       # dp - slow on curve from 0.7.6.1
-      elif self.dp_slow_on_curve and slowest == 'model':
+      elif self.dp_slow_on_curve and slowest == 'modelV2':
         self.v_acc = self.v_model
         self.a_acc = self.a_model
 

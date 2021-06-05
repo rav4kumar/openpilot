@@ -540,7 +540,11 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
   },
 
   EventName.steerTempUnavailable: {
-    ET.SOFT_DISABLE: SoftDisableAlert(_("Steering Temporarily Unavailable")),
+    ET.WARNING: Alert(
+      _("TAKE CONTROL"),
+      _("Steering Temporarily Unavailable"),
+      AlertStatus.userPrompt, AlertSize.mid,
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., 1.),
     ET.NO_ENTRY: NoEntryAlert(_("Steering Temporarily Unavailable"),
                               duration_hud_alert=0.),
   },
@@ -592,7 +596,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
   },
 
   EventName.wrongGear: {
-    ET.SOFT_DISABLE: SoftDisableAlert(_("Gear not D")),
+    #ET.SOFT_DISABLE: SoftDisableAlert(_("Gear not D")),
     ET.NO_ENTRY: NoEntryAlert(_("Gear not D")),
   },
 
@@ -712,7 +716,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       "",
       AlertStatus.normal, AlertSize.full,
       Priority.LOWEST, VisualAlert.none, AudibleAlert.none, 0., 0., .2, creation_delay=0.5),
-    ET.IMMEDIATE_DISABLE: ImmediateDisableAlert(_("Reverse Gear")),
+    #ET.IMMEDIATE_DISABLE: ImmediateDisableAlert(_("Reverse Gear")),
     ET.NO_ENTRY: NoEntryAlert(_("Reverse Gear")),
   },
 

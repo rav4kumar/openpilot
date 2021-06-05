@@ -48,13 +48,13 @@ confs = [
   {'name': 'dp_auto_lc_delay', 'default': 0, 'type': 'Float32', 'min': 0, 'max': 10., 'depends': [{'name': 'dp_auto_lc', 'vals': [True]}], 'conf_type': ['param', 'struct']},
   # long ctrl
   {'name': 'dp_slow_on_curve', 'default': False, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
-  {'name': 'dp_allow_gas', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
+  {'name': 'dp_allow_gas', 'default': False, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   # {'name': 'dp_max_ctrl_speed', 'default': 92., 'type': 'Float32', 'conf_type': ['param', 'struct']},
   # {'name': 'dp_lead_car_alert', 'default': False, 'type': 'Bool', 'conf_type': ['param', 'struct']},
   # {'name': 'dp_lead_car_away_alert', 'default': True, 'type': 'Bool', 'conf_type': ['param']},
 
   {'name': 'dp_following_profile_ctrl', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
-  {'name': 'dp_following_profile', 'default': 1, 'type': 'UInt8', 'min': 0, 'max': 4, 'depends': [{'name': 'dp_atl', 'vals': [False]}, {'name': 'dp_accel_profile_ctrl', 'vals': [True]}], 'conf_type': ['param', 'struct']},
+  {'name': 'dp_following_profile', 'default': 3, 'type': 'UInt8', 'min': 0, 'max': 4, 'depends': [{'name': 'dp_atl', 'vals': [False]}, {'name': 'dp_accel_profile_ctrl', 'vals': [True]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_accel_profile_ctrl', 'default': True, 'type': 'Bool', 'depends': [{'name': 'dp_atl', 'vals': [False]}], 'conf_type': ['param', 'struct']},
   {'name': 'dp_accel_profile', 'default': 1, 'type': 'UInt8', 'min': 0, 'max': 3, 'depends': [{'name': 'dp_atl', 'vals': [False]}, {'name': 'dp_accel_profile_ctrl', 'vals': [True]}], 'conf_type': ['param', 'struct']},
   # safety
