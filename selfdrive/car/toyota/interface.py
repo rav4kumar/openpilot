@@ -91,13 +91,9 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 13.4   # True steerRation from older prius
       tire_stiffness_factor = 0.6371   # hand-tune
       ret.mass = 3115. * CV.LB_TO_KG + STD_CARGO_KG
-      #ret.lateralTuning.pid.kpBP = [8, 23, 23.01, 33]
-      #ret.lateralTuning.pid.kiBP = [8, 23, 23.01, 33]
-      ret.lateralTuning.pid.kpBP = [0, 8, 23.6, 23.7, 40]
-      ret.lateralTuning.pid.kiBP = [0, 8, 23.6, 23.7, 40]
-      ret.lateralTuning.pid.kpV = [0.6, 0.38, 0.38, 0.6, 0.6]
-      ret.lateralTuning.pid.kiV = [0.3, 0.45, 0.45, 0.03, 0.03]
-      ret.lateralTuning.pid.kf = 0.000153263811757641
+      ret.lateralTuning.pid.kiBP, ret.lateralTuning.pid.kpBP = [[0., 30.], [0., 30.]]
+      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.3, 0.6], [0.05, 0.03]]
+      ret.lateralTuning.pid.kf = 0.00007818594
 
     elif candidate in [CAR.RAV4, CAR.RAV4H]:
       stop_and_go = True if (candidate in CAR.RAV4H) else False
