@@ -18,6 +18,7 @@
 #include "selfdrive/ui/qt/widgets/ssh_keys.h"
 #include "selfdrive/ui/qt/widgets/toggle.h"
 #include "selfdrive/ui/ui.h"
+#include "settings_dp.h"
 
 TogglesPanel::TogglesPanel(QWidget *parent) : QWidget(parent) {
   QVBoxLayout *toggles_list = new QVBoxLayout();
@@ -197,7 +198,7 @@ DevicePanel::DevicePanel(QWidget* parent) : QWidget(parent) {
       padding: 0;
       height: 120px;
       border-radius: 15px;
-      background-color: #393939;
+      background-color: #000000;
     }
   )");
 }
@@ -276,20 +277,20 @@ void SettingsWindow::showEvent(QShowEvent *event) {
   panel_widget = new QStackedWidget();
   panel_widget->setStyleSheet(R"(
     border-radius: 30px;
-    background-color: #292929;
+    background-color: #000000;
   )");
 
   // close button
   QPushButton *close_btn = new QPushButton("X");
   close_btn->setStyleSheet(R"(
-    font-size: 90px;
+    font-size: 72px;
     font-weight: bold;
     border 1px grey solid;
     border-radius: 100px;
-    background-color: #292929;
+    background-color: #000000;
   )");
-  close_btn->setFixedSize(200, 200);
-  sidebar_layout->addSpacing(45);
+  close_btn->setFixedSize(100, 100);
+  sidebar_layout->addSpacing(10);
   sidebar_layout->addWidget(close_btn, 0, Qt::AlignCenter);
   QObject::connect(close_btn, &QPushButton::released, this, &SettingsWindow::closeSettings);
 
@@ -302,9 +303,14 @@ void SettingsWindow::showEvent(QShowEvent *event) {
     {"Network", network_panel(this)},
     {"Toggles", new TogglesPanel(this)},
     {"Developer", new DeveloperPanel()},
+    {"DP - General", dp_general(this)},
+    {"DP - Controls", dp_controls(this)},
+    {"DP - UI", dp_ui(this)},
+//    {"DP - APPs", dp_apps()},
+    {"DP - Cars", dp_cars(this)},
   };
 
-  sidebar_layout->addSpacing(45);
+  sidebar_layout->addSpacing(10);
   nav_btns = new QButtonGroup();
   for (auto &[name, panel] : panels) {
     QPushButton *btn = new QPushButton(name);
@@ -315,10 +321,10 @@ void SettingsWindow::showEvent(QShowEvent *event) {
         color: grey;
         border: none;
         background: none;
-        font-size: 65px;
-        font-weight: 500;
-        padding-top: 35px;
-        padding-bottom: 35px;
+        font-size: 52px;
+        font-weight: 350;
+        padding-top: 5px;
+        padding-bottom: 5px;
       }
       QPushButton:checked {
         color: white;
@@ -326,9 +332,9 @@ void SettingsWindow::showEvent(QShowEvent *event) {
     )");
 
     nav_btns->addButton(btn);
-    sidebar_layout->addWidget(btn, 0, Qt::AlignRight);
+    sidebar_layout->addWidget(btn, 0, Qt::AlignLeft);
 
-    panel->setContentsMargins(50, 25, 50, 25);
+    panel->setContentsMargins(25, 12, 25, 12);
 
     ScrollView *panel_frame = new ScrollView(panel, this);
     panel_widget->addWidget(panel_frame);

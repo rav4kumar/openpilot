@@ -21,6 +21,8 @@ from selfdrive.swaglog import cloudlog, add_file_handler
 from selfdrive.version import dirty, get_git_commit, version, origin, branch, commit, \
                               terms_version, training_version, comma_remote, \
                               get_git_branch, get_git_remote
+from common.dp_conf import init_params_vals
+
 
 def manager_init():
 
@@ -47,6 +49,9 @@ def manager_init():
   for k, v in default_params:
     if params.get(k) is None:
       params.put(k, v)
+
+  # dp init params
+  init_params_vals(params)
 
   # is this dashcam?
   if os.getenv("PASSIVE") is not None:
@@ -111,12 +116,24 @@ def manager_thread():
   cloudlog.info("manager start")
   cloudlog.info({"environ": os.environ})
 
-  # save boot log
-  subprocess.call("./bootlog", cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
-
   params = Params()
 
+  dp_logger = params.get('dp_logger') == b'1'
+  dp_athenad = params.get('dp_athenad') == b'1'
+  dp_uploader = params.get('dp_uploader') == b'1'
+  # save boot log
+  if dp_logger:
+    subprocess.call("./bootlog", cwd=os.path.join(BASEDIR, "selfdrive/loggerd"))
+
   ignore = []
+  if not dp_logger:
+    ignore += ['logcatd', 'loggerd', 'proclogd', 'logmessaged', 'tombstoned']
+  if not dp_athenad:
+    ignore += ['manage_athenad']
+  if not dp_uploader:
+    ignore += ['uploader']
+  if not dp_athenad and not dp_uploader:
+    ignore += ['deleter']
   if params.get("DongleId") == UNREGISTERED_DONGLE_ID:
     ignore += ["manage_athenad", "uploader"]
   if os.getenv("NOBOARD") is not None:

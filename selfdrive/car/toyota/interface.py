@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
 from cereal import car
 from selfdrive.config import Conversions as CV
-from selfdrive.car.toyota.values import Ecu, CAR, TSS2_CAR, NO_DSU_CAR, CarControllerParams
-from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint
+from selfdrive.car.toyota.values import Ecu, CAR, TSS2_CAR, NO_DSU_CAR, CarControllerParams, FINGERPRINTS, ECU_FINGERPRINT
+from selfdrive.car import STD_CARGO_KG, scale_rot_inertia, scale_tire_stiffness, gen_empty_fingerprint, is_ecu_disconnected
 from selfdrive.swaglog import cloudlog
 from selfdrive.car.interfaces import CarInterfaceBase
+from common.dp_common import common_interface_atl, common_interface_get_params_lqr
+from common.params import Params
 
 EventName = car.CarEvent.EventName
 
 
 class CarInterface(CarInterfaceBase):
+  def __init__(self, CP, CarController, CarState):
+    super().__init__(CP, CarController, CarState)
+
+    # dp
+    self.dp_cruise_speed = 0.
+
   @staticmethod
   def compute_gb(accel, speed):
     return float(accel) / CarControllerParams.ACCEL_SCALE
 
   @staticmethod
-  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=[]):  # pylint: disable=dangerous-default-value
-    ret = CarInterfaceBase.get_std_params(candidate, fingerprint)
+  def get_params(candidate, fingerprint=gen_empty_fingerprint(), car_fw=[], has_relay=False):  # pylint: disable=dangerous-default-value
+    ret = CarInterfaceBase.get_std_params(candidate, fingerprint, has_relay)
 
     ret.carName = "toyota"
     ret.safetyModel = car.CarParams.SafetyModel.toyota
@@ -74,6 +82,9 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 16.88   # 14.5 is spec end-to-end
       tire_stiffness_factor = 0.5533
       ret.mass = 3650. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
+      if ret.enableGasInterceptor:
+        ret.longitudinalTuning.kpV = [0.4, 0.36, 0.325]  # arne's tune.
+        ret.longitudinalTuning.kiV = [0.195, 0.10]
       ret.lateralTuning.init('lqr')
 
       ret.lateralTuning.lqr.scale = 1500.0
@@ -320,7 +331,7 @@ class CarInterface(CarInterfaceBase):
     ret.tireStiffnessFront, ret.tireStiffnessRear = scale_tire_stiffness(ret.mass, ret.wheelbase, ret.centerToFront,
                                                                          tire_stiffness_factor=tire_stiffness_factor)
 
-    ret.enableCamera = True
+    ret.enableCamera = is_ecu_disconnected(fingerprint[0], FINGERPRINTS, ECU_FINGERPRINT, candidate, Ecu.fwdCamera) or has_relay
     ret.enableBsm = 0x3F6 in fingerprint[0] and candidate in TSS2_CAR
     # Detect smartDSU, which intercepts ACC_CMD from the DSU allowing openpilot to send it
     smartDsu = 0x2FF in fingerprint[0]
@@ -347,15 +358,36 @@ class CarInterface(CarInterfaceBase):
       ret.longitudinalTuning.kpV = [1.2, 0.8, 0.5]
       ret.longitudinalTuning.kiV = [0.18, 0.12]
 
+    # dp
+    ret = common_interface_get_params_lqr(ret)
+    if candidate == CAR.PRIUS and Params().get('dp_toyota_zss') == b'1':
+      ret.mass = 3370. * CV.LB_TO_KG + STD_CARGO_KG
+      if Params().get('dp_lqr') == b'0':
+        ret.lateralTuning.indi.timeConstant = 0.1
+      ret.steerRateCost = 0.5
+
     return ret
 
   # returns a car.CarState
-  def update(self, c, can_strings):
+  def update(self, c, can_strings, dragonconf):
     # ******************* do can recv *******************
     self.cp.update_strings(can_strings)
     self.cp_cam.update_strings(can_strings)
 
     ret = self.CS.update(self.cp, self.cp_cam)
+    # dp
+    self.dragonconf = dragonconf
+    ret.cruiseState.enabled = common_interface_atl(ret, dragonconf.dpAtl)
+    # if ret.cruiseState.enabled and dragonconf.dpToyotaLowestCruiseOverride and ret.cruiseState.speed < dragonconf.dpToyotaLowestCruiseOverrideAt * CV.KPH_TO_MS:
+    #   if dragonconf.dpToyotaLowestCruiseOverrideVego:
+    #     if self.dp_cruise_speed == 0.:
+    #       ret.cruiseState.speed = self.dp_cruise_speed = max( dragonconf.dpToyotaLowestCruiseOverrideSpeed * CV.KPH_TO_MS,ret.vEgo)
+    #     else:
+    #       ret.cruiseState.speed = self.dp_cruise_speed
+    #   else:
+    #     ret.cruiseState.speed = dragonconf.dpToyotaLowestCruiseOverrideSpeed * CV.KPH_TO_MS
+    # else:
+    #   self.dp_cruise_speed = 0.
 
     ret.canValid = self.cp.can_valid and self.cp_cam.can_valid
     ret.steeringRateLimited = self.CC.steer_rate_limited if self.CC is not None else False
@@ -387,7 +419,7 @@ class CarInterface(CarInterfaceBase):
                                c.actuators, c.cruiseControl.cancel,
                                c.hudControl.visualAlert, c.hudControl.leftLaneVisible,
                                c.hudControl.rightLaneVisible, c.hudControl.leadVisible,
-                               c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart)
+                               c.hudControl.leftLaneDepart, c.hudControl.rightLaneDepart, self.dragonconf)
 
     self.frame += 1
     return can_sends

@@ -9,6 +9,11 @@
 #include "selfdrive/common/params.h"
 #include "selfdrive/ui/qt/widgets/toggle.h"
 
+#include <chrono>
+#include <string>
+namespace sc = std::chrono;
+using std::to_string;
+
 QFrame *horizontal_line(QWidget *parent = nullptr);
 
 class AbstractControl : public QFrame {
@@ -122,6 +127,12 @@ public:
     }
     QObject::connect(this, &ToggleControl::toggleFlipped, [=](bool state) {
       params.putBool(param.toStdString().c_str(), state);
+
+      // touch dp_last_modified
+      auto time = sc::system_clock::now(); // get the current time
+      auto since_epoch = time.time_since_epoch(); // get the duration since epoch
+      auto millis = sc::duration_cast<sc::milliseconds>(since_epoch);
+      params.put("dp_last_modified", std::to_string(millis.count()));
     });
   }
 

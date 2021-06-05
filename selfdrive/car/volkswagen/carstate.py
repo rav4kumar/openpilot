@@ -249,6 +249,7 @@ class CarState(CarStateBase):
                   ("BCM1_Rueckfahrlicht_Schalter", "Gateway_72", 0)]  # Reverse light from BCM
       checks += [("Motor_14", 10)]  # From J623 Engine control module
 
+    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.pt)
 
   @staticmethod
@@ -267,5 +268,5 @@ class CarState(CarStateBase):
       # sig_address, frequency
       ("LDW_02", 10)        # From R242 Driver assistance camera
     ]
-
+    checks = []
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, CANBUS.cam)

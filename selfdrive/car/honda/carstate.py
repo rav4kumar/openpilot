@@ -206,6 +206,13 @@ class CarState(CarStateBase):
     self.v_cruise_pcm_prev = 0
     self.cruise_mode = 0
 
+    #dp
+    self.lkMode = True
+    self.hud_lead = 0
+    self.has_hud_lead = 0
+    self.has_lead_distance = 0
+    self.lead_distance = 0.
+
   def update(self, cp, cp_cam, cp_body):
     ret = car.CarState.new_message()
 
@@ -222,6 +229,14 @@ class CarState(CarStateBase):
     if self.CP.carFingerprint in (CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH, CAR.CIVIC_BOSCH, CAR.CIVIC_BOSCH_DIESEL, CAR.CRV_HYBRID, CAR.INSIGHT, CAR.ACURA_RDX_3G):
       ret.standstill = cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] < 0.1
       ret.doorOpen = bool(cp.vl["SCM_FEEDBACK"]['DRIVERS_DOOR_OPEN'])
+      if self.has_lead_distance == 0:
+        try:
+          self.lead_distance = cp.vl["RADAR_HUD"]['LEAD_DISTANCE']
+          self.has_lead_distance = 1
+        except KeyError:
+          self.has_lead_distance = -1
+      if self.has_lead_distance == 1:
+        self.lead_distance = cp.vl["RADAR_HUD"]['LEAD_DISTANCE']
     elif self.CP.carFingerprint == CAR.ODYSSEY_CHN:
       ret.standstill = cp.vl["ENGINE_DATA"]['XMISSION_SPEED'] < 0.1
       ret.doorOpen = bool(cp.vl["SCM_BUTTONS"]['DRIVERS_DOOR_OPEN'])
@@ -260,6 +275,14 @@ class CarState(CarStateBase):
 
     ret.steeringAngleDeg = cp.vl["STEERING_SENSORS"]['STEER_ANGLE']
     ret.steeringRateDeg = cp.vl["STEERING_SENSORS"]['STEER_ANGLE_RATE']
+
+    # dp - when user presses LKAS button on steering wheel
+    if self.cruise_setting == 1:
+      if cp.vl["SCM_BUTTONS"]["CRUISE_SETTING"] == 0:
+        if self.lkMode:
+          self.lkMode = False
+        else:
+          self.lkMode = True
 
     self.cruise_setting = cp.vl["SCM_BUTTONS"]['CRUISE_SETTING']
     self.cruise_buttons = cp.vl["SCM_BUTTONS"]['CRUISE_BUTTONS']
@@ -335,6 +358,16 @@ class CarState(CarStateBase):
     ret.cruiseState.available = bool(main_on)
     ret.cruiseState.nonAdaptive = self.cruise_mode != 0
 
+    # afa feature
+    if self.has_hud_lead == 0:
+      try:
+        self.hud_lead = cp.vl["ACC_HUD"]['HUD_LEAD']
+        self.has_hud_lead = 1
+      except KeyError:
+        self.has_hud_lead = -1
+    if self.has_hud_lead == 1:
+      self.hud_lead = cp.vl["ACC_HUD"]['HUD_LEAD']
+
     # Gets rid of Pedal Grinding noise when brake is pressed at slow speeds for some models
     if self.CP.carFingerprint in (CAR.PILOT, CAR.PILOT_2019, CAR.RIDGELINE):
       if ret.brake > 0.05:
@@ -367,7 +400,8 @@ class CarState(CarStateBase):
   @staticmethod
   def get_can_parser(CP):
     signals, checks = get_can_signals(CP)
-    bus_pt = 1 if CP.carFingerprint in HONDA_BOSCH else 0
+    checks = []
+    bus_pt = 1 if CP.isPandaBlack and CP.carFingerprint in HONDA_BOSCH else 0
     return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, bus_pt)
 
   @staticmethod
@@ -392,8 +426,9 @@ class CarState(CarStateBase):
         ("ACC_HUD", 10),
         ("BRAKE_COMMAND", 50),
       ]
-
-    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, 2)
+    checks = []
+    bus_cam = 1 if CP.carFingerprint in HONDA_BOSCH and not CP.isPandaBlack else 2
+    return CANParser(DBC[CP.carFingerprint]['pt'], signals, checks, bus_cam)
 
   @staticmethod
   def get_body_can_parser(CP):
@@ -406,5 +441,6 @@ class CarState(CarStateBase):
         ("BSM_STATUS_RIGHT", 3),
       ]
       bus_body = 0 # B-CAN is forwarded to ACC-CAN radar side (CAN 0 on fake ethernet port)
+      checks = []
       return CANParser(DBC[CP.carFingerprint]['body'], signals, checks, bus_body)
     return None

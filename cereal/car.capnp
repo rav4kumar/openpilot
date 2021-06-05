@@ -123,6 +123,18 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     neosUpdateRequiredDEPRECATED @88;
     modelLagWarningDEPRECATED @93;
     startupOneplusDEPRECATED @82;
+
+    #dp
+    preLaneChangeLeftALC @99;
+    preLaneChangeRightALC @100;
+    manualSteeringRequired @101;
+    manualSteeringRequiredBlinkersOn @102;
+    leadCarMoving @103;
+
+    # timebomb assist
+    timebombWarn @104;
+    timebombBypassing @105;
+    timebombBypassed @106;
   }
 }
 
@@ -188,6 +200,10 @@ struct CarState {
   # blindspot sensors
   leftBlindspot @33 :Bool; # Is there something blocking the left lane change
   rightBlindspot @34 :Bool; # Is there something blocking the right lane change
+
+  # dp
+  lkMode @37 :Bool;
+  stopSteering @38 :Bool; # timebomb - stopSteering
 
   struct WheelSpeeds {
     # optional wheel speeds
@@ -556,5 +572,5 @@ struct CarParams {
     gateway @1;    # Integration at vehicle's CAN gateway
   }
 
-  isPandaBlackDEPRECATED @39: Bool;
+  isPandaBlack @39: Bool;
 }

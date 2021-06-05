@@ -224,7 +224,7 @@ SetupWidget::SetupWidget(QWidget* parent) : QFrame(parent) {
 
   setStyleSheet(R"(
     SetupWidget {
-      background-color: #292929;
+      background-color: #000000;
     }
     * {
       font-size: 90px;

@@ -23,6 +23,7 @@
 #include "selfdrive/hardware/hw.h"
 
 #include "selfdrive/ui/ui.h"
+#include "selfdrive/ui/paint_dp.h"
 
 // TODO: this is also hardcoded in common/transformations/camera.py
 // TODO: choose based on frame input size
@@ -178,10 +179,11 @@ static void ui_draw_world(UIState *s) {
   nvgScissor(s->vg, s->viz_rect.x, s->viz_rect.y, s->viz_rect.w, s->viz_rect.h);
 
   // Draw lane edges and vision/mpc tracks
-  ui_draw_vision_lane_lines(s);
+  if (s->scene.dpUiLane)
+    ui_draw_vision_lane_lines(s);
 
   // Draw lead indicators if openpilot is handling longitudinal
-  if (s->scene.longitudinal_control) {
+  if (s->scene.dpUiLead) {
     if (scene->lead_data[0].getStatus()) {
       draw_lead(s, 0);
     }
@@ -213,11 +215,40 @@ static void ui_draw_vision_maxspeed(UIState *s) {
 }
 
 static void ui_draw_vision_speed(UIState *s) {
-  const float speed = std::max(0.0, s->scene.car_state.getVEgo() * (s->scene.is_metric ? 3.6 : 2.2369363));
-  const std::string speed_str = std::to_string((int)std::nearbyint(speed));
-  nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
-  ui_draw_text(s, s->viz_rect.centerX(), 240, speed_str.c_str(), 96 * 2.5, COLOR_WHITE, "sans-bold");
-  ui_draw_text(s, s->viz_rect.centerX(), 320, s->scene.is_metric ? "km/h" : "mph", 36 * 2.5, COLOR_WHITE_ALPHA(200), "sans-regular");
+  if (s->scene.dpUiSpeed) {
+    const float speed = std::max(0.0, s->scene.car_state.getVEgo() * (s->scene.is_metric ? 3.6 : 2.2369363));
+    const std::string speed_str = std::to_string((int)std::nearbyint(speed));
+    nvgTextAlign(s->vg, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+    ui_draw_text(s, s->viz_rect.centerX(), 240, speed_str.c_str(), 96 * 2.5, COLOR_WHITE, "sans-bold");
+    ui_draw_text(s, s->viz_rect.centerX(), 320, s->scene.is_metric ? "km/h" : "mph", 36 * 2.5, COLOR_WHITE_ALPHA(200), "sans-regular");
+  }
+  // dp blinker, from kegman
+  if (s->scene.dpUiBlinker) {
+    const int viz_speed_w = 280;
+    const int viz_speed_x = s->viz_rect.centerX() - viz_speed_w/2;
+    if(s->scene.leftBlinker) {
+      nvgBeginPath(s->vg);
+      nvgMoveTo(s->vg, viz_speed_x, s->viz_rect.y + header_h/4);
+      nvgLineTo(s->vg, viz_speed_x - viz_speed_w/2, s->viz_rect.y + header_h/4 + header_h/4);
+      nvgLineTo(s->vg, viz_speed_x, s->viz_rect.y + header_h/2 + header_h/4);
+      nvgClosePath(s->vg);
+      nvgFillColor(s->vg, nvgRGBA(0,255,0,s->scene.blinker_blinking_rate>=60?190:30));
+      nvgFill(s->vg);
+    }
+    if(s->scene.rightBlinker) {
+      nvgBeginPath(s->vg);
+      nvgMoveTo(s->vg, viz_speed_x+viz_speed_w, s->viz_rect.y + header_h/4);
+      nvgLineTo(s->vg, viz_speed_x+viz_speed_w + viz_speed_w/2, s->viz_rect.y + header_h/4 + header_h/4);
+      nvgLineTo(s->vg, viz_speed_x+viz_speed_w, s->viz_rect.y + header_h/2 + header_h/4);
+      nvgClosePath(s->vg);
+      nvgFillColor(s->vg, nvgRGBA(0,255,0,s->scene.blinker_blinking_rate>=60?190:30));
+      nvgFill(s->vg);
+    }
+    if(s->scene.leftBlinker || s->scene.rightBlinker) {
+      s->scene.blinker_blinking_rate -= 3;
+      if(s->scene.blinker_blinking_rate<0) s->scene.blinker_blinking_rate = 120;
+    }
+  }
 }
 
 static void ui_draw_vision_event(UIState *s) {
@@ -282,10 +313,11 @@ static void ui_draw_vision_header(UIState *s) {
                         nvgRGBAf(0,0,0,0.45), nvgRGBAf(0,0,0,0));
 
   ui_fill_rect(s->vg, {s->viz_rect.x, s->viz_rect.y, s->viz_rect.w, header_h}, gradient);
-
-  ui_draw_vision_maxspeed(s);
+  if (s->scene.dpUiMaxSpeed)
+    ui_draw_vision_maxspeed(s);
   ui_draw_vision_speed(s);
-  ui_draw_vision_event(s);
+  if (s->scene.dpUiEvent)
+    ui_draw_vision_event(s);
 }
 
 static void ui_draw_vision_frame(UIState *s) {
@@ -308,8 +340,23 @@ static void ui_draw_vision(UIState *s) {
     }
     // Set Speed, Current Speed, Status/Events
     ui_draw_vision_header(s);
-    if (s->scene.controls_state.getAlertSize() == cereal::ControlsState::AlertSize::NONE) {
+    if (s->scene.dpUiFace && s->scene.controls_state.getAlertSize() == cereal::ControlsState::AlertSize::NONE) {
       ui_draw_vision_face(s);
+    }
+    if (false) { //s->scene.dpFollowingProfileCtrl) {
+      ui_draw_fp_button(s);
+    }
+    if (false) { //s->scene.dpAccelProfileCtrl) {
+      ui_draw_ap_button(s);
+    }
+    if (s->scene.dpUiDev) {
+      ui_draw_bbui(s);
+    }
+    if (s->scene.dpUiDevMini) {
+      ui_draw_blindspots(s, true);
+      ui_draw_infobar(s);
+    } else {
+      ui_draw_blindspots(s, false);
     }
   } else {
     ui_draw_driver_view(s);

@@ -73,4 +73,5 @@ public:
   inline int putBool(const std::string &key, bool val) {
     return putBool(key.c_str(), val);
   }
+  std::string get_params_path();
 };

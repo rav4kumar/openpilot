@@ -3,11 +3,12 @@
 from cereal import car
 from selfdrive.car import dbc_dict
 Ecu = car.CarParams.Ecu
+from common.params import Params
 
 # Steer torque limits
 class CarControllerParams:
   def __init__(self, CP):
-    if CP.carFingerprint in [CAR.SONATA, CAR.PALISADE, CAR.SANTA_FE, CAR.VELOSTER, CAR.GENESIS_G70, CAR.IONIQ_EV_2020, CAR.KIA_CEED, CAR.KIA_SELTOS]:
+    if Params().get('dp_hkg_smart_mdps') == b'1' or CP.carFingerprint in [CAR.SONATA, CAR.PALISADE, CAR.SANTA_FE, CAR.VELOSTER, CAR.GENESIS_G70, CAR.IONIQ_EV_2020, CAR.KIA_CEED, CAR.KIA_SELTOS]:
       self.STEER_MAX = 384
     else:
       self.STEER_MAX = 255
@@ -624,3 +625,7 @@ DBC = {
 }
 
 STEER_THRESHOLD = 150
+
+ECU_FINGERPRINT = {
+  Ecu.fwdCamera: [832, 1156, 1191, 1342]
+}

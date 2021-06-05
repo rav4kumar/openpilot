@@ -36,6 +36,11 @@ else:
     "-g",
   ]
 
+  if FindFile('dp_vw', '/data/params/d') != None:
+    with open('/data/params/d/dp_vw') as f:
+      if (int(f.read().strip())) == 1:
+        PROJECT_FLAGS += ['-Dvw']
+
   if not PC:
     PROJECT_FLAGS += ["-DEON"]
     BUILDER = "EON"

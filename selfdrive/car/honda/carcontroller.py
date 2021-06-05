@@ -7,6 +7,7 @@ from selfdrive.car import create_gas_command
 from selfdrive.car.honda import hondacan
 from selfdrive.car.honda.values import CruiseButtons, CAR, VISUAL_HUD, HONDA_BOSCH, CarControllerParams
 from opendbc.can.packer import CANPacker
+from common.dp_common import common_controller_ctrl
 
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 
@@ -72,11 +73,33 @@ def process_hud_alert(hud_alert):
 
 HUDData = namedtuple("HUDData",
                      ["pcm_accel", "v_cruise",  "car",
-                     "lanes", "fcw", "acc_alert", "steer_required"])
+                      "lanes", "fcw", "acc_alert", "steer_required", "dashed_lanes"])
 
 
 class CarController():
+  def rough_speed(self, lead_distance):
+    if self.prev_lead_distance != lead_distance:
+      self.lead_distance_counter_prev = self.lead_distance_counter
+      self.rough_lead_speed += 0.3334 * (
+              (lead_distance - self.prev_lead_distance) / self.lead_distance_counter_prev - self.rough_lead_speed)
+      self.lead_distance_counter = 0.0
+    elif self.lead_distance_counter >= self.lead_distance_counter_prev:
+      self.rough_lead_speed = (self.lead_distance_counter * self.rough_lead_speed) / (self.lead_distance_counter + 1.0)
+    self.lead_distance_counter += 1.0
+    self.prev_lead_distance = lead_distance
+    return self.rough_lead_speed
+
+
   def __init__(self, dbc_name, CP, VM):
+    # dp
+    self.last_blinker_on = False
+    self.blinker_end_frame = 0.
+    self.prev_lead_distance = 0.0
+    self.stopped_lead_distance = 0.0
+    self.lead_distance_counter = 1
+    self.lead_distance_counter_prev = 1
+    self.rough_lead_speed = 0.0
+
     self.braking = False
     self.brake_steady = 0.
     self.brake_last = 0.
@@ -89,7 +112,7 @@ class CarController():
 
   def update(self, enabled, CS, frame, actuators,
              pcm_speed, pcm_override, pcm_cancel_cmd, pcm_accel,
-             hud_v_cruise, hud_show_lanes, hud_show_car, hud_alert):
+             hud_v_cruise, hud_show_lanes, dragonconf, hud_show_car, hud_alert):
 
     P = self.params
 
@@ -105,7 +128,7 @@ class CarController():
     self.brake_last = rate_limit(brake, self.brake_last, -2., DT_CTRL)
 
     # vehicle hud display, wait for one update from 10Hz 0x304 msg
-    if hud_show_lanes:
+    if hud_show_lanes and CS.lkMode:
       hud_lanes = 1
     else:
       hud_lanes = 0
@@ -121,37 +144,65 @@ class CarController():
     fcw_display, steer_required, acc_alert = process_hud_alert(hud_alert)
 
     hud = HUDData(int(pcm_accel), int(round(hud_v_cruise)), hud_car,
-                  hud_lanes, fcw_display, acc_alert, steer_required)
+                  hud_lanes, fcw_display, acc_alert, steer_required, CS.lkMode)
 
     # **** process the car messages ****
 
     # steer torque is converted back to CAN reference (positive when steering right)
     apply_steer = int(interp(-actuators.steer * P.STEER_MAX, P.STEER_LOOKUP_BP, P.STEER_LOOKUP_V))
 
-    lkas_active = enabled and not CS.steer_not_allowed
+    lkas_active = enabled and not CS.steer_not_allowed and CS.lkMode
 
     # Send CAN commands.
     can_sends = []
 
+    # dp
+    blinker_on = CS.out.leftBlinker or CS.out.rightBlinker
+    if not enabled:
+      self.blinker_end_frame = 0
+    if self.last_blinker_on and not blinker_on:
+      self.blinker_end_frame = frame + dragonconf.dpSignalOffDelay
+    apply_steer = common_controller_ctrl(enabled,
+                                         dragonconf,
+                                         blinker_on or frame < self.blinker_end_frame,
+                                         apply_steer, CS.out.vEgo)
+    self.last_blinker_on = blinker_on
+
     # Send steering command.
     idx = frame % 4
     can_sends.append(hondacan.create_steering_control(self.packer, apply_steer,
-      lkas_active, CS.CP.carFingerprint, idx, CS.CP.openpilotLongitudinalControl))
+      lkas_active, CS.CP.carFingerprint, idx, CS.CP.openpilotLongitudinalControl, CS.CP.isPandaBlack))
 
     # Send dashboard UI commands.
-    if (frame % 10) == 0:
+    if not dragonconf.dpAtl and (frame % 10) == 0:
       idx = (frame//10) % 4
-      can_sends.extend(hondacan.create_ui_commands(self.packer, pcm_speed, hud, CS.CP.carFingerprint, CS.is_metric, idx, CS.CP.openpilotLongitudinalControl, CS.stock_hud))
+      can_sends.extend(hondacan.create_ui_commands(self.packer, pcm_speed, hud, CS.CP.carFingerprint, CS.is_metric, idx, CS.CP.openpilotLongitudinalControl, CS.stock_hud, CS.CP.isPandaBlack))
 
     if not CS.CP.openpilotLongitudinalControl:
       if (frame % 2) == 0:
         idx = frame // 2
-        can_sends.append(hondacan.create_bosch_supplemental_1(self.packer, CS.CP.carFingerprint, idx))
+        can_sends.append(hondacan.create_bosch_supplemental_1(self.packer, CS.CP.carFingerprint, idx, CS.CP.isPandaBlack))
+      if dragonconf.dpAtl:
+        pass
       # If using stock ACC, spam cancel command to kill gas when OP disengages.
-      if pcm_cancel_cmd:
-        can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.CANCEL, idx, CS.CP.carFingerprint))
+      elif not dragonconf.dpAllowGas and pcm_cancel_cmd:
+        can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.CANCEL, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack))
       elif CS.out.cruiseState.standstill:
-        can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, CS.CP.carFingerprint))
+        if CS.CP.carFingerprint in (CAR.ACCORD, CAR.ACCORD_15, CAR.ACCORDH, CAR.CIVIC_BOSCH, CAR.CIVIC_BOSCH_DIESEL, CAR.CRV_HYBRID, CAR.INSIGHT, CAR.ACURA_RDX_3G):
+          rough_lead_speed = self.rough_speed(CS.lead_distance)
+          if CS.lead_distance > (self.stopped_lead_distance + 15.0) or rough_lead_speed > 0.1:
+            self.stopped_lead_distance = 0.0
+            can_sends.append(
+              hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack))
+        elif CS.CP.carFingerprint in (CAR.CIVIC_BOSCH, CAR.CRV_HYBRID):
+          if CS.hud_lead == 1:
+            can_sends.append(
+              hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack))
+        else:
+          can_sends.append(hondacan.spam_buttons_command(self.packer, CruiseButtons.RES_ACCEL, idx, CS.CP.carFingerprint, CS.CP.isPandaBlack))
+      else:
+        self.stopped_lead_distance = CS.lead_distance
+        self.prev_lead_distance = CS.lead_distance
 
     else:
       # Send gas and brake commands.
@@ -161,16 +212,17 @@ class CarController():
         if CS.CP.carFingerprint in HONDA_BOSCH:
           pass # TODO: implement
         else:
-          apply_gas = clip(actuators.gas, 0., 1.)
-          apply_brake = int(clip(self.brake_last * P.BRAKE_MAX, 0, P.BRAKE_MAX - 1))
-          pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
-          can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
-            pcm_override, pcm_cancel_cmd, hud.fcw, idx, CS.CP.carFingerprint, CS.stock_brake))
-          self.apply_brake_last = apply_brake
+          if not dragonconf.dpAtl:
+            apply_gas = clip(actuators.gas, 0., 1.)
+            apply_brake = int(clip(self.brake_last * P.BRAKE_MAX, 0, P.BRAKE_MAX - 1))
+            pump_on, self.last_pump_ts = brake_pump_hysteresis(apply_brake, self.apply_brake_last, self.last_pump_ts, ts)
+            can_sends.append(hondacan.create_brake_command(self.packer, apply_brake, pump_on,
+              pcm_override, pcm_cancel_cmd, hud.fcw, idx, CS.CP.carFingerprint, CS.stock_brake, CS.CP.isPandaBlack))
+            self.apply_brake_last = apply_brake
 
-          if CS.CP.enableGasInterceptor:
-            # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
-            # This prevents unexpected pedal range rescaling
-            can_sends.append(create_gas_command(self.packer, apply_gas, idx))
+            if CS.CP.enableGasInterceptor:
+              # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
+              # This prevents unexpected pedal range rescaling
+              can_sends.append(create_gas_command(self.packer, apply_gas, idx))
 
     return can_sends
