@@ -273,6 +273,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_reset_live_param_on_start", PERSISTENT},
     {"dp_jetson", PERSISTENT},
     {"dp_debug", PERSISTENT},
+    {"HandsOnWheelMonitoring", PERSISTENT},
 };
 
 } // namespace
