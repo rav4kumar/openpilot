@@ -1277,6 +1277,10 @@ struct ManagerState {
   }
 }
 
+struct DynamicGasButton {
+  status @0 :UInt16;
+}
+
 struct Event {
   logMonoTime @0 :UInt64;  # nanoseconds
   valid @67 :Bool = true;
@@ -1374,5 +1378,6 @@ struct Event {
     gpsLocationDEPRECATED @21 :GpsLocationData;
     uiLayoutStateDEPRECATED @57 :Legacy.UiLayoutState;
     dragonConf @79 :Dp.DragonConf;
+    dynamicGasButton @80 :DynamicGasButton;
   }
 }
