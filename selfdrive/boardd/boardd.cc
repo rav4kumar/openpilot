@@ -428,7 +428,7 @@ void hardware_control_thread() {
     cnt++;
     sm.update(1000); // TODO: what happens if EINTR is sent while in sm.update?
 
-    if (!Hardware::PC() && sm.updated("deviceState")){
+    if (!Hardware::PC() && !Hardware::JETSON() && sm.updated("deviceState")){
       // Charging mode
       bool charging_disabled = sm["deviceState"].getDeviceState().getChargingDisabled();
       if (charging_disabled != prev_charging_disabled){
@@ -573,7 +573,7 @@ int main() {
   err = set_realtime_priority(54);
   LOG("set priority returns %d", err);
 
-  err = set_core_affinity(Hardware::TICI() ? 4 : 3);
+  err = set_core_affinity(Hardware::TICI() || Hardware::JETSON() ? 4 : 3);
   LOG("set affinity returns %d", err);
 
   while (!do_exit){

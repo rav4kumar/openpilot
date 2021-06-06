@@ -9,6 +9,7 @@ $Java.outerClassname("dp");
 
 # dp.capnp: a home for deprecated structs
 
+# dp
 struct DragonConf {
   dpThermalStarted @0 :Bool;
   dpThermalOverheat @1 :Bool;
@@ -23,36 +24,35 @@ struct DragonConf {
   dpAutoLcCont @10 :Bool;
   dpAutoLcMinMph @11 :Float32;
   dpAutoLcDelay @12 :Float32;
-  dpSlowOnCurve @13 :Bool;
-  dpAllowGas @14 :Bool;
-  dpFollowingProfileCtrl @15 :Bool;
-  dpFollowingProfile @16 :UInt8;
-  dpAccelProfileCtrl @17 :Bool;
-  dpAccelProfile @18 :UInt8;
-  dpGearCheck @19 :Bool;
-  dpSpeedCheck @20 :Bool;
-  dpUiScreenOffReversing @21 :Bool;
-  dpUiSpeed @22 :Bool;
-  dpUiEvent @23 :Bool;
-  dpUiMaxSpeed @24 :Bool;
-  dpUiFace @25 :Bool;
-  dpUiLane @26 :Bool;
-  dpUiLead @27 :Bool;
-  dpUiDev @28 :Bool;
-  dpUiDevMini @29 :Bool;
-  dpUiBlinker @30 :Bool;
-  dpAppExtGps @31 :Bool;
-  dpAppTomtom @32 :Bool;
-  dpAppTomtomAuto @33 :Bool;
-  dpAppTomtomManual @34 :Int8;
-  dpAppMixplorer @35 :Bool;
-  dpAppMixplorerManual @36 :Int8;
-  dpCarDetected @37 :Text;
-  dpToyotaLdw @38 :Bool;
-  dpToyotaSng @39 :Bool;
-  dpVwPanda @40 :Bool;
-  dpVwTimebombAssist @41 :Bool;
-  dpIpAddr @42 :Text;
-  dpLocale @43 :Text;
-  dpDebug @44 :Bool;
+  dpAllowGas @13 :Bool;
+  dpFollowingProfileCtrl @14 :Bool;
+  dpFollowingProfile @15 :UInt8;
+  dpAccelProfileCtrl @16 :Bool;
+  dpAccelProfile @17 :UInt8;
+  dpGearCheck @18 :Bool;
+  dpSpeedCheck @19 :Bool;
+  dpUiScreenOffReversing @20 :Bool;
+  dpUiSpeed @21 :Bool;
+  dpUiEvent @22 :Bool;
+  dpUiMaxSpeed @23 :Bool;
+  dpUiFace @24 :Bool;
+  dpUiLane @25 :Bool;
+  dpUiLead @26 :Bool;
+  dpUiDev @27 :Bool;
+  dpUiDevMini @28 :Bool;
+  dpUiBlinker @29 :Bool;
+  dpAppExtGps @30 :Bool;
+  dpAppTomtom @31 :Bool;
+  dpAppTomtomAuto @32 :Bool;
+  dpAppTomtomManual @33 :Int8;
+  dpAppMixplorer @34 :Bool;
+  dpAppMixplorerManual @35 :Int8;
+  dpCarDetected @36 :Text;
+  dpToyotaLdw @37 :Bool;
+  dpToyotaSng @38 :Bool;
+  dpVwPanda @39 :Bool;
+  dpVwTimebombAssist @40 :Bool;
+  dpIpAddr @41 :Text;
+  dpLocale @42 :Text;
+  dpDebug @43 :Bool;
 }

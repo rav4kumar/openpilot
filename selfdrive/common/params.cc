@@ -33,9 +33,9 @@
 
 namespace {
 
-const std::string default_params_path = Hardware::PC() ? util::getenv_default("HOME", "/.comma/params", "/data/params")
+const std::string default_params_path = Hardware::PC() || Hardware::JETSON() ? util::getenv_default("HOME", "/.comma/params", "/data/params")
                                                        : "/data/params";
-const std::string persistent_params_path = Hardware::PC() ? default_params_path : "/persist/comma/params";
+const std::string persistent_params_path = Hardware::PC() || Hardware::JETSON() ? default_params_path : "/persist/comma/params";
 
 volatile sig_atomic_t params_do_exit = 0;
 void params_sig_handler(int signal) {
@@ -220,7 +220,6 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_logger", PERSISTENT},
     {"dp_athenad", PERSISTENT},
     {"dp_uploader", PERSISTENT},
-    {"dp_updated", PERSISTENT},
     {"dp_hotspot_on_boot", PERSISTENT},
     {"dp_steering_on_signal", PERSISTENT},
     {"dp_signal_off_delay", PERSISTENT},
@@ -229,7 +228,6 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_auto_lc_cont", PERSISTENT},
     {"dp_auto_lc_min_mph", PERSISTENT},
     {"dp_auto_lc_delay", PERSISTENT},
-    {"dp_slow_on_curve", PERSISTENT},
     {"dp_allow_gas", PERSISTENT},
     {"dp_following_profile_ctrl", PERSISTENT},
     {"dp_following_profile", PERSISTENT},

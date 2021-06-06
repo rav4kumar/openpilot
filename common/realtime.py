@@ -5,7 +5,7 @@ import time
 import multiprocessing
 
 from common.clock import sec_since_boot  # pylint: disable=no-name-in-module, import-error
-from selfdrive.hardware import PC, TICI
+from selfdrive.hardware import PC, TICI, JETSON
 
 
 # time step for each process
@@ -32,12 +32,12 @@ class Priority:
 
 
 def set_realtime_priority(level):
-  if not PC:
+  if JETSON or not PC:
     os.sched_setscheduler(0, os.SCHED_FIFO, os.sched_param(level))
 
 
 def set_core_affinity(core):
-  if not PC:
+  if JETSON or not PC:
     os.sched_setaffinity(0, [core,])
 
 

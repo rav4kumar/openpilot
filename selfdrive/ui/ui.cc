@@ -274,7 +274,7 @@ static void update_vision(UIState *s) {
     VisionBuf * buf = s->vipc_client->recv();
     if (buf != nullptr){
       s->last_frame = buf;
-    } else if (!Hardware::PC()) {
+    } else if (!Hardware::PC() && !Hardware::JETSON()) {
       LOGE("visionIPC receive timeout");
     }
   }

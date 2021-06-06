@@ -103,12 +103,6 @@ QWidget * dp_controls(QWidget * parent) {
 //                                            "../assets/offroad/icon_empty.png"
 //                                              ));
   dp_list->addWidget(horizontal_line());
-  dp_list->addWidget(new ParamControl("dp_slow_on_curve",
-                                            "Enable Slow Down On Curve Road",
-                                            "",
-                                            "../assets/offroad/icon_empty.png"
-                                              ));
-  dp_list->addWidget(horizontal_line());
   dp_list->addWidget(new ParamControl("dp_allow_gas",
                                             "Allow Gas Pedal Pressed",
                                             "",

@@ -257,11 +257,11 @@ class Controls:
 
     # TODO: fix simulator
     if not self.dp_jetson and not SIMULATION:
-      # if not NOSENSOR:
-      #   if not self.sm['liveLocationKalman'].gpsOK and (self.distance_traveled > 1000) and \
-      #     (not TICI or self.enable_lte_onroad):
-      #     # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
-      #     self.events.add(EventName.noGps)
+      if False: #not NOSENSOR:
+        if not self.sm['liveLocationKalman'].gpsOK and (self.distance_traveled > 1000) and \
+          (not TICI or self.enable_lte_onroad):
+          # Not show in first 1 km to allow for driving out of garage. This event shows after 5 minutes
+          self.events.add(EventName.noGps)
       if not self.sm.all_alive(['roadCameraState', 'driverCameraState']):
         self.events.add(EventName.cameraMalfunction)
       if self.sm['modelV2'].frameDropPerc > 20:

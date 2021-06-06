@@ -86,12 +86,12 @@ class opParams:
                         #'distance_traveled': Param(False, bool, 'Whether to log distance_traveled or not.'),
                         #'enable_long_derivative': Param(False, bool, 'If you have longitudinal overshooting, enable this! This enables derivative-based\n'
                                                                     # 'integral wind-down to help reduce overshooting within the long PID loop'),
-                        'dynamic_follow_mod': Param(0, VT.number, 'off:0, traffic:1, relaxed:2, roadtrip:3\n', live=True),
+                        #'dynamic_follow_mod': Param(0, VT.number, 'off:0, traffic:1, relaxed:2, roadtrip:3\n', live=True),
                         #'eco_mode': Param(False, bool, "Default to eco instead of normal."),
                         #'force_pedal': Param(False, bool, "If openpilot isn't recognizing your comma pedal, set this to True"),
-                        'global_df_mod': Param(1.0, VT.number, 'The multiplier for the current distance used by dynamic follow. The range is limited from 0.85 to 1.5\n'
-                                                               'Smaller values will get you closer, larger will get you farther\n'
-                                                               'This is multiplied by any profile that\'s active. Set to 1. to disable', live=True),
+                        #'global_df_mod': Param(1.0, VT.number, 'The multiplier for the current distance used by dynamic follow. The range is limited from 0.85 to 1.5\n'
+                                                               #'Smaller values will get you closer, larger will get you farther\n'
+                                                               #'This is multiplied by any profile that\'s active. Set to 1. to disable', live=True),
                         #'hide_auto_df_alerts': Param(True, bool, 'Hides the alert that shows what profile the model has chosen'),
                         #'hotspot_on_boot': Param(False, bool, 'Enable Hotspot On Boot'),
                         'keep_openpilot_engaged': Param(True, bool, 'True is stock behavior in this fork. False lets you use the brake and cruise control stalk to disengage as usual'),
@@ -105,7 +105,7 @@ class opParams:
                         #'osm': Param(True, bool, 'Whether to use OSM for drives'),
                         'prius_pid': Param(False, bool, 'This enables the PID lateral controller with new a experimental derivative tune\nFalse: stock INDI, True: TSS2-tuned PID'),
                         #'physical_buttons_AP': Param(False, bool, 'This enables the physical buttons to control sport and eco, some cars do not have buttons'),
-                        'physical_buttons_DF': Param(False, bool, 'This enables the physical buttons to control following distance, TSS1 works with new SDSU FW'),
+                        #'physical_buttons_DF': Param(False, bool, 'This enables the physical buttons to control following distance, TSS1 works with new SDSU FW'),
                         #'physical_buttons_LKAS': Param(False, bool, 'This enables the physical buttons to control LKAS. TSS1 only this may break if used on TSS2 vechicle'),
                         #'rolling_stop': Param(False, bool, 'If you do not want stop signs to go down to 0 kph enable this for 9kph slow down'),
                         #'rsa_max_speed': Param(24.5, VT.number, 'Speed limit to ignore RSA in m/s'),
@@ -121,9 +121,9 @@ class opParams:
                         #'traffic_lights': Param(False, bool, "Should Openpilot stop for traffic lights"),
                         #'traffic_lights_without_direction': Param(False, bool, "Should Openpilot stop for traffic lights without a direction specified"),
                         #'use_car_caching': Param(True, bool, 'Whether to use fingerprint caching'),
-                        'min_TR': Param(0.9, VT.number, 'The minimum allowed following distance in seconds. Default is 0.9 seconds.\n'
-                                                        'The range is limited from 0.85 to 1.6.', live=True),
-                        'use_car_caching': Param(True, bool, 'Cache car fingerprint if panda not disconnected.'),
+                        #'min_TR': Param(0.9, VT.number, 'The minimum allowed following distance in seconds. Default is 0.9 seconds.\n'
+                                                        #'The range is limited from 0.85 to 1.6.', live=True),
+                        #'use_car_caching': Param(True, bool, 'Cache car fingerprint if panda not disconnected.'),
                         #'use_virtual_middle_line': Param(False, bool, 'For roads over 4m wide, hug right. For roads under 2m wide, hug left. European requirement.'),
                         #'uniqueID': Param(None, [type(None), str], 'User\'s unique ID'),
                         #'update_behavior': Param('auto', str, 'Can be: (\'off\', \'alert\', \'auto\') without quotes\n'

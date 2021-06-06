@@ -19,14 +19,14 @@ AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distract
 
 # lookup tables VS speed to determine min and max accels in cruise
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MIN_V =  [-1.0, -0.7, -0.6, -0.5, -0.3]
-_A_CRUISE_MIN_BP = [0.0, 5.0, 10.0, 20.0, 55.0]
+_A_CRUISE_MIN_V = [-1.0, -.8, -.67, -.5, -.30]
+_A_CRUISE_MIN_BP = [  0.,  5.,  10., 20.,  40.]
 
 # need fast accel at very low speed for stop and go
 # make sure these accelerations are smaller than mpc limits
-_A_CRUISE_MAX_V = [0.8, 0.9, 1.0, 0.4, 0.2]
+_A_CRUISE_MAX_V = [1.2, 1.2, 0.65, .4]
 _A_CRUISE_MAX_V_FOLLOWING = [1.6, 1.6, 0.65, .4]
-_A_CRUISE_MAX_BP = [0., 5., 10., 20., 55.]
+_A_CRUISE_MAX_BP = [0.,  6.4, 22.5, 40.]
 
 # Lookup table for turns
 _A_TOTAL_MAX_V = [1.7, 3.2]
@@ -39,6 +39,10 @@ DP_FOLLOWING_DIST = {
   2: 1.2,
   3: 0.9,
 }
+
+DP_ACCEL_ECO = 0
+DP_ACCEL_NORMAL = 1
+DP_ACCEL_SPORT = 2
 
 # accel profile by @arne182
 _DP_CRUISE_MIN_V = [-2.0, -1.5, -1.0, -0.7, -0.5]
@@ -62,10 +66,10 @@ def dp_calc_cruise_accel_limits(v_ego, following, dp_profile):
     a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_FOLLOWING)
     a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_FOLLOWING)
   else:
-    if dp_profile == DP_ECO:
+    if dp_profile == DP_ACCEL_ECO:
       a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_ECO)
       a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_ECO)
-    elif dp_profile == DP_SPORT:
+    elif dp_profile == DP_ACCEL_SPORT:
       a_cruise_min = interp(v_ego, _DP_CRUISE_MIN_BP, _DP_CRUISE_MIN_V_SPORT)
       a_cruise_max = interp(v_ego, _DP_CRUISE_MAX_BP, _DP_CRUISE_MAX_V_SPORT)
     else:
@@ -125,14 +129,10 @@ class Planner():
 
     # dp
     self.dp_accel_profile_ctrl = False
-    self.dp_accel_profile = 0
+    self.dp_accel_profile = DP_ACCEL_ECO
     self.dp_following_profile_ctrl = False
     self.dp_following_profile = 0
     self.dp_following_dist = 1.8 # default val
-    # dp - slow on curve from 0.7.6.1
-    self.dp_slow_on_curve = False
-    self.v_model = 0.0
-    self.a_model = 0.0
 
   def choose_solution(self, v_cruise_setpoint, enabled, lead_1, lead_2, steeringAngleDeg):
     center_x = -2.5 # Wheel base 2.5m
@@ -175,11 +175,7 @@ class Planner():
         self.v_acc = self.v_model
         self.a_acc = self.a_model
 
-    self.v_acc_future = v_cruise_setpoint
-    if lead1_check:
-      self.v_acc_future = min([self.mpc1.v_mpc_future, self.v_acc_future])
-    if lead2_check:
-      self.v_acc_future = min([self.mpc2.v_mpc_future, self.v_acc_future])
+    self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
 
   def update(self, sm, CP):
     """Gets called when new radarState is available"""
@@ -197,7 +193,7 @@ class Planner():
     lead_2 = sm['radarState'].leadTwo
 
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
-    following = (lead_1.status and lead_1.dRel < 45.0 and lead_1.vRel < 0.0) or (lead_2.status and lead_2.dRel < 45.0 and lead_2.vRel < 0.0) #lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
+    following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
 
     self.v_acc_start = self.v_acc_next
     self.a_acc_start = self.a_acc_next
@@ -206,28 +202,8 @@ class Planner():
     self.dp_accel_profile_ctrl = sm['dragonConf'].dpAccelProfileCtrl
     self.dp_accel_profile = sm['dragonConf'].dpAccelProfile
     self.dp_following_profile_ctrl = sm['dragonConf'].dpAccelProfileCtrl
-    self.dp_slow_on_curve = sm['dragonConf'].dpSlowOnCurve
     self.dp_following_profile = sm['dragonConf'].dpFollowingProfile
     self.dp_following_dist = DP_FOLLOWING_DIST[0 if not self.dp_following_profile_ctrl else self.dp_following_profile]
-
-    # dp - slow on curve from 0.7.6.1
-    if self.dp_slow_on_curve and len(sm['model'].path.poly):
-      path = list(sm['model'].path.poly)
-
-      # Curvature of polynomial https://en.wikipedia.org/wiki/Curvature#Curvature_of_the_graph_of_a_function
-      # y = a x^3 + b x^2 + c x + d, y' = 3 a x^2 + 2 b x + c, y'' = 6 a x + 2 b
-      # k = y'' / (1 + y'^2)^1.5
-      # TODO: compute max speed without using a list of points and without numpy
-      y_p = 3 * path[0] * self.path_x**2 + 2 * path[1] * self.path_x + path[2]
-      y_pp = 6 * path[0] * self.path_x + 2 * path[1]
-      curv = y_pp / (1. + y_p**2)**1.5
-
-      a_y_max = 2.975 - v_ego * 0.0375  # ~1.85 @ 75mph, ~2.6 @ 25mph
-      v_curvature = np.sqrt(a_y_max / np.clip(np.abs(curv), 1e-4, None))
-      model_speed = np.min(v_curvature)
-      model_speed = max(20.0 * CV.MPH_TO_MS, model_speed)  # Don't slow down below 20mph
-    else:
-      model_speed = 255.0
 
     # Calculate speed for normal cruise control
     pedal_pressed = sm['carState'].gasPressed or sm['carState'].brakePressed
@@ -235,7 +211,7 @@ class Planner():
       if not self.dp_accel_profile_ctrl:
         accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following)]
       else:
-        accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, (self.longitudinalPlanSource == 'mpc1' or self.longitudinalPlanSource == 'mpc2'), self.dp_accel_profile)]
+        accel_limits = [float(x) for x in dp_calc_cruise_accel_limits(v_ego, following, self.dp_accel_profile)]
       jerk_limits = [min(-0.1, accel_limits[0]), max(0.1, accel_limits[1])]  # TODO: make a separate lookup for jerk tuning
       accel_limits_turns = limit_accel_in_turns(v_ego, sm['carState'].steeringAngleDeg, accel_limits, self.CP)
 
