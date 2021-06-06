@@ -253,6 +253,20 @@ QWidget * network_panel(QWidget * parent) {
   layout->addWidget(new SshToggle());
   layout->addWidget(horizontal_line());
   layout->addWidget(new SshControl());
+  layout->addWidget(horizontal_line());
+
+  const char* gitpull = "/data/openpilot/scripts/gitpull.sh ''";
+  layout->addWidget(new ButtonControl("Git Pull", "Fetch", "Pressing this button will pull latest changes from github.",
+                                      [=]() { std::system(gitpull); }));
+  layout->addWidget(horizontal_line());
+
+  const char* panda_flashing = "/data/openpilot/scripts/panda_flashing.sh ''";
+  layout->addWidget(new ButtonControl("Flash panda", "Flash", "Are you sure you want to flash the panda manully?",
+                                      [=]() {
+                                        if (ConfirmationDialog::confirm("are you sure?")) {
+                                          std::system(panda_flashing);
+                                        }
+                                      }));
 
   layout->addStretch(1);
 

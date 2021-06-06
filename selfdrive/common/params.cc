@@ -220,6 +220,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_logger", PERSISTENT},
     {"dp_athenad", PERSISTENT},
     {"dp_uploader", PERSISTENT},
+    {"dp_updated", PERSISTENT},
     {"dp_hotspot_on_boot", PERSISTENT},
     {"dp_steering_on_signal", PERSISTENT},
     {"dp_signal_off_delay", PERSISTENT},
@@ -271,6 +272,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"dp_reset_live_param_on_start", PERSISTENT},
     {"dp_jetson", PERSISTENT},
     {"dp_debug", PERSISTENT},
+    {"HandsOnWheelMonitoring", PERSISTENT},
 };
 
 } // namespace

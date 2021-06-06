@@ -1194,6 +1194,16 @@ struct DriverMonitoringState @0xb83cda094a1da284 {
   isRHDDEPRECATED @4 :Bool;
   isPreviewDEPRECATED @15 :Bool;
   rhdCheckedDEPRECATED @5 :Bool;
+  handsOnWheelState @17 :HandsOnWheelState;
+
+  enum HandsOnWheelState {
+    none @0;          # hand on wheel monitoring inactive
+    ok @1;            # driver has hands on steering wheel
+    minor @2;         # hands off steering wheel for acceptable period
+    warning @3;       # hands off steering wheel for warning period
+    critical @4;      # # hands off steering wheel for critical period
+    terminal @5;      # # hands off steering wheel for terminal period
+  }
 }
 
 struct Boot {
@@ -1266,6 +1276,10 @@ struct ManagerState {
     running @2 :Bool;
     exitCode @3 :Int32;
   }
+}
+
+struct DynamicGasButton {
+  status @0 :UInt16;
 }
 
 struct Event {
@@ -1365,5 +1379,6 @@ struct Event {
     gpsLocationDEPRECATED @21 :GpsLocationData;
     uiLayoutStateDEPRECATED @57 :Legacy.UiLayoutState;
     dragonConf @79 :Dp.DragonConf;
+    dynamicGasButton @80 :DynamicGasButton;
   }
 }

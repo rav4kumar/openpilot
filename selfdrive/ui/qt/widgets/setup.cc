@@ -10,6 +10,8 @@
 #include <QVBoxLayout>
 #include <QrCode.hpp>
 
+#include <QPixmap> // NICE PRIUS BOX
+
 #include "selfdrive/common/params.h"
 #include "selfdrive/ui/qt/request_repeater.h"
 
@@ -108,7 +110,7 @@ PrimeUserWidget::PrimeUserWidget(QWidget* parent) : QWidget(parent) {
     return;
   }
 
-  QString url = "https://api.commadotai.com/v1/devices/" + dongleId + "/owner";
+  QString url = "https://api.retropilot.org/v1/devices/" + dongleId + "/owner";
   RequestRepeater *repeater = new RequestRepeater(this, url, "ApiCache_Owner", 6);
   QObject::connect(repeater, &RequestRepeater::receivedResponse, this, &PrimeUserWidget::replyFinished);
 }
@@ -135,7 +137,15 @@ PrimeAdWidget::PrimeAdWidget(QWidget* parent) : QWidget(parent) {
   QVBoxLayout* vlayout = new QVBoxLayout;
   vlayout->setMargin(30);
   vlayout->setSpacing(15);
+  vlayout->addWidget(new QLabel("Stay Drifing~"), 1, Qt::AlignCenter);
 
+  QPixmap logo("../assets/icon_prius.png");
+  QLabel *kumar = new QLabel();
+  kumar->setPixmap(logo.scaledToWidth(430, Qt::SmoothTransformation));
+  kumar->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+  vlayout->addWidget(kumar, 0, Qt::AlignCenter);
+
+/*
   vlayout->addWidget(new QLabel("Upgrade now"), 1, Qt::AlignTop);
 
   QLabel* description = new QLabel("Become a comma prime member at my.comma.ai and get premium features!");
@@ -151,7 +161,7 @@ PrimeAdWidget::PrimeAdWidget(QWidget* parent) : QWidget(parent) {
     QLabel* feature = new QLabel(f);
     feature->setStyleSheet(R"(font-size: 40px;)");
     vlayout->addWidget(feature, 0, Qt::AlignBottom);
-  }
+  }*/
 
   setLayout(vlayout);
 }
@@ -240,7 +250,7 @@ SetupWidget::SetupWidget(QWidget* parent) : QFrame(parent) {
 
   // set up API requests
   QString dongleId = QString::fromStdString(Params().get("DongleId"));
-  QString url = "https://api.commadotai.com/v1.1/devices/" + dongleId + "/";
+  QString url = "https://api.retropilot.org/v1.1/devices/" + dongleId + "/";
   RequestRepeater* repeater = new RequestRepeater(this, url, "ApiCache_Device", 5);
 
   QObject::connect(repeater, &RequestRepeater::receivedResponse, this, &SetupWidget::replyFinished);

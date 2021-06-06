@@ -27,6 +27,12 @@ QWidget * dp_general(QWidget * parent) {
                                             "",
                                             "../assets/offroad/icon_empty.png"
                                             ));
+  dp_list->addWidget(horizontal_line());
+  dp_list->addWidget(new ParamControl("HandsOnWheelMonitoring",
+                                            "Enable Hands on Wheel Monitoring",
+                                            "Monitor and alert when driver is not keeping the hands on the steering wheel.",
+                                            "../assets/offroad/icon_openpilot.png"
+                                            ));
 /*
   dp_list->addWidget(horizontal_line());
   dp_list->addWidget(new ParamControl("dp_dashcam",
