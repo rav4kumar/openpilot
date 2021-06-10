@@ -130,12 +130,12 @@ class CarController():
 
     if hud_show_lanes and enabled and CS.lkMode and CS.out.cruiseState.enabled:
       hud_lanes = 1
-    else:
-      hud_lanes = 0
       if hud_show_car:
         hud_car = 2
       else:
         hud_car = 1
+    else:
+      hud_car = 0
 
     fcw_display, steer_required, acc_alert = process_hud_alert(hud_alert)
 
