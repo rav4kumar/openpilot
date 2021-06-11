@@ -129,7 +129,6 @@ class CarController():
     self.brake_last = rate_limit(brake, self.brake_last, -2., DT_CTRL)
 
     if hud_show_lanes and enabled and CS.lkMode and CS.out.cruiseState.enabled:
-      hud_lanes = 1
       if hud_show_car:
         hud_car = 2
       else:
